@@ -52,3 +52,4 @@ backends:
 settings:
   default_threshold: 0.8
   max_candidates: 5
+  jaccard_threshold: 0.75  # Minimum Jaccard similarity for high-confidence token overlap matches

@@ -109,7 +109,7 @@ function PendingItems() {
     queryKey: ["external-products", selectedQuery?.backend],
     queryFn: async () => {
       if (!selectedQuery?.backend)
-        return { data: [], count: 0, backend: "mock" }
+        return { data: [], count: 0, backend: "" }
 
       const result = await MatchingService.getExternalProducts({
         backend: selectedQuery.backend,

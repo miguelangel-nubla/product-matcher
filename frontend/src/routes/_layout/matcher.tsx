@@ -93,7 +93,7 @@ function ProductMatcher() {
   } = useForm<MatchForm>({
     defaultValues: {
       text: "",
-      backend: "mock",
+      backend: "",
       threshold: 0.8,
       createPending: true,
     },
@@ -105,6 +105,13 @@ function ProductMatcher() {
       setValue("threshold", settings.default_threshold)
     }
   }, [settings, setValue])
+
+  // Set default backend to first available when backends load
+  useEffect(() => {
+    if (backends && backends.length > 0) {
+      setValue("backend", backends[0].name)
+    }
+  }, [backends, setValue])
 
   const threshold = watch("threshold")
   const selectedBackend = watch("backend")
@@ -167,6 +174,7 @@ function ProductMatcher() {
                     label="Product Text"
                     invalid={!!errors.text}
                     errorText={errors.text?.message}
+                    required
                   >
                     <Input
                       {...register("text", {
@@ -193,6 +201,7 @@ function ProductMatcher() {
                     label="Backend"
                     invalid={!!errors.backend}
                     errorText={errors.backend?.message}
+                    required
                   >
                     {isLoadingBackends ? (
                       <HStack>

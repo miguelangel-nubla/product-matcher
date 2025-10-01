@@ -72,10 +72,6 @@ class DebugStepTracker:
         return MatchingDebugInfo(steps=self.steps, start_time=self.start_time)
 
 
-# Static threshold for token overlap - very restrictive to ensure high confidence
-TOKEN_OVERLAP_THRESHOLD = 0.8
-# Minimum number of tokens required to attempt Jaccard similarity
-MIN_TOKENS_FOR_JACCARD = 2
 
 
 def calculate_jaccard_similarity(tokens1: list[str], tokens2: list[str]) -> float:
@@ -121,9 +117,8 @@ class ProductMatcher:
 
         Algorithm:
         1. Normalize input text to tokens
-        2. If input has >= MIN_TOKENS_FOR_JACCARD:
-           a. Calculate Jaccard for all aliases
-           b. If exactly one alias passes TOKEN_OVERLAP_THRESHOLD: return it
+        2. Calculate Jaccard similarity for all aliases
+           a. If exactly one product passes TOKEN_OVERLAP_THRESHOLD: return it
         3. Fallback to fuzzy matching for all aliases
         4. Return best fuzzy matches above threshold
 
@@ -143,8 +138,9 @@ class ProductMatcher:
         if threshold is None:
             threshold = global_settings.get("default_threshold", 0.8)
         max_candidates = global_settings.get("max_candidates", 5)
+        jaccard_threshold = global_settings["jaccard_threshold"]  # Mandatory config value
 
-        debug.add(f"Using threshold: {threshold}, max_candidates: {max_candidates}")
+        debug.add(f"Using fuzzy threshold: {threshold}, max_candidates: {max_candidates}, jaccard_threshold: {jaccard_threshold}")
 
         # Get language and configuration from backend
         from app.adapters.registry import get_backend_language
@@ -173,67 +169,57 @@ class ProductMatcher:
             debug.add("No products found, returning empty result")
             return False, normalized_input, [], debug.get_debug_info()
 
-        # Step 1: Try Jaccard similarity if input has enough tokens
-        if len(input_tokens) >= MIN_TOKENS_FOR_JACCARD:
-            debug.add(
-                f"Input has {len(input_tokens)} tokens (>= {MIN_TOKENS_FOR_JACCARD}), attempting Jaccard matching"
-            )
-            jaccard_product_scores: dict[
-                str, tuple[str, float]
-            ] = {}  # Track best score per product
-            jaccard_candidates_checked = 0
+        # Step 1: Try Jaccard similarity for token overlap matching
+        debug.add(f"Input has {len(input_tokens)} tokens, attempting Jaccard matching")
+        jaccard_product_scores: dict[
+            str, tuple[str, float]
+        ] = {}  # Track best score per product
+        jaccard_candidates_checked = 0
 
-            for product in products:
-                for alias in product.aliases:
-                    alias_tokens = normalize_text(alias, language, backend_config)
+        for product in products:
+            for alias in product.aliases:
+                alias_tokens = normalize_text(alias, language, backend_config)
+                jaccard_candidates_checked += 1
+                overlap_score = calculate_jaccard_similarity(
+                    input_tokens, alias_tokens
+                )
 
-                    # Only attempt Jaccard if alias also has enough tokens
-                    if len(alias_tokens) >= MIN_TOKENS_FOR_JACCARD:
-                        jaccard_candidates_checked += 1
-                        overlap_score = calculate_jaccard_similarity(
-                            input_tokens, alias_tokens
+                if overlap_score >= jaccard_threshold:
+                    debug.add(
+                        f"  Jaccard match found: '{alias}' -> {alias_tokens} (score: {overlap_score:.3f})"
+                    )
+
+                    # Track best score for this product (multiple aliases of same product is fine)
+                    if (
+                        product.id not in jaccard_product_scores
+                        or overlap_score > jaccard_product_scores[product.id][1]
+                    ):
+                        jaccard_product_scores[product.id] = (
+                            alias,
+                            overlap_score,
                         )
 
-                        if overlap_score >= TOKEN_OVERLAP_THRESHOLD:
-                            debug.add(
-                                f"  Jaccard match found: '{alias}' -> {alias_tokens} (score: {overlap_score:.3f})"
-                            )
+        debug.add(
+            f"Checked {jaccard_candidates_checked} aliases for Jaccard, found {len(jaccard_product_scores)} unique products with matches"
+        )
 
-                            # Track best score for this product (multiple aliases of same product is fine)
-                            if (
-                                product.id not in jaccard_product_scores
-                                or overlap_score > jaccard_product_scores[product.id][1]
-                            ):
-                                jaccard_product_scores[product.id] = (
-                                    alias,
-                                    overlap_score,
-                                )
-
+        # If exactly one PRODUCT passes Jaccard threshold, return it (high confidence)
+        if len(jaccard_product_scores) == 1:
+            product_id, (best_alias, best_score) = list(
+                jaccard_product_scores.items()
+            )[0]
             debug.add(
-                f"Checked {jaccard_candidates_checked} aliases for Jaccard, found {len(jaccard_product_scores)} unique products with matches"
+                f"Exactly 1 product matched via Jaccard ('{best_alias}' score: {best_score:.3f} >= {jaccard_threshold}) - returning high confidence result"
             )
-
-            # If exactly one PRODUCT passes Jaccard threshold, return it (high confidence)
-            if len(jaccard_product_scores) == 1:
-                product_id, (best_alias, best_score) = list(
-                    jaccard_product_scores.items()
-                )[0]
-                debug.add(
-                    f"Exactly 1 product matched via Jaccard ('{best_alias}' score: {best_score:.3f}) - returning high confidence result"
-                )
-                jaccard_matches = [(product_id, best_score)]
-                return True, normalized_input, jaccard_matches, debug.get_debug_info()
-            elif len(jaccard_product_scores) > 1:
-                debug.add(
-                    f"Multiple products matched via Jaccard ({len(jaccard_product_scores)} products), falling back to fuzzy matching"
-                )
-            else:
-                debug.add(
-                    "No products matched via Jaccard, falling back to fuzzy matching"
-                )
+            jaccard_matches = [(product_id, best_score)]
+            return True, normalized_input, jaccard_matches, debug.get_debug_info()
+        elif len(jaccard_product_scores) > 1:
+            debug.add(
+                f"Multiple products matched via Jaccard ({len(jaccard_product_scores)} products >= {jaccard_threshold}), falling back to fuzzy matching"
+            )
         else:
             debug.add(
-                f"Input has only {len(input_tokens)} tokens (< {MIN_TOKENS_FOR_JACCARD}), skipping Jaccard, using fuzzy matching"
+                f"No products matched via Jaccard (threshold: {jaccard_threshold}), falling back to fuzzy matching"
             )
 
         # Step 2: Fallback to fuzzy matching for all aliases
@@ -336,7 +322,7 @@ class ProductMatcher:
             alias_text = " ".join(alias_tokens)
 
             if input_text and alias_text:
-                fuzzy_score = fuzz.ratio(input_text, alias_text) / 100.0
+                fuzzy_score = fuzz.token_sort_ratio(input_text, alias_text) / 100.0
                 all_fuzzy_scores.append(
                     (input_text, alias_text, fuzzy_score, original_alias, product_id)
                 )
@@ -365,35 +351,38 @@ class ProductMatcher:
         ]
         debug.add("Fuzzy matching examples", json.dumps(fuzzy_examples, indent=2))
 
-        # Collect products that meet threshold
-        for product_id, (_, best_score, _) in product_best_scores.items():
-            if best_score >= threshold:
-                scored_matches.append((product_id, best_score))
-
-        debug.add(
-            f"Found {len(scored_matches)} products above threshold {threshold} from {len(normalized_aliases)} aliases"
-        )
+        # Collect all products with their best scores
+        all_scored_matches = [(product_id, best_score) for product_id, (_, best_score, _) in product_best_scores.items()]
 
         # Sort by score (descending) and take top candidates
-        scored_matches.sort(key=lambda x: x[1], reverse=True)
-        top_candidates = scored_matches[:max_candidates]
+        all_scored_matches.sort(key=lambda x: x[1], reverse=True)
+        top_candidates = all_scored_matches[:max_candidates]
 
-        # Check for ambiguous matches (multiple products with same top score)
-        if len(top_candidates) > 1:
-            top_score = top_candidates[0][1]
+        # Count how many are above threshold for logging
+        above_threshold_count = sum(1 for _, score in top_candidates if score >= threshold)
+
+        debug.add(
+            f"Found {above_threshold_count} products above threshold {threshold} from {len(normalized_aliases)} aliases, returning top {len(top_candidates)} candidates"
+        )
+
+        # Check for success based on matches above threshold
+        above_threshold_matches = [match for match in top_candidates if match[1] >= threshold]
+
+        if len(above_threshold_matches) > 1:
+            top_score = above_threshold_matches[0][1]
             top_score_count = sum(
-                1 for _, score in top_candidates if score == top_score
+                1 for _, score in above_threshold_matches if score == top_score
             )
             if top_score_count > 1:
                 debug.add(
-                    f"Found {top_score_count} products with identical top score {top_score:.3f} - treating as no match due to ambiguity"
+                    f"Found {top_score_count} products with identical top score {top_score:.3f} above threshold - treating as no match due to ambiguity"
                 )
                 success = False
             else:
-                debug.add(f"Single best match found with score {top_score:.3f}")
+                debug.add(f"Single best match found above threshold with score {top_score:.3f}")
                 success = True
-        elif len(top_candidates) == 1:
-            debug.add(f"Single match found with score {top_candidates[0][1]:.3f}")
+        elif len(above_threshold_matches) == 1:
+            debug.add(f"Single match found above threshold with score {above_threshold_matches[0][1]:.3f}")
             success = True
         else:
             debug.add("No matches found above threshold")

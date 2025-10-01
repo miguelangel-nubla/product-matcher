@@ -18,7 +18,7 @@ import {
 } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import useAuth from "@/hooks/useAuth"
 import { MatchingService } from "../../client"
 
@@ -36,13 +36,20 @@ export const Route = createFileRoute("/_layout/")({
 
 function Dashboard() {
   const { user: currentUser } = useAuth()
-  const [selectedBackend, setSelectedBackend] = useState("mock")
+  const [selectedBackend, setSelectedBackend] = useState("")
 
   // Load available backends
   const { data: backends, isLoading: isLoadingBackends } = useQuery({
     queryKey: ["backends"],
     queryFn: () => MatchingService.getAvailableBackends(),
   })
+
+  // Set default backend to first available when backends load
+  useEffect(() => {
+    if (backends && backends.length > 0 && !selectedBackend) {
+      setSelectedBackend(backends[0].name)
+    }
+  }, [backends, selectedBackend])
 
   // Create collection for backend select
   const backendCollection = createListCollection({

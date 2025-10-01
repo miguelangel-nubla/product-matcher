@@ -239,7 +239,7 @@ def delete_pending_query(
 
 
 @router.get("/external-products")
-def get_external_products(backend: str = "mock") -> Any:
+def get_external_products(backend: str) -> Any:
     """
     Get external products from the specified backend adapter.
     """
@@ -285,7 +285,7 @@ def get_available_languages() -> Any:
 
 @router.get("/stats")
 def get_matching_stats(
-    session: SessionDep, current_user: CurrentUser, backend: str = "mock"
+    session: SessionDep, current_user: CurrentUser, backend: str
 ) -> Any:
     """
     Get matching statistics for the user.
