@@ -3,111 +3,25 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { BackendsGetProductUrlData, BackendsGetProductUrlResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MatchingMatchProductData, MatchingMatchProductResponse, MatchingGetPendingQueriesData, MatchingGetPendingQueriesResponse, MatchingResolvePendingQueryData, MatchingResolvePendingQueryResponse, MatchingDeletePendingQueryData, MatchingDeletePendingQueryResponse, MatchingGetExternalProductsData, MatchingGetExternalProductsResponse, MatchingGetAvailableBackendsResponse, MatchingGetAvailableLanguagesResponse, MatchingGetMatchingStatsData, MatchingGetMatchingStatsResponse, MatchingGetMatchingSettingsResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
-export class ItemsService {
+export class BackendsService {
     /**
-     * Read Items
-     * Retrieve items.
+     * Get Product Url
+     * Get external URL for a product in the specified backend.
      * @param data The data for the request.
-     * @param data.skip
-     * @param data.limit
-     * @returns ItemsPublic Successful Response
+     * @param data.backend
+     * @param data.productId
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static readItems(data: ItemsReadItemsData = {}): CancelablePromise<ItemsReadItemsResponse> {
+    public static getProductUrl(data: BackendsGetProductUrlData): CancelablePromise<BackendsGetProductUrlResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/items/',
-            query: {
-                skip: data.skip,
-                limit: data.limit
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Create Item
-     * Create new item.
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns ItemPublic Successful Response
-     * @throws ApiError
-     */
-    public static createItem(data: ItemsCreateItemData): CancelablePromise<ItemsCreateItemResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/items/',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Read Item
-     * Get item by ID.
-     * @param data The data for the request.
-     * @param data.id
-     * @returns ItemPublic Successful Response
-     * @throws ApiError
-     */
-    public static readItem(data: ItemsReadItemData): CancelablePromise<ItemsReadItemResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/items/{id}',
+            url: '/api/v1/backend/{backend}/product/{product_id}/url',
             path: {
-                id: data.id
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Update Item
-     * Update an item.
-     * @param data The data for the request.
-     * @param data.id
-     * @param data.requestBody
-     * @returns ItemPublic Successful Response
-     * @throws ApiError
-     */
-    public static updateItem(data: ItemsUpdateItemData): CancelablePromise<ItemsUpdateItemResponse> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/items/{id}',
-            path: {
-                id: data.id
-            },
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Item
-     * Delete an item.
-     * @param data The data for the request.
-     * @param data.id
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static deleteItem(data: ItemsDeleteItemData): CancelablePromise<ItemsDeleteItemResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/items/{id}',
-            path: {
-                id: data.id
+                backend: data.backend,
+                product_id: data.productId
             },
             errors: {
                 422: 'Validation Error'
@@ -209,6 +123,176 @@ export class LoginService {
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+}
+
+export class MatchingService {
+    /**
+     * Match Product
+     * Match a text string against external product database.
+     * Returns either a matched product or adds to pending queue.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns MatchResult Successful Response
+     * @throws ApiError
+     */
+    public static matchProduct(data: MatchingMatchProductData): CancelablePromise<MatchingMatchProductResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/matching/match',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Pending Queries
+     * Get pending queries for manual resolution.
+     * @param data The data for the request.
+     * @param data.status
+     * @param data.skip
+     * @param data.limit
+     * @returns PendingQueriesPublic Successful Response
+     * @throws ApiError
+     */
+    public static getPendingQueries(data: MatchingGetPendingQueriesData = {}): CancelablePromise<MatchingGetPendingQueriesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/pending',
+            query: {
+                status: data.status,
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Resolve Pending Query
+     * Resolve a pending query by assigning it to a product or creating a new one.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static resolvePendingQuery(data: MatchingResolvePendingQueryData): CancelablePromise<MatchingResolvePendingQueryResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/matching/resolve',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Pending Query
+     * Delete a pending query without resolving it.
+     * @param data The data for the request.
+     * @param data.pendingQueryId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deletePendingQuery(data: MatchingDeletePendingQueryData): CancelablePromise<MatchingDeletePendingQueryResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/matching/pending/{pending_query_id}',
+            path: {
+                pending_query_id: data.pendingQueryId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get External Products
+     * Get external products from the specified backend adapter.
+     * @param data The data for the request.
+     * @param data.backend
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getExternalProducts(data: MatchingGetExternalProductsData = {}): CancelablePromise<MatchingGetExternalProductsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/external-products',
+            query: {
+                backend: data.backend
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Available Backends
+     * Get list of available backend adapters with descriptions.
+     * @returns BackendInfo Successful Response
+     * @throws ApiError
+     */
+    public static getAvailableBackends(): CancelablePromise<MatchingGetAvailableBackendsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/backends'
+        });
+    }
+    
+    /**
+     * Get Available Languages
+     * Get list of supported languages for matching.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getAvailableLanguages(): CancelablePromise<MatchingGetAvailableLanguagesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/languages'
+        });
+    }
+    
+    /**
+     * Get Matching Stats
+     * Get matching statistics for the user.
+     * @param data The data for the request.
+     * @param data.backend
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static getMatchingStats(data: MatchingGetMatchingStatsData = {}): CancelablePromise<MatchingGetMatchingStatsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/stats',
+            query: {
+                backend: data.backend
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Matching Settings
+     * Get global matching settings from configuration.
+     * @returns GlobalSettings Successful Response
+     * @throws ApiError
+     */
+    public static getMatchingSettings(): CancelablePromise<MatchingGetMatchingSettingsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/settings'
         });
     }
 }

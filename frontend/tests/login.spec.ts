@@ -54,7 +54,9 @@ test("Log in with valid email and password ", async ({ page }) => {
   await page.waitForURL("/")
 
   await expect(
-    page.getByText("Welcome back, nice to see you again!"),
+    page.getByText(
+      "Welcome back! Here's an overview of your product matching activity.",
+    ),
   ).toBeVisible()
 })
 
@@ -88,7 +90,9 @@ test("Successful log out", async ({ page }) => {
   await page.waitForURL("/")
 
   await expect(
-    page.getByText("Welcome back, nice to see you again!"),
+    page.getByText(
+      "Welcome back! Here's an overview of your product matching activity.",
+    ),
   ).toBeVisible()
 
   await page.getByTestId("user-menu").click()
@@ -105,7 +109,9 @@ test("Logged-out user cannot access protected routes", async ({ page }) => {
   await page.waitForURL("/")
 
   await expect(
-    page.getByText("Welcome back, nice to see you again!"),
+    page.getByText(
+      "Welcome back! Here's an overview of your product matching activity.",
+    ),
   ).toBeVisible()
 
   await page.getByTestId("user-menu").click()

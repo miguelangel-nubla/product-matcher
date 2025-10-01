@@ -26,6 +26,14 @@ repos:
       - id: ruff-format
   - repo: local
     hooks:
+      - id: mypy-backend
+        name: mypy
+        entry: bash -c 'cd backend && uv run mypy app'
+        language: system
+        types: [python]
+        files: ^backend/
+  - repo: local
+    hooks:
       - id: local-biome-check
         name: biome check
         entry: bash -c 'cd frontend && npm run lint'

@@ -56,6 +56,8 @@ services:
     command: bash scripts/prestart.sh
     env_file:
       - .env
+    volumes:
+      - ./backend/app/config/backends.yaml:/code/app/config/backends.yaml:ro
     environment:
       - DOMAIN=${DOMAIN}
       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
@@ -89,6 +91,8 @@ services:
         condition: service_completed_successfully
     env_file:
       - .env
+    volumes:
+      - ./backend/app/config/backends.yaml:/code/app/config/backends.yaml:ro
     environment:
       - DOMAIN=${DOMAIN}
       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}

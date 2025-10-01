@@ -1,9 +1,11 @@
 name: Deploy to Staging
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+  # Disabled automatic deployment on push
+  # push:
+  #   branches:
+  #     - master
 
 jobs:
   deploy:

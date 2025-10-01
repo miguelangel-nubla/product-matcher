@@ -1,0 +1,54 @@
+# Backend Configuration
+# Define all available backend instances here
+
+backends:
+  # Mock backend for testing and development
+  mock:
+    description: "Mock adapter for testing"
+    language: en
+    adapter:
+      type: mock
+      config: {}
+    # normalization section is optional - if not specified, uses language defaults
+
+  # Example Grocy instance 1 (using default English normalization)
+  grocy1:
+    description: "Production Grocy instance (English)"
+    language: en
+    adapter:
+      type: grocy
+      config:
+        base_url: "https://grocy1.example.com"
+        api_key: "${GROCY1_API_KEY:-demo_api_key_1}" # Environment variable with default
+        verify_ssl: true
+        external_url: "https://grocy1.example.com"
+    # No normalization section = uses default English stopwords/expansions
+
+  # Example Grocy instance 2 (custom German normalization)
+  grocy2:
+    description: "German Grocy instance"
+    language: de
+    adapter:
+      type: grocy
+      config:
+        base_url: "https://grocy2.example.com"
+        api_key: "${GROCY2_API_KEY:-demo_api_key_2}" # Environment variable with default
+        verify_ssl: true
+    normalization:
+      # Custom stopwords (replaces language defaults if specified)
+      stopwords:
+        - "der"
+        - "die"
+        - "das"
+        - "marke"
+        - "produkt"
+      # Custom expansions (replaces language defaults if specified)
+      expansions:
+        "bio": "biologisch"
+        "öko": "ökologisch"
+        "kg": "kilogramm"
+
+# Global settings
+settings:
+  default_threshold: 0.8
+  max_candidates: 5

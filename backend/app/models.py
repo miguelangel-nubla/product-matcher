@@ -3,6 +3,18 @@ import uuid
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
+from app.services.matcher import MatchingDebugInfo
+
+
+class GlobalSettings(SQLModel):
+    default_threshold: float
+    max_candidates: int
+
+
+class BackendInfo(SQLModel):
+    name: str
+    description: str
+
 
 # Shared properties
 class UserBase(SQLModel):
@@ -43,7 +55,7 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    match_logs: list["MatchLog"] = Relationship(cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -56,40 +68,91 @@ class UsersPublic(SQLModel):
     count: int
 
 
-# Shared properties
-class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
-
-
-# Properties to receive on item creation
-class ItemCreate(ItemBase):
-    pass
-
-
-# Properties to receive on item update
-class ItemUpdate(ItemBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-
-
-# Database model, database table inferred from class name
-class Item(ItemBase, table=True):
+# Model for pending queries that need manual resolution
+class PendingQuery(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    original_text: str = Field(min_length=1, max_length=255)
+    normalized_text: str = Field(min_length=1, max_length=255)
+    candidates: str | None = Field(default=None)  # JSON string of candidates array
+    status: str = Field(default="pending", max_length=20)  # pending, resolved, ignored
+    backend: str = Field(min_length=1, max_length=50)  # Backend instance name
+    created_at: str = Field(default_factory=lambda: str(uuid.uuid4()))
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: User | None = Relationship(back_populates="items")
+    owner: User | None = Relationship()
 
 
-# Properties to return via API, id is always required
-class ItemPublic(ItemBase):
+# Model for logging successful matches for analytics and learning
+class MatchLog(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    original_text: str = Field(min_length=1, max_length=255)
+    normalized_text: str = Field(min_length=1, max_length=255)
+    language: str = Field(min_length=2, max_length=10)
+    matched_product_id: str = Field(min_length=1, max_length=255)  # External product ID
+    matched_text: str = Field(
+        min_length=1, max_length=255
+    )  # The alias that was matched
+    confidence_score: float = Field(ge=0.0, le=1.0)
+    threshold_used: float = Field(ge=0.0, le=1.0)
+    created_at: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship()
+
+
+class PendingQueryPublic(SQLModel):
     id: uuid.UUID
+    original_text: str
+    normalized_text: str
+    candidates: str | None
+    status: str
+    backend: str
+    created_at: str
     owner_id: uuid.UUID
 
 
-class ItemsPublic(SQLModel):
-    data: list[ItemPublic]
+class PendingQueriesPublic(SQLModel):
+    data: list[PendingQueryPublic]
     count: int
+
+
+# Models for matching API
+class MatchRequest(SQLModel):
+    text: str = Field(min_length=1, max_length=255)
+    threshold: float | None = Field(
+        default=None, ge=0.0, le=1.0
+    )  # None means use global default
+    backend: str = Field(
+        min_length=1, max_length=50
+    )  # Backend instance name (backend1, backend2, etc.)
+    create_pending: bool = Field(
+        default=True
+    )  # Whether to create pending items for unmatched queries
+
+
+class MatchCandidate(SQLModel):
+    product_id: str
+    confidence: float
+
+
+class MatchResult(SQLModel):
+    success: bool  # True if match exceeded threshold
+    normalized_input: str
+    pending_query_id: uuid.UUID | None = None
+    candidates: list[MatchCandidate] = []  # Top 5 best matches found
+    debug_info: MatchingDebugInfo | None = None  # Structured debug information
+
+
+# Model for resolving pending queries
+class ResolveRequest(SQLModel):
+    pending_query_id: uuid.UUID
+    action: str = Field(regex="^(assign|ignore)$")
+    product_id: str | None = (
+        None  # External product ID (required if action is "assign")
+    )
+    custom_alias: str | None = None  # Optional custom alias text
 
 
 # Generic message
