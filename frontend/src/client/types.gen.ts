@@ -39,6 +39,24 @@ export type MatchingDebugInfo = {
     start_time: number;
 };
 
+export type MatchLogPublic = {
+    id: string;
+    original_text: string;
+    normalized_text: string;
+    language: string;
+    matched_product_id: string;
+    matched_text: string;
+    confidence_score: number;
+    threshold_used: number;
+    created_at: string;
+    owner_id: string;
+};
+
+export type MatchLogsPublic = {
+    data: Array<MatchLogPublic>;
+    count: number;
+};
+
 export type MatchRequest = {
     text: string;
     threshold?: (number | null);
@@ -209,7 +227,7 @@ export type MatchingDeletePendingQueryData = {
 export type MatchingDeletePendingQueryResponse = (Message);
 
 export type MatchingGetExternalProductsData = {
-    backend?: string;
+    backend: string;
 };
 
 export type MatchingGetExternalProductsResponse = (unknown);
@@ -219,12 +237,19 @@ export type MatchingGetAvailableBackendsResponse = (Array<BackendInfo>);
 export type MatchingGetAvailableLanguagesResponse = (unknown);
 
 export type MatchingGetMatchingStatsData = {
-    backend?: string;
+    backend: string;
 };
 
 export type MatchingGetMatchingStatsResponse = (unknown);
 
 export type MatchingGetMatchingSettingsResponse = (GlobalSettings);
+
+export type MatchingGetMatchLogsData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type MatchingGetMatchLogsResponse = (MatchLogsPublic);
 
 export type PrivateCreateUserData = {
     requestBody: PrivateUserCreate;

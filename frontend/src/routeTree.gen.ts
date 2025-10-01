@@ -18,6 +18,7 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutPendingRouteImport } from './routes/_layout/pending'
 import { Route as LayoutMatcherRouteImport } from './routes/_layout/matcher'
+import { Route as LayoutLogsRouteImport } from './routes/_layout/logs'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
 const SignupRoute = SignupRouteImport.update({
@@ -64,6 +65,11 @@ const LayoutMatcherRoute = LayoutMatcherRouteImport.update({
   path: '/matcher',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutLogsRoute = LayoutLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/logs': typeof LayoutLogsRoute
   '/matcher': typeof LayoutMatcherRoute
   '/pending': typeof LayoutPendingRoute
   '/settings': typeof LayoutSettingsRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/logs': typeof LayoutLogsRoute
   '/matcher': typeof LayoutMatcherRoute
   '/pending': typeof LayoutPendingRoute
   '/settings': typeof LayoutSettingsRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/logs': typeof LayoutLogsRoute
   '/_layout/matcher': typeof LayoutMatcherRoute
   '/_layout/pending': typeof LayoutPendingRoute
   '/_layout/settings': typeof LayoutSettingsRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/logs'
     | '/matcher'
     | '/pending'
     | '/settings'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/logs'
     | '/matcher'
     | '/pending'
     | '/settings'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/logs'
     | '/_layout/matcher'
     | '/_layout/pending'
     | '/_layout/settings'
@@ -215,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutMatcherRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/logs': {
+      id: '/_layout/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof LayoutLogsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -227,6 +246,7 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutLogsRoute: typeof LayoutLogsRoute
   LayoutMatcherRoute: typeof LayoutMatcherRoute
   LayoutPendingRoute: typeof LayoutPendingRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
@@ -235,6 +255,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutLogsRoute: LayoutLogsRoute,
   LayoutMatcherRoute: LayoutMatcherRoute,
   LayoutPendingRoute: LayoutPendingRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,

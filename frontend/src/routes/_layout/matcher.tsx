@@ -26,7 +26,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import type {
@@ -69,6 +69,8 @@ const formatDebugStep = (
 }
 
 function ProductMatcher() {
+  const navigate = useNavigate()
+  const { text: searchText, backend: searchBackend, threshold: searchThreshold } = useSearch({ from: "/_layout/matcher" })
   const [result, setResult] = useState<MatchResult | null>(null)
   const [lastInputText, setLastInputText] = useState<string>("")
 
@@ -112,6 +114,19 @@ function ProductMatcher() {
       setValue("backend", backends[0].name)
     }
   }, [backends, setValue])
+
+  // Auto-populate form from URL search parameters
+  useEffect(() => {
+    if (searchText) {
+      setValue("text", searchText)
+    }
+    if (searchBackend) {
+      setValue("backend", searchBackend)
+    }
+    if (searchThreshold) {
+      setValue("threshold", searchThreshold)
+    }
+  }, [searchText, searchBackend, searchThreshold, setValue])
 
   const threshold = watch("threshold")
   const selectedBackend = watch("backend")
@@ -329,6 +344,16 @@ function ProductMatcher() {
                       originalText={lastInputText}
                       normalizedText={result.normalized_input}
                       backend={selectedBackend}
+                      onOriginalTextClick={() =>
+                        navigate({
+                          to: "/matcher",
+                          search: {
+                            text: lastInputText,
+                            backend: selectedBackend,
+                            threshold: watch("threshold"),
+                          }
+                        })
+                      }
                     />
                   </Box>
 
@@ -374,9 +399,12 @@ function ProductMatcher() {
                       size="sm"
                       cursor="pointer"
                       onClick={() =>
-                        navigator.clipboard.writeText(result.pending_query_id!)
+                        navigate({
+                          to: "/pending",
+                          search: { queryId: result.pending_query_id || undefined }
+                        })
                       }
-                      title="Click to copy"
+                      title="Click to resolve this query"
                     >
                       {result.pending_query_id}
                     </Badge>
@@ -429,16 +457,17 @@ function ProductMatcher() {
                             bg="bg.default"
                             borderRadius="sm"
                             borderLeft="2px solid"
-                            borderColor="border.emphasized"
+                            borderColor="blue.500"
                           >
-                            <HStack gap={2} align="flex-start">
+                            <HStack gap={4} align="flex-start">
                               <Text
                                 fontSize="xs"
                                 color="fg.muted"
                                 fontFamily="mono"
+                                textAlign="right"
                                 flexShrink={0}
                               >
-                                {formatted.timing}
+                                {`+${(index === 0 ? ((step.timestamp - result.debug_info!.start_time) * 1000) : ((step.timestamp - result.debug_info!.steps[index - 1].timestamp) * 1000)).toFixed(0)}ms`}
                               </Text>
                               <VStack gap={1} align="stretch" flex={1}>
                                 <Text fontSize="xs" fontWeight="medium">
@@ -496,4 +525,11 @@ function ProductMatcher() {
 
 export const Route = createFileRoute("/_layout/matcher")({
   component: ProductMatcher,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      text: search.text as string | undefined,
+      backend: search.backend as string | undefined,
+      threshold: search.threshold as number | undefined,
+    }
+  },
 })

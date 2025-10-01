@@ -64,6 +64,12 @@ STOPWORDS = {
     "extra",
     "weight",
     "bulk",
+    "pound",
+    "ounce",
+    "kilogram",
+    "gram",
+    "liter",
+    "milliliter",
     "quality",
     "selection",
     "premium",
@@ -80,7 +86,6 @@ STOPWORDS = {
     "unit",
     "piece",
     "flavor",
-    "flavors",
     "variety",
     "brand",
     "type",
@@ -280,24 +285,7 @@ def post_process_tokens(
     return tokens
 
 
-def normalize(text: str) -> list[str]:
-    """
-    Complete English normalization pipeline:
-    1. Fast normalization (case, accents, punctuation)
-    2. SpaCy tokenization
-    3. SpaCy lemmatization
-    4. Fast post-processing (abbreviations, stopwords)
-
-    Uses cached spaCy model for better performance.
-    """
-    fast_normalized = fast_normalize(text)
-    doc = tokenize_text(fast_normalized)
-    lemmatized_tokens = lemmatize_tokens(doc)
-    final_tokens = post_process_tokens(lemmatized_tokens)
-    return final_tokens
-
-
-def normalize_with_config(text: str, config: dict[str, Any] | None = None) -> list[str]:
+def normalize(text: str, config: dict[str, Any] | None) -> list[str]:
     """
     Complete English normalization pipeline with configurable stopwords and expansions.
 
@@ -322,10 +310,29 @@ def normalize_with_config(text: str, config: dict[str, Any] | None = None) -> li
             custom_expansions = config["expansions"]
 
     # Run the normalization pipeline
-    fast_normalized = fast_normalize(text)
-    doc = tokenize_text(fast_normalized)
-    lemmatized_tokens = lemmatize_tokens(doc)
-    final_tokens = post_process_tokens(
-        lemmatized_tokens, custom_stopwords, custom_expansions
-    )
+    import re
+    import unicodedata
+
+    # Step 1: Only strip accents, preserve case and punctuation/numbers for spaCy context
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(char for char in text if unicodedata.category(char) != "Mn")
+
+    # Step 2: SpaCy processing with full context (preserve original case for better POS tagging)
+    nlp = _get_spacy_model()
+    doc = nlp(text)
+
+    # Step 3: Extract lemmatized tokens, filter out punctuation, spaces, and numbers
+    tokens = [
+        token.lemma_.lower()
+        for token in doc
+        if not token.is_punct
+        and not token.is_space
+        and token.text.strip()
+        and not token.text.isdigit()
+        and not re.match(r'^[\d/]+$', token.text)  # Handle "6/7" style numbers
+        and not re.match(r'^[ivxlcdm]+\.?$', token.text.lower())  # Handle Roman numerals like "i.", "ii.", "iii."
+    ]
+
+    # Step 4: Post-processing (abbreviations, stopwords) with custom config
+    final_tokens = post_process_tokens(tokens, custom_stopwords, custom_expansions)
     return final_tokens

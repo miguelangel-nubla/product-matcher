@@ -5,11 +5,13 @@ import {
   Button,
   Card,
   CloseButton,
+  Code,
   Container,
   createListCollection,
   Dialog,
   Heading,
   HStack,
+  IconButton,
   Input,
   Portal,
   SelectContent,
@@ -23,9 +25,10 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useCallback, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
+import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi"
 import type { PendingQueryPublic, ResolveRequest } from "../../client"
 import { MatchingService } from "../../client"
 import { getErrorMessage } from "../../utils/error"
@@ -40,6 +43,7 @@ interface ExternalProduct {
 }
 
 import { ProductCard } from "../../components/ProductCard"
+import { ProductIdBadge } from "../../components/ProductIdBadge"
 import { QueryCard } from "../../components/QueryCard"
 import { Field } from "../../components/ui/field"
 
@@ -66,6 +70,8 @@ const actionCollection = createListCollection({
 })
 
 function PendingItems() {
+  const navigate = useNavigate()
+  const { queryId } = useSearch({ from: "/_layout/pending" })
   const [selectedStatus, setSelectedStatus] = useState("pending")
   const [selectedQuery, setSelectedQuery] = useState<PendingQueryPublic | null>(
     null,
@@ -98,6 +104,21 @@ function PendingItems() {
         skip: currentPage * itemsPerPage,
       }),
   })
+
+  const { data: settings } = useQuery({
+    queryKey: ["matching-settings"],
+    queryFn: () => MatchingService.getMatchingSettings(),
+  })
+
+  // Auto-open resolve dialog if queryId is provided in URL
+  useEffect(() => {
+    if (queryId && pendingQueries?.data && !isLoading) {
+      const targetQuery = pendingQueries.data.find(q => q.id === queryId)
+      if (targetQuery) {
+        handleResolveClick(targetQuery)  // Reuse existing logic
+      }
+    }
+  }, [queryId, pendingQueries?.data, isLoading])
 
   // Reset page when status changes
   useEffect(() => {
@@ -291,7 +312,7 @@ function PendingItems() {
                       <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                       <Table.ColumnHeader>Status</Table.ColumnHeader>
                       <Table.ColumnHeader>Created</Table.ColumnHeader>
-                      <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                      <Table.ColumnHeader textAlign="end">Actions</Table.ColumnHeader>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
@@ -311,16 +332,33 @@ function PendingItems() {
 
                       return (
                         <Table.Row key={query.id}>
-                          <Table.Cell fontWeight="medium">
-                            {query.original_text}
-                          </Table.Cell>
-                          <Table.Cell color="fg.muted">
-                            {query.normalized_text}
+                          <Table.Cell>
+                            <Button
+                              variant="subtle"
+                              size="xs"
+                              px={2}
+                              py={1}
+                              onClick={() =>
+                                navigate({
+                                  to: "/matcher",
+                                  search: {
+                                    text: query.original_text,
+                                    backend: query.backend,
+                                    threshold: query.threshold,
+                                  }
+                                })
+                              }
+                            >
+                              {query.original_text}
+                            </Button>
                           </Table.Cell>
                           <Table.Cell>
-                            <Badge size="sm" colorScheme="blue">
-                              {query.backend}
-                            </Badge>
+                            <Code fontSize="sm" variant="surface">
+                              {query.normalized_text}
+                            </Code>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Badge variant="outline">{query.backend}</Badge>
                           </Table.Cell>
                           <Table.Cell>
                             {candidates.length > 0 ? (
@@ -329,28 +367,21 @@ function PendingItems() {
                                   .slice(0, 2)
                                   .map((candidate, idx) => (
                                     <HStack key={idx} gap={2}>
-                                      <Badge size="sm" colorScheme="gray">
-                                        {candidate.product_id}
-                                      </Badge>
-                                      <Badge
+                                      <ProductIdBadge
+                                        productId={candidate.product_id}
+                                        backend={query.backend}
                                         size="sm"
-                                        colorScheme={
-                                          candidate.confidence > 0.8
-                                            ? "green"
-                                            : candidate.confidence > 0.5
-                                              ? "yellow"
-                                              : "red"
-                                        }
-                                      >
+                                      />
+                                      <Text fontSize="xs" color="fg.subtle">
                                         {(candidate.confidence * 100).toFixed(
                                           1,
                                         )}
                                         %
-                                      </Badge>
+                                      </Text>
                                     </HStack>
                                   ))}
                                 {candidates.length > 2 && (
-                                  <Text fontSize="xs" color="fg.muted">
+                                  <Text fontSize="xs" color="fg.subtle">
                                     +{candidates.length - 2} more
                                   </Text>
                                 )}
@@ -362,15 +393,20 @@ function PendingItems() {
                             )}
                           </Table.Cell>
                           <Table.Cell>
-                            <Badge colorScheme={getStatusColor(query.status)}>
+                            <Badge colorPalette={getStatusColor(query.status)}>
                               {query.status}
                             </Badge>
                           </Table.Cell>
                           <Table.Cell color="fg.muted" fontSize="sm">
-                            {new Date(query.created_at).toLocaleDateString()}
+                            {new Date(query.created_at).toLocaleDateString() + " " +
+                             new Date(query.created_at).toLocaleTimeString([], {
+                               hour: '2-digit',
+                               minute: '2-digit',
+                               second: '2-digit'
+                             })}
                           </Table.Cell>
                           <Table.Cell>
-                            <HStack gap={2}>
+                            <HStack gap={2} justify="end">
                               {query.status === "pending" && (
                                 <Button
                                   size="sm"
@@ -412,37 +448,40 @@ function PendingItems() {
                     of {pendingQueries.count} queries
                   </Text>
                   <HStack gap={2}>
-                    <Button
+                    <IconButton
                       size="sm"
                       variant="outline"
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage(0)}
+                      aria-label="First page"
                     >
-                      First
-                    </Button>
-                    <Button
+                      <FiChevronsLeft />
+                    </IconButton>
+                    <IconButton
                       size="sm"
                       variant="outline"
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage(currentPage - 1)}
+                      aria-label="Previous page"
                     >
-                      Previous
-                    </Button>
+                      <FiChevronLeft />
+                    </IconButton>
                     <Text fontSize="sm" color="fg.muted">
                       Page {currentPage + 1} of{" "}
                       {Math.ceil(pendingQueries.count / itemsPerPage)}
                     </Text>
-                    <Button
+                    <IconButton
                       size="sm"
                       variant="outline"
                       disabled={
                         (currentPage + 1) * itemsPerPage >= pendingQueries.count
                       }
                       onClick={() => setCurrentPage(currentPage + 1)}
+                      aria-label="Next page"
                     >
-                      Next
-                    </Button>
-                    <Button
+                      <FiChevronRight />
+                    </IconButton>
+                    <IconButton
                       size="sm"
                       variant="outline"
                       disabled={
@@ -453,9 +492,10 @@ function PendingItems() {
                           Math.ceil(pendingQueries.count / itemsPerPage) - 1,
                         )
                       }
+                      aria-label="Last page"
                     >
-                      Last
-                    </Button>
+                      <FiChevronsRight />
+                    </IconButton>
                   </HStack>
                 </HStack>
               </Box>
@@ -499,6 +539,16 @@ function PendingItems() {
                           normalizedText={selectedQuery.normalized_text}
                           backend={selectedQuery.backend}
                           createdAt={selectedQuery.created_at}
+                          onOriginalTextClick={() =>
+                            navigate({
+                              to: "/matcher",
+                              search: {
+                                text: selectedQuery.original_text,
+                                backend: selectedQuery.backend,
+                                threshold: selectedQuery.threshold,
+                              }
+                            })
+                          }
                         />
                       </Box>
                     )}
@@ -552,7 +602,7 @@ function PendingItems() {
                                   Click on a candidate to select it:
                                 </Text>
                                 {candidates
-                                  .slice(0, 3)
+                                  .slice(0, settings?.max_candidates || 5)
                                   .map((candidate, idx) => {
                                     const candidateProduct = (
                                       products as any
@@ -564,6 +614,7 @@ function PendingItems() {
                                       <ProductCard
                                         key={idx}
                                         product={candidateProduct}
+                                        backend={selectedQuery.backend}
                                         confidence={candidate.confidence}
                                         isSelected={
                                           selectedProduct?.id ===
@@ -869,4 +920,9 @@ function PendingItems() {
 
 export const Route = createFileRoute("/_layout/pending")({
   component: PendingItems,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      queryId: search.queryId as string | undefined,
+    }
+  },
 })

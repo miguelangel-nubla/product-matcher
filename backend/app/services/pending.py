@@ -24,6 +24,7 @@ class PendingQueueManager:
         normalized_text: str,
         owner_id: uuid.UUID,
         backend: str,
+        threshold: float,
         candidates: list[tuple[str, float]] | None = None,
     ) -> PendingQuery:
         """
@@ -34,6 +35,7 @@ class PendingQueueManager:
             normalized_text: Normalized version of the text
             owner_id: ID of the owner
             backend: Backend instance name that was used for matching
+            threshold: Threshold that was used for matching
             candidates: List of (product_id, confidence) tuples from matching
 
         Returns:
@@ -53,6 +55,7 @@ class PendingQueueManager:
             normalized_text=normalized_text,
             candidates=candidates_json,
             backend=backend,
+            threshold=threshold,
             owner_id=owner_id,
             created_at=datetime.now().isoformat(),
         )
@@ -85,6 +88,7 @@ class PendingQueueManager:
         statement = (
             select(PendingQuery)
             .where(PendingQuery.owner_id == owner_id, PendingQuery.status == status)
+            .order_by(PendingQuery.created_at.desc())
             .offset(offset)
             .limit(limit)
         )

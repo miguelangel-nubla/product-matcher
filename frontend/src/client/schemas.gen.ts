@@ -144,6 +144,75 @@ export const MatchCandidateSchema = {
     title: 'MatchCandidate'
 } as const;
 
+export const MatchLogPublicSchema = {
+    properties: {
+        id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Id'
+        },
+        original_text: {
+            type: 'string',
+            title: 'Original Text'
+        },
+        normalized_text: {
+            type: 'string',
+            title: 'Normalized Text'
+        },
+        language: {
+            type: 'string',
+            title: 'Language'
+        },
+        matched_product_id: {
+            type: 'string',
+            title: 'Matched Product Id'
+        },
+        matched_text: {
+            type: 'string',
+            title: 'Matched Text'
+        },
+        confidence_score: {
+            type: 'number',
+            title: 'Confidence Score'
+        },
+        threshold_used: {
+            type: 'number',
+            title: 'Threshold Used'
+        },
+        created_at: {
+            type: 'string',
+            title: 'Created At'
+        },
+        owner_id: {
+            type: 'string',
+            format: 'uuid',
+            title: 'Owner Id'
+        }
+    },
+    type: 'object',
+    required: ['id', 'original_text', 'normalized_text', 'language', 'matched_product_id', 'matched_text', 'confidence_score', 'threshold_used', 'created_at', 'owner_id'],
+    title: 'MatchLogPublic'
+} as const;
+
+export const MatchLogsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/MatchLogPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'MatchLogsPublic'
+} as const;
+
 export const MatchRequestSchema = {
     properties: {
         text: {

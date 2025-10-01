@@ -30,14 +30,9 @@ def normalize_text(
 
     try:
         module = import_module(f"app.services.normalization.{lang}")
-        # Check if module supports configurable normalization
-        if hasattr(module, "normalize_with_config"):
-            result = module.normalize_with_config(text, normalization_config)
-            return result if isinstance(result, list) else []
-        else:
-            # Fallback to original normalize function
-            result = module.normalize(text)
-            return result if isinstance(result, list) else []
+        # Use the unified normalize function that supports optional config
+        result = module.normalize(text, normalization_config)
+        return result if isinstance(result, list) else []
     except ImportError:
         # Fallback to base normalization
         from app.services.normalization.base import default_normalize_tokens

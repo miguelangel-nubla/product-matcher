@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
@@ -76,7 +77,8 @@ class PendingQuery(SQLModel, table=True):
     candidates: str | None = Field(default=None)  # JSON string of candidates array
     status: str = Field(default="pending", max_length=20)  # pending, resolved, ignored
     backend: str = Field(min_length=1, max_length=50)  # Backend instance name
-    created_at: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    threshold: float = Field(ge=0.0, le=1.0)  # Threshold that was used for matching
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
@@ -88,14 +90,14 @@ class MatchLog(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     original_text: str = Field(min_length=1, max_length=255)
     normalized_text: str = Field(min_length=1, max_length=255)
-    language: str = Field(min_length=2, max_length=10)
+    backend: str = Field(min_length=1, max_length=50)  # Backend instance name
     matched_product_id: str = Field(min_length=1, max_length=255)  # External product ID
     matched_text: str = Field(
         min_length=1, max_length=255
     )  # The alias that was matched
     confidence_score: float = Field(ge=0.0, le=1.0)
     threshold_used: float = Field(ge=0.0, le=1.0)
-    created_at: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
@@ -109,12 +111,31 @@ class PendingQueryPublic(SQLModel):
     candidates: str | None
     status: str
     backend: str
-    created_at: str
+    threshold: float
+    created_at: datetime
     owner_id: uuid.UUID
 
 
 class PendingQueriesPublic(SQLModel):
     data: list[PendingQueryPublic]
+    count: int
+
+
+class MatchLogPublic(SQLModel):
+    id: uuid.UUID
+    original_text: str
+    normalized_text: str
+    backend: str
+    matched_product_id: str
+    matched_text: str
+    confidence_score: float
+    threshold_used: float
+    created_at: datetime
+    owner_id: uuid.UUID
+
+
+class MatchLogsPublic(SQLModel):
+    data: list[MatchLogPublic]
     count: int
 
 

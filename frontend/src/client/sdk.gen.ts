@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { BackendsGetProductUrlData, BackendsGetProductUrlResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MatchingMatchProductData, MatchingMatchProductResponse, MatchingGetPendingQueriesData, MatchingGetPendingQueriesResponse, MatchingResolvePendingQueryData, MatchingResolvePendingQueryResponse, MatchingDeletePendingQueryData, MatchingDeletePendingQueryResponse, MatchingGetExternalProductsData, MatchingGetExternalProductsResponse, MatchingGetAvailableBackendsResponse, MatchingGetAvailableLanguagesResponse, MatchingGetMatchingStatsData, MatchingGetMatchingStatsResponse, MatchingGetMatchingSettingsResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { BackendsGetProductUrlData, BackendsGetProductUrlResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MatchingMatchProductData, MatchingMatchProductResponse, MatchingGetPendingQueriesData, MatchingGetPendingQueriesResponse, MatchingResolvePendingQueryData, MatchingResolvePendingQueryResponse, MatchingDeletePendingQueryData, MatchingDeletePendingQueryResponse, MatchingGetExternalProductsData, MatchingGetExternalProductsResponse, MatchingGetAvailableBackendsResponse, MatchingGetAvailableLanguagesResponse, MatchingGetMatchingStatsData, MatchingGetMatchingStatsResponse, MatchingGetMatchingSettingsResponse, MatchingGetMatchLogsData, MatchingGetMatchLogsResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class BackendsService {
     /**
@@ -223,7 +223,7 @@ export class MatchingService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static getExternalProducts(data: MatchingGetExternalProductsData = {}): CancelablePromise<MatchingGetExternalProductsResponse> {
+    public static getExternalProducts(data: MatchingGetExternalProductsData): CancelablePromise<MatchingGetExternalProductsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/matching/external-products',
@@ -270,7 +270,7 @@ export class MatchingService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static getMatchingStats(data: MatchingGetMatchingStatsData = {}): CancelablePromise<MatchingGetMatchingStatsResponse> {
+    public static getMatchingStats(data: MatchingGetMatchingStatsData): CancelablePromise<MatchingGetMatchingStatsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/matching/stats',
@@ -293,6 +293,29 @@ export class MatchingService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/matching/settings'
+        });
+    }
+    
+    /**
+     * Get Match Logs
+     * Get match logs for the current user.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns MatchLogsPublic Successful Response
+     * @throws ApiError
+     */
+    public static getMatchLogs(data: MatchingGetMatchLogsData = {}): CancelablePromise<MatchingGetMatchLogsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/matching/logs',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
 }

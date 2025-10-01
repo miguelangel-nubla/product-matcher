@@ -14,6 +14,8 @@ from app.models import (
     BackendInfo,
     GlobalSettings,
     MatchLog,
+    MatchLogPublic,
+    MatchLogsPublic,
     MatchRequest,
     MatchResult,
     Message,
@@ -40,10 +42,6 @@ def match_product(
     adapter = get_backend(query.backend)
     matcher = ProductMatcher(session, adapter)
 
-    # Get the language configured for this backend
-    from app.adapters.registry import get_backend_language
-
-    language = get_backend_language(query.backend)
 
     # Attempt to match the product
     try:
@@ -75,7 +73,7 @@ def match_product(
         match_log = MatchLog(
             original_text=query.text,
             normalized_text=normalized_input,
-            language=language,
+            backend=query.backend,
             matched_product_id=best_match[0],  # product_id
             matched_text="",  # We don't track this anymore
             confidence_score=best_match[1],  # confidence
@@ -93,6 +91,7 @@ def match_product(
                 normalized_text=normalized_input,
                 owner_id=current_user.id,
                 backend=query.backend,
+                threshold=query.threshold,
                 candidates=candidates,
             )
             pending_item_id = pending_query.id
@@ -135,6 +134,7 @@ def get_pending_queries(
             candidates=query.candidates,
             status=query.status,
             backend=query.backend,
+            threshold=query.threshold,
             created_at=query.created_at,
             owner_id=query.owner_id,
         )
@@ -331,3 +331,54 @@ def get_matching_settings() -> GlobalSettings:
         default_threshold=settings.get("default_threshold", 0.8),
         max_candidates=settings.get("max_candidates", 5),
     )
+
+
+@router.get("/logs", response_model=MatchLogsPublic)
+def get_match_logs(
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    """
+    Get match logs for the current user.
+    """
+    from sqlmodel import select, func
+
+    # Get match logs for the current user, sorted by timestamp (newest first)
+    statement = (
+        select(MatchLog)
+        .where(MatchLog.owner_id == current_user.id)
+        .order_by(MatchLog.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+
+    match_logs = session.exec(statement).all()
+
+    # Get total count
+    count_statement = (
+        select(func.count())
+        .select_from(MatchLog)
+        .where(MatchLog.owner_id == current_user.id)
+    )
+    count = session.exec(count_statement).one()
+
+    # Convert to public models
+    public_logs = []
+    for log in match_logs:
+        public_log = MatchLogPublic(
+            id=log.id,
+            original_text=log.original_text,
+            normalized_text=log.normalized_text,
+            backend=log.backend,
+            matched_product_id=log.matched_product_id,
+            matched_text=log.matched_text,
+            confidence_score=log.confidence_score,
+            threshold_used=log.threshold_used,
+            created_at=log.created_at,
+            owner_id=log.owner_id,
+        )
+        public_logs.append(public_log)
+
+    return MatchLogsPublic(data=public_logs, count=count)

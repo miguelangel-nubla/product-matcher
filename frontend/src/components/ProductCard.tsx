@@ -2,13 +2,13 @@ import {
   Badge,
   Box,
   HStack,
-  Link,
   Spinner,
   Text,
   VStack,
 } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
-import { BackendsService, MatchingService } from "../client"
+import { MatchingService } from "../client"
+import { ProductIdBadge } from "./ProductIdBadge"
 
 interface ExternalProduct {
   id: string
@@ -47,14 +47,6 @@ export function ProductCard({
     enabled: !!(id && backend && !product),
   })
 
-  // Fetch product URL if ID and backend provided
-  const { data: productUrlData } = useQuery({
-    queryKey: ["product-url", backend, id],
-    queryFn: () =>
-      BackendsService.getProductUrl({ backend: backend!, productId: id! }),
-    enabled: !!(id && backend),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  })
 
   // Find the specific product from fetched data
   const productData =
@@ -118,26 +110,11 @@ export function ProductCard({
                 {(confidence * 100).toFixed(1)}%
               </Badge>
             )}
-            {(productUrlData as any)?.url ? (
-              <Link
-                href={(productUrlData as any).url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Badge
-                  colorScheme="blue"
-                  size="sm"
-                  cursor="pointer"
-                  _hover={{ bg: "blue.700" }}
-                >
-                  {productData.id}
-                </Badge>
-              </Link>
-            ) : (
-              <Badge colorScheme="blue" size="sm">
-                {productData.id}
-              </Badge>
-            )}
+            <ProductIdBadge
+              productId={productData.id}
+              backend={backend || ""}
+              size="sm"
+            />
           </HStack>
         </HStack>
 

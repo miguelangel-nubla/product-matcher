@@ -1,10 +1,11 @@
-import { Badge, Box, HStack, Text, VStack } from "@chakra-ui/react"
+import { Badge, Box, Button, Code, HStack, Text, VStack } from "@chakra-ui/react"
 
 interface QueryCardProps {
   originalText: string
   normalizedText: string
   backend: string
   createdAt?: string
+  onOriginalTextClick?: () => void
 }
 
 export function QueryCard({
@@ -12,6 +13,7 @@ export function QueryCard({
   normalizedText,
   backend,
   createdAt,
+  onOriginalTextClick,
 }: QueryCardProps) {
   return (
     <Box
@@ -24,24 +26,36 @@ export function QueryCard({
     >
       <VStack gap={2} align="stretch" width="full">
         <HStack justify="space-between" align="start">
-          <Text
-            fontWeight="semibold"
-            fontSize="md"
-            color="fg.emphasized"
-            lineHeight="short"
-          >
-            "{originalText}"
-          </Text>
-          <Badge colorScheme="blue" size="sm" flexShrink={0}>
+          {onOriginalTextClick ? (
+            <Button
+              variant="subtle"
+              size="xs"
+              px={2}
+              py={1}
+              onClick={onOriginalTextClick}
+            >
+              {originalText}
+            </Button>
+          ) : (
+            <Text
+              fontWeight="semibold"
+              fontSize="md"
+              color="fg.emphasized"
+              lineHeight="short"
+            >
+              {originalText}
+            </Text>
+          )}
+          <Badge variant="outline" size="sm" flexShrink={0}>
             {backend}
           </Badge>
         </HStack>
 
         <Text fontSize="sm" color="fg.muted">
           Normalized:{" "}
-          <Text as="span" fontWeight="medium" color="fg.default">
+          <Code fontSize="sm" variant="surface">
             {normalizedText}
-          </Text>
+          </Code>
         </Text>
 
         {createdAt && (
