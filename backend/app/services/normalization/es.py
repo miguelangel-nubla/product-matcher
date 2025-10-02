@@ -5,9 +5,13 @@ Spanish-specific normalization rules.
 from typing import Any
 
 import spacy
+import re
 
 # Common Spanish stopwords to remove
 STOPWORDS = {
+    "a",
+    "b",
+    "c",
     "el",
     "la",
     "los",
@@ -146,6 +150,7 @@ EXPANSIONS = {
     "gr": "gramo",
     "ml": "mililitro",
     "lt": "litro",
+    "pz": "pieza",
     "pza": "pieza",
     "pzas": "piezas",
     "paq": "paquete",
@@ -284,6 +289,9 @@ def post_process_tokens(
         expansions = EXPANSIONS
     if stopwords is None:
         stopwords = STOPWORDS
+
+    # Strip numbers from tokens
+    tokens = [re.sub(r'\d+', '', token) for token in tokens]
 
     # Expand abbreviations
     tokens = [expansions.get(token, token) for token in tokens]
