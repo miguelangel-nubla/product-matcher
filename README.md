@@ -1,6 +1,10 @@
+![Product Matcher Logo](frontend/public/assets/images/logo.png)
+
 # ProductMatcher
 
 A flexible, multilingual, backend-agnostic service for mapping free-text product names (e.g., from store receipts) to canonical inventory items. ProductMatcher normalizes input strings internally, performs fuzzy matching, and learns new aliases over time through an interactive resolution interface.
+
+![Product Matcher Screenshot](frontend/public/assets/images/originals/screenshot.png)
 
 ## Key Features
 
@@ -8,8 +12,6 @@ A flexible, multilingual, backend-agnostic service for mapping free-text product
 🌍 **Multi-language Support** - Built-in normalization for English, Spanish, and extensible language system
 🔌 **Backend Adapters** - Plug-in architecture supporting Grocy, custom ERP systems, and more
 📝 **Interactive Resolution** - Web-based interface for resolving ambiguous matches
-🧠 **Learning System** - Automatically improves matching accuracy by learning from user decisions
-🎯 **Configurable Matching** - Adjustable similarity thresholds and candidate limits
 
 ## How ProductMatcher Works
 
