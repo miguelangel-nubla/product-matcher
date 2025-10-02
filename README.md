@@ -8,10 +8,10 @@ A flexible, multilingual, backend-agnostic service for mapping free-text product
 
 ## Key Features
 
-🔍 **Intelligent Product Matching** - Advanced fuzzy matching with configurable confidence thresholds
-🌍 **Multi-language Support** - Built-in normalization for English, Spanish, and extensible language system
-🔌 **Backend Adapters** - Plug-in architecture supporting Grocy, custom ERP systems, and more
-📝 **Interactive Resolution** - Web-based interface for resolving ambiguous matches
+- 🔍 **Intelligent Product Matching** Advanced fuzzy matching with configurable confidence thresholds
+- 🌍 **Multi-language Support** Built-in normalization for English, Spanish, and extensible language system
+- 🔌 **Backend Adapters** Plug-in architecture supporting Grocy, custom ERP systems, and more
+- 📝 **Interactive Resolution** Web-based interface for resolving ambiguous matches
 
 ## How ProductMatcher Works
 
