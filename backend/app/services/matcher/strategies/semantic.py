@@ -24,22 +24,10 @@ class SemanticMatchingStrategy(MatchingStrategy):
                 f"Starting SpaCy semantic matching setup for {len(context.input_tokens)} input tokens"
             )
 
-            # Get language module for semantic similarity - this MUST be available
-            try:
-                lang_module = __import__(
-                    f"app.services.normalization.{context.language}",
-                    fromlist=[context.language],
-                )
-                if not hasattr(lang_module, "calculate_semantic_similarity"):
-                    raise RuntimeError(
-                        f"SpaCy semantic similarity function not found in language module '{context.language}'. "
-                        "This is a mandatory component and must be available."
-                    )
-            except ImportError as e:
-                raise RuntimeError(
-                    f"Failed to import language normalization module for '{context.language}': {e}. "
-                    "SpaCy semantic similarity is mandatory and must be available."
-                ) from e
+            # Get matching utilities for semantic similarity
+            from ...matching.utils.registry import get_matching_utils
+
+            matching_utils = get_matching_utils(context.backend_config.language)
 
             context.debug.add(
                 f"Running semantic similarity calculation on {len(context.normalized_aliases)} pre-normalized aliases"
@@ -53,7 +41,7 @@ class SemanticMatchingStrategy(MatchingStrategy):
 
             for product_id, original_alias, alias_tokens in context.normalized_aliases:
                 candidates_checked += 1
-                semantic_score = lang_module.calculate_semantic_similarity(
+                semantic_score = matching_utils.calculate_semantic_similarity(
                     context.input_tokens, alias_tokens
                 )
 

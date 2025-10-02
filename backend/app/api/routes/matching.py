@@ -7,9 +7,9 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.adapters.registry import get_backend, get_backend_language
+from app.adapters.registry import get_backend
 from app.api.deps import CurrentUser, SessionDep
-from app.config.loader import get_global_settings
+from app.config.loader import get_backend_config, get_global_settings
 from app.models import (
     BackendInfo,
     GlobalSettings,
@@ -41,8 +41,8 @@ def match_product(
     # Initialize the refactored matcher
     matcher = ProductMatcher()
 
-    # Get backend language for matching
-    language = get_backend_language(query.backend)
+    # Get typed backend configuration
+    backend_config = get_backend_config(query.backend)
 
     # Attempt to match the product
     try:
@@ -52,8 +52,7 @@ def match_product(
 
         success, normalized_input, candidates, debug_info = matcher.match_product(
             input_query=query.text,
-            language=language,
-            backend_config={"type": query.backend},
+            backend_config=backend_config,
             threshold=threshold,
             max_candidates=global_settings.max_candidates,
         )
@@ -271,14 +270,13 @@ def get_available_backends() -> list[BackendInfo]:
     """
     Get list of available backend adapters with descriptions.
     """
-    from app.config.loader import load_backends_config
+    from app.adapters.registry import get_available_backends
 
-    config = load_backends_config()
-    backends = config.get("backends", {})
+    backend_names = get_available_backends()
 
     return [
-        BackendInfo(name=name, description=backend_config.get("description", name))
-        for name, backend_config in backends.items()
+        BackendInfo(name=name, description=get_backend_config(name).description)
+        for name in backend_names
     ]
 
 
@@ -287,9 +285,9 @@ def get_available_languages() -> Any:
     """
     Get list of supported languages for matching.
     """
-    from app.services.normalization.base import get_available_languages
+    from app.config.loader import get_language_configs
 
-    languages = get_available_languages()
+    languages = list(get_language_configs().keys())
     return languages
 
 

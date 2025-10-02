@@ -1,123 +1,64 @@
 """
-Base normalization engine for ProductMatcher.
-Provides general text normalization with language-specific extensions.
+Base normalizer class for language-specific text normalization.
 """
 
-import re
-import unicodedata
+from abc import ABC, abstractmethod
+from typing import Any
 
 
-def default_normalize(text: str) -> str:
-    """
-    Default normalization pipeline:
-    - Lowercase
-    - Remove punctuation and special characters
-    - Strip accents
-    - Remove extra whitespace
-    """
-    # Convert to lowercase
-    text = text.lower()
+class BaseNormalizer(ABC):
+    """Abstract base class for text normalizers with instance-level caching."""
 
-    # Strip accents using Unicode normalization
-    text = unicodedata.normalize("NFD", text)
-    text = "".join(char for char in text if unicodedata.category(char) != "Mn")
+    def __init__(self, config: dict[str, Any]):
+        """Initialize normalizer with configuration and cache.
 
-    # Remove punctuation and special characters, keep only alphanumeric and spaces
-    text = re.sub(r"[^\w\s]", " ", text)
+        Args:
+            config: Optional configuration dict specific to the normalizer
+        """
+        self.config = config
+        self._cache: dict[str, list[str]] = {}
 
-    # Remove extra whitespace
-    text = re.sub(r"\s+", " ", text).strip()
+    @abstractmethod
+    def _normalize_uncached(self, text: str) -> list[str]:
+        """Perform the actual normalization without caching.
 
-    return text
+        Args:
+            text: Input text to normalize
 
-
-def default_normalize_tokens(text: str) -> list[str]:
-    """
-    Default normalization pipeline that returns tokens:
-    - Lowercase
-    - Strip accents
-    - Remove punctuation and special characters
-    - Tokenize (split on whitespace)
-    - Remove empty tokens
-    """
-    # Convert to lowercase
-    text = text.lower()
-
-    # Strip accents using Unicode normalization
-    text = unicodedata.normalize("NFD", text)
-    text = "".join(char for char in text if unicodedata.category(char) != "Mn")
-
-    # Remove punctuation and special characters, keep only alphanumeric and spaces
-    text = re.sub(r"[^\w\s]", " ", text)
-
-    # Tokenize and remove empty tokens
-    tokens = [token.strip() for token in text.split() if token.strip()]
-
-    return tokens
-
-
-def normalize_text(text: str, language: str) -> str:
-    """
-    Main normalization function that applies general normalization
-    and language-specific rules.
-
-    Args:
-        text: Input text to normalize
-        language: Language code (e.g., 'en', 'es', 'de')
-
-    Returns:
-        Normalized text string
-    """
-    if not text or not text.strip():
-        return ""
-
-    # Apply default normalization first
-    normalized = default_normalize(text)
-
-    # Apply language-specific normalization if available
-    try:
-        # Dynamic import of language-specific module
-        module = __import__(
-            f"app.services.normalization.{language}", fromlist=["normalize"]
-        )
-        if hasattr(module, "normalize"):
-            normalized = module.normalize(normalized)
-    except (ImportError, AttributeError):
-        # Fallback to default normalization if language module doesn't exist
+        Returns:
+            List of normalized tokens
+        """
         pass
 
-    return normalized
+    def normalize(self, text: str) -> list[str]:
+        """Normalize text with automatic caching.
 
+        Args:
+            text: Input text to normalize
 
-def get_available_languages() -> list[str]:
-    """
-    Get list of supported language codes based on available normalization modules.
+        Returns:
+            List of normalized tokens
+        """
+        if not text or not text.strip():
+            return []
 
-    Returns:
-        List of language codes (e.g., ['en', 'es'])
-    """
-    import importlib
-    import os
+        # Check cache first
+        if text in self._cache:
+            return self._cache[text]
 
-    languages = []
-    normalization_dir = os.path.dirname(__file__)
+        # Perform normalization and cache result
+        tokens = self._normalize_uncached(text)
+        self._cache[text] = tokens
+        return tokens
 
-    for filename in os.listdir(normalization_dir):
-        if (
-            filename.endswith(".py")
-            and not filename.startswith("__")
-            and filename != "base.py"
-        ):
-            lang_code = filename[:-3]  # Remove .py extension
+    def clear_cache(self) -> None:
+        """Clear the normalization cache."""
+        self._cache.clear()
 
-            # Verify the module has a normalize function
-            try:
-                module = importlib.import_module(
-                    f"app.services.normalization.{lang_code}"
-                )
-                if hasattr(module, "normalize") and callable(module.normalize):
-                    languages.append(lang_code)
-            except ImportError:
-                continue
+    def get_cache_stats(self) -> dict[str, int]:
+        """Get cache statistics for monitoring.
 
-    return sorted(languages)
+        Returns:
+            Dict with cache size and other stats
+        """
+        return {"cache_size": len(self._cache), "total_entries": len(self._cache)}

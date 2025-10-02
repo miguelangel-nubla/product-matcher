@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from app.models import GlobalSettings
+from app.models import BackendConfig, GlobalSettings
 
 
 def _substitute_env_vars(value: Any) -> Any:
@@ -75,7 +75,7 @@ def load_backends_config() -> dict[str, Any]:
         raise ValueError(f"Error loading backends configuration: {e}")
 
 
-def get_backend_config(backend_name: str) -> dict[str, Any]:
+def get_backend_config(backend_name: str) -> BackendConfig:
     """
     Get configuration for a specific backend.
 
@@ -83,7 +83,7 @@ def get_backend_config(backend_name: str) -> dict[str, Any]:
         backend_name: Name of the backend (e.g., "mock", "grocy1")
 
     Returns:
-        Backend configuration dictionary
+        Typed BackendConfig instance
 
     Raises:
         ValueError: If backend is not found in configuration
@@ -96,8 +96,8 @@ def get_backend_config(backend_name: str) -> dict[str, Any]:
             f"Backend '{backend_name}' not found. Available backends: {available}"
         )
 
-    backend_config = config["backends"][backend_name]
-    return backend_config if isinstance(backend_config, dict) else {}
+    backend_config_dict = config["backends"][backend_name]
+    return BackendConfig.model_validate(backend_config_dict)
 
 
 def get_available_backends() -> list[str]:
@@ -125,3 +125,14 @@ def get_global_settings() -> GlobalSettings:
         default_threshold=settings["default_threshold"],
         max_candidates=settings["max_candidates"],
     )
+
+
+def get_language_configs() -> dict[str, Any]:
+    """
+    Get language-specific normalizer configurations.
+
+    Returns:
+        Dict mapping language codes to normalizer configs
+    """
+    config = load_backends_config()
+    return dict(config.get("languages", {}))

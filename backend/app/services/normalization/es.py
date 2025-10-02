@@ -3,9 +3,12 @@ Spanish-specific normalization rules.
 """
 
 import re
+import unicodedata
 from typing import Any
 
 import spacy
+
+from .base import BaseNormalizer
 
 # Common Spanish stopwords to remove
 STOPWORDS = {
@@ -207,39 +210,6 @@ except OSError:
     )
 
 
-def _get_spacy_model() -> Any:
-    """Get the pre-loaded spaCy model."""
-    return _nlp_model
-
-
-def calculate_semantic_similarity(tokens1: list[str], tokens2: list[str]) -> float:
-    """
-    Calculate semantic similarity between two token lists using SpaCy word vectors.
-
-    Args:
-        tokens1: First set of tokens
-        tokens2: Second set of tokens
-
-    Returns:
-        Semantic similarity score (0.0 to 1.0)
-    """
-    if not tokens1 or not tokens2:
-        return 0.0
-
-    text1 = " ".join(tokens1)
-    text2 = " ".join(tokens2)
-
-    if not text1.strip() or not text2.strip():
-        return 0.0
-
-    nlp = _get_spacy_model()
-    doc1 = nlp(text1)
-    doc2 = nlp(text2)
-
-    # SpaCy's similarity method handles empty vectors gracefully
-    return float(doc1.similarity(doc2))
-
-
 def post_process_tokens(
     tokens: list[str],
     stopwords: set[str] | None = None,
@@ -277,63 +247,56 @@ def post_process_tokens(
     return tokens
 
 
-def normalize(text: str, config: dict[str, Any] | None) -> list[str]:
-    """
-    Complete Spanish normalization pipeline with configurable stopwords and expansions.
+class SpanishNormalizer(BaseNormalizer):
+    """Spanish text normalizer with instance-level configuration and caching."""
 
-    Args:
-        text: Input text to normalize
-        config: Optional configuration dict with 'stopwords' and 'expansions' keys
+    def __init__(self, config: dict[str, Any]):
+        """Initialize Spanish normalizer with configuration.
 
-    Returns:
-        List of normalized tokens
-    """
-    if not text or not text.strip():
-        return []
+        Args:
+            config: Configuration dict with 'stopwords' and 'expansions' keys
+        """
+        super().__init__(config)
 
-    # Extract custom stopwords and expansions from config
-    custom_stopwords = None
-    custom_expansions = None
+        # Extract and store config values for this instance
+        self.custom_stopwords = None
+        self.custom_expansions = None
 
-    if config:
-        if "stopwords" in config:
-            custom_stopwords = set(config["stopwords"])
-        if "expansions" in config:
-            custom_expansions = config["expansions"]
+        if self.config:
+            if "stopwords" in self.config:
+                self.custom_stopwords = set(self.config["stopwords"])
+            if "expansions" in self.config:
+                self.custom_expansions = self.config["expansions"]
 
-    # Run the normalization pipeline
-    import re
-    import unicodedata
+    def _normalize_uncached(self, text: str) -> list[str]:
+        """Perform Spanish normalization without caching.
 
-    # Step 1: Strip accents and clean leading/trailing punctuation
-    text = unicodedata.normalize("NFD", text)
-    text = "".join(char for char in text if unicodedata.category(char) != "Mn")
+        Args:
+            text: Input text to normalize
 
-    # Clean leading/trailing punctuation that interferes with spaCy tokenization
-    # This handles cases like "*Peras al vino" -> "Peras al vino"
-    text = re.sub(r"^[^\w\s]+|[^\w\s]+$", "", text).strip()
+        Returns:
+            List of normalized tokens
+        """
+        # Step 1: Strip accents and clean leading/trailing punctuation
+        text = unicodedata.normalize("NFD", text)
+        text = "".join(char for char in text if unicodedata.category(char) != "Mn")
 
-    # Step 2: SpaCy processing with proper case for better POS tagging
-    # spaCy performs better with proper case than all caps
-    normalized_case_text = text.title()
+        # Clean leading/trailing punctuation that interferes with spaCy tokenization
+        text = re.sub(r"^[^\w\s]+|[^\w\s]+$", "", text).strip()
 
-    nlp = _get_spacy_model()
-    doc = nlp(normalized_case_text)
+        # Step 2: SpaCy processing with proper case for better POS tagging
+        normalized_case_text = text.title()
+        doc = _nlp_model(normalized_case_text)
 
-    # Step 3: Extract lemmatized tokens, filter out punctuation, spaces, and numbers
-    tokens = [
-        token.lemma_.lower()
-        for token in doc
-        if not token.is_punct
-        and not token.is_space
-        and token.text.strip()
-        and not token.text.isdigit()
-        and not re.match(r"^[\d/]+$", token.text)  # Handle "6/7" style numbers
-        and not re.match(
-            r"^[ivxlcdm]+\.?$", token.text.lower()
-        )  # Handle Roman numerals like "i.", "ii.", "iii."
-    ]
+        # Step 3: Lemmatization (extract lemmas from doc)
+        tokens = [
+            token.lemma_.lower()
+            for token in doc
+            if not token.is_punct and not token.is_space
+        ]
 
-    # Step 4: Post-processing (abbreviations, stopwords) with custom config
-    final_tokens = post_process_tokens(tokens, custom_stopwords, custom_expansions)
-    return final_tokens
+        # Step 4: Post-processing with instance configuration
+        final_tokens = post_process_tokens(
+            tokens, self.custom_stopwords, self.custom_expansions
+        )
+        return final_tokens

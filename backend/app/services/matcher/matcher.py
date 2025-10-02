@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from app.models import BackendConfig
+
 from ..debug import DebugStepTracker
 from .data_preparation import DataPreparation
 from .pipeline import MatchingPipeline
@@ -14,11 +16,26 @@ class ProductMatcher:
         self.data_preparation = DataPreparation()
         self.pipeline = MatchingPipeline()
 
+    def _get_normalizer(self, language: str) -> Any:
+        """Get normalizer instance for the requested language from registry.
+
+        Args:
+            language: Language code (e.g., 'es')
+
+        Returns:
+            Configured normalizer instance
+
+        Raises:
+            ValueError: If language not supported
+        """
+        from app.services.normalization.registry import get_normalizer
+
+        return get_normalizer(language)
+
     def match_product(
         self,
         input_query: str,
-        language: str,
-        backend_config: dict[str, Any],
+        backend_config: BackendConfig,
         threshold: float = 0.8,
         max_candidates: int = 10,
         debug: DebugStepTracker | None = None,
@@ -28,8 +45,7 @@ class ProductMatcher:
 
         Args:
             input_query: The user's product query
-            language: Language code for normalization
-            backend_config: Backend configuration
+            backend_config: Backend configuration (contains language and adapter info)
             threshold: Minimum score threshold for fuzzy matching (final fallback)
             max_candidates: Maximum number of candidates to return
             debug: Debug tracker (created if not provided)
@@ -45,13 +61,16 @@ class ProductMatcher:
             debug = DebugStepTracker()
 
         debug.add(
-            f"ProductMatcher.match_product called with: '{input_query}' (language: {language}, threshold: {threshold})"
+            f"ProductMatcher.match_product called with: '{input_query}' (language: {backend_config.language}, threshold: {threshold})"
         )
 
         try:
-            # Step 1: Prepare data and context
+            # Step 1: Get normalizer for the requested language from registry
+            normalizer = self._get_normalizer(backend_config.language)
+
+            # Step 2: Prepare data and context with normalizer
             context = self.data_preparation.prepare_context(
-                input_query, language, backend_config, debug
+                normalizer, input_query, backend_config, debug
             )
 
             # Step 2: Execute matching pipeline using user-provided threshold for all strategies
@@ -105,8 +124,6 @@ class ProductMatcher:
             if hasattr(backend, "add_alias"):
                 success = backend.add_alias(external_product_id, alias)
                 if success:
-                    # Clear cache since we added a new alias
-                    self.data_preparation.clear_cache()
                     return True, None
                 else:
                     return False, "Backend failed to add alias"

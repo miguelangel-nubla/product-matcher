@@ -33,3 +33,16 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """Initialize application components on startup."""
+    # Initialize normalizer registry with language configurations
+    from app.config.loader import get_language_configs
+    from app.services.matching.utils.registry import initialize_matching_utils
+    from app.services.normalization.registry import initialize_normalizers
+
+    language_configs = get_language_configs()
+    initialize_normalizers(language_configs)
+    initialize_matching_utils(language_configs)

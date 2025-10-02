@@ -42,11 +42,11 @@ class AdapterRegistry:
         except ValueError as e:
             raise ValueError(f"Backend {backend_name} not configured: {e}")
 
-        adapter_info = backend_config.get("adapter")
+        adapter_info = backend_config.adapter
         if not adapter_info:
             raise ValueError(f"Backend {backend_name} missing adapter configuration.")
 
-        adapter_type = adapter_info.get("type")
+        adapter_type = adapter_info.type
         if not adapter_type:
             raise ValueError(
                 f"Backend {backend_name} missing adapter type in configuration."
@@ -58,7 +58,7 @@ class AdapterRegistry:
             )
 
         # Extract adapter-specific config from the nested structure
-        config = adapter_info.get("config", {})
+        config = adapter_info.config
 
         adapter_class = self._adapters[adapter_type]
         return adapter_class.from_config(**config)
@@ -122,8 +122,7 @@ def get_backend_language(backend_name: str) -> str:
     """
     try:
         backend_config = get_backend_config(backend_name)
-        language = backend_config.get("language", "en")
-        return str(language) if language is not None else "en"
+        return backend_config.language
     except ValueError:
         # Backend not found, return default
         return "en"

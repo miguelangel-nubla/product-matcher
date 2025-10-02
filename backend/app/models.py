@@ -16,6 +16,21 @@ class BackendInfo(SQLModel):
     description: str
 
 
+class AdapterConfig(SQLModel):
+    """Adapter-specific configuration."""
+
+    type: str
+    config: dict[str, Any] = Field(default_factory=dict)
+
+
+class BackendConfig(SQLModel):
+    """Complete backend configuration with type safety."""
+
+    description: str
+    language: str
+    adapter: AdapterConfig
+
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)

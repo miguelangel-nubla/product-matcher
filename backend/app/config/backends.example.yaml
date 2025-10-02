@@ -34,22 +34,39 @@ backends:
         base_url: "https://grocy2.example.com"
         api_key: "${GROCY2_API_KEY:-demo_api_key_2}" # Environment variable with default
         verify_ssl: true
-    normalization:
-      # Custom stopwords (replaces language defaults if specified)
-      stopwords:
-        - "der"
-        - "die"
-        - "das"
-        - "marke"
-        - "produkt"
-      # Custom expansions (replaces language defaults if specified)
-      expansions:
-        "bio": "biologisch"
-        "öko": "ökologisch"
-        "kg": "kilogramm"
 
 # Global settings
 settings:
   default_threshold: 0.8
   max_candidates: 5
-  jaccard_threshold: 0.75  # Minimum Jaccard similarity for high-confidence token overlap matches
+# # Language-specific normalizer configurations. Overrides the defaults for the specified language.
+# languages:
+#   es:
+#     # Spanish normalization configuration
+#     stopwords:
+#       - "la"
+#       - "las"
+#       - "el"
+#       - "los"
+#       - "de"
+#       - "del"
+#       - "al"
+#     expansions:
+#       "kg": "kilogramo"
+#       "gr": "gramo"
+#       "l": "litro"
+#       "ml": "mililitro"
+
+#   en:
+#     # English normalization configuration
+#     stopwords:
+#       - "the"
+#       - "a"
+#       - "an"
+#       - "of"
+#       - "with"
+#     expansions:
+#       "lb": "pound"
+#       "oz": "ounce"
+#       "pt": "pint"
+#       "qt": "quart"

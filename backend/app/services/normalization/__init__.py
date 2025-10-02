@@ -28,13 +28,6 @@ def normalize_text(
     if backend_config and "normalization" in backend_config:
         normalization_config = backend_config["normalization"]
 
-    try:
-        module = import_module(f"app.services.normalization.{lang}")
-        # Use the unified normalize function that supports optional config
-        result = module.normalize(text, normalization_config)
-        return result if isinstance(result, list) else []
-    except ImportError:
-        # Fallback to base normalization
-        from app.services.normalization.base import default_normalize_tokens
-
-        return default_normalize_tokens(text)
+    module = import_module(f"app.services.normalization.{lang}")
+    result = module.normalize(text, normalization_config)
+    return result if isinstance(result, list) else []
