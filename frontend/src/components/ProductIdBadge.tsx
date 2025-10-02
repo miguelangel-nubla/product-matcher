@@ -18,8 +18,7 @@ export function ProductIdBadge({
   // Fetch product URL
   const { data: productUrlData } = useQuery({
     queryKey: ["product-url", backend, productId],
-    queryFn: () =>
-      BackendsService.getProductUrl({ backend, productId }),
+    queryFn: () => BackendsService.getProductUrl({ backend, productId }),
     enabled: !!(backend && productId),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   })
@@ -47,11 +46,7 @@ export function ProductIdBadge({
 
   // Otherwise, just return the badge
   return (
-    <Badge
-      colorScheme={colorScheme}
-      size={size}
-      cursor="default"
-    >
+    <Badge colorScheme={colorScheme} size={size} cursor="default">
       {productId}
     </Badge>
   )

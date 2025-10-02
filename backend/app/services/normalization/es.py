@@ -2,10 +2,10 @@
 Spanish-specific normalization rules.
 """
 
+import re
 from typing import Any
 
 import spacy
-import re
 
 # Common Spanish stopwords to remove
 STOPWORDS = {
@@ -196,44 +196,13 @@ EXPANSIONS = {
     "brick": "tetrabrik",
 }
 
-
-def fast_normalize(text: str) -> str:
-    """
-    Fast normalization operations (no spaCy):
-    - Lowercase
-    - Strip accents
-    - Remove punctuation
-    - Basic cleanup
-    """
-    import re
-    import unicodedata
-
-    # Convert to lowercase
-    text = text.lower()
-
-    # Strip accents using Unicode normalization
-    text = unicodedata.normalize("NFD", text)
-    text = "".join(char for char in text if unicodedata.category(char) != "Mn")
-
-    # Remove punctuation and special characters, keep only alphanumeric and spaces
-    text = re.sub(r"[^\w\s]", " ", text)
-
-    # Remove numbers
-    text = re.sub(r"\d+", " ", text)
-
-    # Remove extra whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
-
-
 # Global spaCy model - loaded at module import time
 
 try:
-    _nlp_model = spacy.load("es_core_news_sm")
+    _nlp_model = spacy.load("es_core_news_lg")
 except OSError:
     raise RuntimeError(
-        "spaCy Spanish model 'es_core_news_sm' not found. "
+        "spaCy Spanish model 'es_core_news_lg' not found. "
         "Please ensure the model is installed in the Docker container."
     )
 
@@ -243,29 +212,32 @@ def _get_spacy_model() -> Any:
     return _nlp_model
 
 
-def tokenize_text(fast_normalized_text: str) -> Any:
+def calculate_semantic_similarity(tokens1: list[str], tokens2: list[str]) -> float:
     """
-    SpaCy tokenization step:
-    - Use cached spaCy model
-    - Tokenize text (but don't lemmatize yet)
+    Calculate semantic similarity between two token lists using SpaCy word vectors.
+
+    Args:
+        tokens1: First set of tokens
+        tokens2: Second set of tokens
+
+    Returns:
+        Semantic similarity score (0.0 to 1.0)
     """
+    if not tokens1 or not tokens2:
+        return 0.0
+
+    text1 = " ".join(tokens1)
+    text2 = " ".join(tokens2)
+
+    if not text1.strip() or not text2.strip():
+        return 0.0
+
     nlp = _get_spacy_model()
-    doc = nlp(fast_normalized_text)
-    return doc
+    doc1 = nlp(text1)
+    doc2 = nlp(text2)
 
-
-def lemmatize_tokens(doc: Any) -> list[str]:
-    """
-    SpaCy lemmatization step:
-    - Extract lemmatized tokens from spaCy doc
-    - Skip punctuation and spaces
-    """
-    tokens = [
-        token.lemma_.lower()
-        for token in doc
-        if not token.is_punct and not token.is_space and token.text.strip()
-    ]
-    return tokens
+    # SpaCy's similarity method handles empty vectors gracefully
+    return float(doc1.similarity(doc2))
 
 
 def post_process_tokens(
@@ -291,7 +263,7 @@ def post_process_tokens(
         stopwords = STOPWORDS
 
     # Strip numbers from tokens
-    tokens = [re.sub(r'\d+', '', token) for token in tokens]
+    tokens = [re.sub(r"\d+", "", token) for token in tokens]
 
     # Expand abbreviations
     tokens = [expansions.get(token, token) for token in tokens]
@@ -333,13 +305,20 @@ def normalize(text: str, config: dict[str, Any] | None) -> list[str]:
     import re
     import unicodedata
 
-    # Step 1: Only strip accents, preserve case and punctuation/numbers for spaCy context
+    # Step 1: Strip accents and clean leading/trailing punctuation
     text = unicodedata.normalize("NFD", text)
     text = "".join(char for char in text if unicodedata.category(char) != "Mn")
 
-    # Step 2: SpaCy processing with full context (preserve original case for better POS tagging)
+    # Clean leading/trailing punctuation that interferes with spaCy tokenization
+    # This handles cases like "*Peras al vino" -> "Peras al vino"
+    text = re.sub(r"^[^\w\s]+|[^\w\s]+$", "", text).strip()
+
+    # Step 2: SpaCy processing with proper case for better POS tagging
+    # spaCy performs better with proper case than all caps
+    normalized_case_text = text.title()
+
     nlp = _get_spacy_model()
-    doc = nlp(text)
+    doc = nlp(normalized_case_text)
 
     # Step 3: Extract lemmatized tokens, filter out punctuation, spaces, and numbers
     tokens = [
@@ -349,8 +328,10 @@ def normalize(text: str, config: dict[str, Any] | None) -> list[str]:
         and not token.is_space
         and token.text.strip()
         and not token.text.isdigit()
-        and not re.match(r'^[\d/]+$', token.text)  # Handle "6/7" style numbers
-        and not re.match(r'^[ivxlcdm]+\.?$', token.text.lower())  # Handle Roman numerals like "i.", "ii.", "iii."
+        and not re.match(r"^[\d/]+$", token.text)  # Handle "6/7" style numbers
+        and not re.match(
+            r"^[ivxlcdm]+\.?$", token.text.lower()
+        )  # Handle Roman numerals like "i.", "ii.", "iii."
     ]
 
     # Step 4: Post-processing (abbreviations, stopwords) with custom config

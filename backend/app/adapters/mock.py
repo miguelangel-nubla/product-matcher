@@ -1,8 +1,11 @@
 """
-Mock adapter for testing and development.
+Mock adapter for testing and development with comprehensive messy test data.
 """
 
+from pathlib import Path
 from typing import Any
+
+import yaml
 
 from app.adapters.base import ExternalProduct, ProductDatabaseAdapter
 
@@ -10,7 +13,7 @@ from app.adapters.base import ExternalProduct, ProductDatabaseAdapter
 class MockProductAdapter(ProductDatabaseAdapter):
     """
     Mock adapter for testing and development.
-    Simulates an external product database with aliases.
+    Uses comprehensive messy test data that reflects real-world data quality issues.
     """
 
     @classmethod
@@ -19,49 +22,46 @@ class MockProductAdapter(ProductDatabaseAdapter):
         return cls()
 
     def __init__(self) -> None:
-        # Simulate external product database with aliases
-        self._products = {
-            "productId1": ExternalProduct(
-                id="productId1",
-                aliases=["Organic Apples", "organic red apples", "red apples"],
-                description="Fresh organic red apples",
-                category="Fruits",
-                brand="FreshFarm",
-                unit="kg",
-            ),
-            "productId2": ExternalProduct(
-                id="productId2",
-                aliases=["Whole Milk", "milk", "fresh milk"],
-                description="Fresh whole milk",
-                category="Dairy",
-                brand="LocalDairy",
-                unit="liter",
-            ),
-            "productId3": ExternalProduct(
-                id="productId3",
-                aliases=["Chocolate Cookies", "cookies", "choc cookies"],
-                description="Dark chocolate chip cookies",
-                category="Snacks",
-                brand="SweetBite",
-                unit="package",
-            ),
-            "productId4": ExternalProduct(
-                id="productId4",
-                aliases=["Red Apples", "red apple", "apples red"],
-                description="Fresh red apples",
-                category="Fruits",
-                brand="FreshFarm",
-                unit="kg",
-            ),
-            "productId5": ExternalProduct(
-                id="productId5",
-                aliases=["Las Manzanas Rojas", "manzanas rojas", "manzana roja"],
-                description="Manzanas rojas frescas",
-                category="Frutas",
-                brand="FreshFarm",
-                unit="kg",
-            ),
-        }
+        """Initialize with comprehensive messy test data."""
+        self._products: dict[str, ExternalProduct] = {}
+        self._load_test_data()
+
+    def _load_test_data(self) -> None:
+        """Load test data from YAML file."""
+        test_data_path = Path("tests/benchmarks/test_products_messy.yaml")
+
+        if not test_data_path.exists():
+            raise RuntimeError(
+                f"Mock adapter requires test data file: {test_data_path}. "
+                "Please ensure the comprehensive test dataset exists."
+            )
+
+        with open(test_data_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+            products_data = data.get("products", {})
+
+            for product_id, product_info in products_data.items():
+                name = product_info.get("name", "")
+                aliases = product_info.get("aliases", [])
+
+                # Create ExternalProduct with all aliases
+                all_aliases = [name] if name else []
+                all_aliases.extend([alias for alias in aliases if alias])
+
+                # Skip completely empty products
+                if not all_aliases:
+                    continue
+
+                self._products[product_id] = ExternalProduct(
+                    id=product_id,
+                    aliases=all_aliases,
+                    description=f"Test product: {name}"
+                    if name
+                    else "Test product with data issues",
+                    category="Test Category",
+                    brand="Test Brand",
+                    unit="unit",
+                )
 
     def get_all_products(self) -> list[ExternalProduct]:
         """Mock implementation returning all products from external system."""

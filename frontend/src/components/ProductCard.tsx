@@ -1,11 +1,4 @@
-import {
-  Badge,
-  Box,
-  HStack,
-  Spinner,
-  Text,
-  VStack,
-} from "@chakra-ui/react"
+import { Badge, Box, HStack, Spinner, Text, VStack } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
 import { MatchingService } from "../client"
 import { ProductIdBadge } from "./ProductIdBadge"
@@ -46,7 +39,6 @@ export function ProductCard({
     queryFn: () => MatchingService.getExternalProducts({ backend: backend! }),
     enabled: !!(id && backend && !product),
   })
-
 
   // Find the specific product from fetched data
   const productData =

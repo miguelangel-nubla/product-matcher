@@ -16,8 +16,12 @@ import {
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi"
-import useAuth from "@/hooks/useAuth"
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiChevronsLeft,
+  FiChevronsRight,
+} from "react-icons/fi"
 import { MatchingService } from "../../client"
 import { ProductIdBadge } from "../../components/ProductIdBadge"
 
@@ -26,7 +30,6 @@ export const Route = createFileRoute("/_layout/logs")({
 })
 
 function MatchLogs() {
-  const { user: currentUser } = useAuth()
   const navigate = useNavigate()
   const [page, setPage] = useState(0)
   const limit = 10
@@ -49,14 +52,14 @@ function MatchLogs() {
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr)
-      return date.toLocaleDateString() + " " + date.toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })
+      return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`
     } catch {
       // Fallback for invalid dates
-      return dateStr.slice(0, 8) + "..."
+      return `${dateStr.slice(0, 8)}...`
     }
   }
 
@@ -127,7 +130,8 @@ function MatchLogs() {
               </HStack>
             ) : !logs?.data?.length ? (
               <Text textAlign="center" color="fg.muted" py={8}>
-                No match history found. Start matching products to see your history here!
+                No match history found. Start matching products to see your
+                history here!
               </Text>
             ) : (
               <Box overflowX="auto">
@@ -178,13 +182,13 @@ function MatchLogs() {
                             <Badge
                               colorPalette={getScoreColor(
                                 log.confidence_score,
-                                log.threshold_used
+                                log.threshold_used,
                               )}
                             >
                               {formatScore(log.confidence_score)}
                             </Badge>
                             <Text fontSize="xs" color="gray.500">
-                               / {formatScore(log.threshold_used)}
+                              / {formatScore(log.threshold_used)}
                             </Text>
                           </HStack>
                         </Table.Cell>
@@ -208,7 +212,9 @@ function MatchLogs() {
               <Box pt={4} borderTop="1px solid" borderColor="border.muted">
                 <HStack justify="space-between" align="center">
                   <Text fontSize="sm" color="fg.muted">
-                    Showing {page * limit + 1}-{Math.min((page + 1) * limit, logs.count)} of {logs.count} matches
+                    Showing {page * limit + 1}-
+                    {Math.min((page + 1) * limit, logs.count)} of {logs.count}{" "}
+                    matches
                   </Text>
                   <HStack gap={2}>
                     <IconButton

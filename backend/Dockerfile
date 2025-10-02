@@ -29,8 +29,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ENV PYTHONPATH=/app
 
-COPY ./scripts /app/scripts
-
 COPY ./pyproject.toml ./uv.lock ./alembic.ini /app/
 
 COPY ./app /app/app
@@ -41,7 +39,5 @@ COPY ./tests /app/tests
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-# Download required spaCy language models
-RUN uv run python scripts/download_spacy_models.py
 
 CMD ["fastapi", "run", "--workers", "4", "app/main.py"]

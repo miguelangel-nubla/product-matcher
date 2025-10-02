@@ -28,7 +28,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useCallback, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi"
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiChevronsLeft,
+  FiChevronsRight,
+} from "react-icons/fi"
 import type { PendingQueryPublic, ResolveRequest } from "../../client"
 import { MatchingService } from "../../client"
 import { getErrorMessage } from "../../utils/error"
@@ -110,15 +115,29 @@ function PendingItems() {
     queryFn: () => MatchingService.getMatchingSettings(),
   })
 
+  const handleResolveClick = useCallback(
+    (item: PendingQueryPublic) => {
+      setSelectedQuery(item)
+      setSelectedProduct(null)
+      setProductSearch("")
+      reset({
+        action: "assign",
+        custom_alias: item.normalized_text, // Use the current item's normalized text
+      })
+      setIsOpen(true)
+    },
+    [reset],
+  )
+
   // Auto-open resolve dialog if queryId is provided in URL
   useEffect(() => {
     if (queryId && pendingQueries?.data && !isLoading) {
-      const targetQuery = pendingQueries.data.find(q => q.id === queryId)
+      const targetQuery = pendingQueries.data.find((q) => q.id === queryId)
       if (targetQuery) {
-        handleResolveClick(targetQuery)  // Reuse existing logic
+        handleResolveClick(targetQuery) // Reuse existing logic
       }
     }
-  }, [queryId, pendingQueries?.data, isLoading])
+  }, [queryId, pendingQueries?.data, isLoading, handleResolveClick])
 
   // Reset page when status changes
   useEffect(() => {
@@ -129,8 +148,7 @@ function PendingItems() {
   const { data: products, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["external-products", selectedQuery?.backend],
     queryFn: async () => {
-      if (!selectedQuery?.backend)
-        return { data: [], count: 0, backend: "" }
+      if (!selectedQuery?.backend) return { data: [], count: 0, backend: "" }
 
       const result = await MatchingService.getExternalProducts({
         backend: selectedQuery.backend,
@@ -163,17 +181,6 @@ function PendingItems() {
       setDeletingItemId(null)
     },
   })
-
-  const handleResolveClick = (item: PendingQueryPublic) => {
-    setSelectedQuery(item)
-    setSelectedProduct(null)
-    setProductSearch("")
-    reset({
-      action: "assign",
-      custom_alias: item.normalized_text, // Use the current item's normalized text
-    })
-    setIsOpen(true)
-  }
 
   const filteredProducts =
     (products as any)?.data?.filter(
@@ -312,7 +319,9 @@ function PendingItems() {
                       <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                       <Table.ColumnHeader>Status</Table.ColumnHeader>
                       <Table.ColumnHeader>Created</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="end">Actions</Table.ColumnHeader>
+                      <Table.ColumnHeader textAlign="end">
+                        Actions
+                      </Table.ColumnHeader>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
@@ -345,7 +354,7 @@ function PendingItems() {
                                     text: query.original_text,
                                     backend: query.backend,
                                     threshold: query.threshold,
-                                  }
+                                  },
                                 })
                               }
                             >
@@ -398,12 +407,16 @@ function PendingItems() {
                             </Badge>
                           </Table.Cell>
                           <Table.Cell color="fg.muted" fontSize="sm">
-                            {new Date(query.created_at).toLocaleDateString() + " " +
-                             new Date(query.created_at).toLocaleTimeString([], {
-                               hour: '2-digit',
-                               minute: '2-digit',
-                               second: '2-digit'
-                             })}
+                            {new Date(query.created_at).toLocaleDateString() +
+                              " " +
+                              new Date(query.created_at).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                },
+                              )}
                           </Table.Cell>
                           <Table.Cell>
                             <HStack gap={2} justify="end">
@@ -546,7 +559,7 @@ function PendingItems() {
                                 text: selectedQuery.original_text,
                                 backend: selectedQuery.backend,
                                 threshold: selectedQuery.threshold,
-                              }
+                              },
                             })
                           }
                         />

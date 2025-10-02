@@ -1,10 +1,9 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
-
-from app.services.matcher import MatchingDebugInfo
 
 
 class GlobalSettings(SQLModel):
@@ -163,7 +162,9 @@ class MatchResult(SQLModel):
     normalized_input: str
     pending_query_id: uuid.UUID | None = None
     candidates: list[MatchCandidate] = []  # Top 5 best matches found
-    debug_info: MatchingDebugInfo | None = None  # Structured debug information
+    debug_info: list[
+        dict[str, Any]
+    ] | None = None  # Debug information as list of step dictionaries
 
 
 # Model for resolving pending queries

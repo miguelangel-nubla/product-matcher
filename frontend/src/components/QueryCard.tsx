@@ -1,4 +1,12 @@
-import { Badge, Box, Button, Code, HStack, Text, VStack } from "@chakra-ui/react"
+import {
+  Badge,
+  Box,
+  Button,
+  Code,
+  HStack,
+  Text,
+  VStack,
+} from "@chakra-ui/react"
 
 interface QueryCardProps {
   originalText: string

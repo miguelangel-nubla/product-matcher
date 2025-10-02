@@ -33,7 +33,6 @@ import type {
   BackendInfo,
   DebugStep,
   GlobalSettings,
-  MatchingDebugInfo,
   MatchRequest,
   MatchResult,
 } from "../../client"
@@ -53,13 +52,14 @@ interface MatchForm {
 const formatDebugStep = (
   step: DebugStep,
   index: number,
-  debugInfo: MatchingDebugInfo,
+  debugSteps: DebugStep[],
 ) => {
-  const totalMs = (step.timestamp - debugInfo.start_time) * 1000
+  const startTime = debugSteps[0]?.timestamp || 0
+  const totalMs = (step.timestamp - startTime) * 1000
   const stepMs =
     index === 0
       ? totalMs
-      : (step.timestamp - debugInfo.steps[index - 1].timestamp) * 1000
+      : (step.timestamp - debugSteps[index - 1].timestamp) * 1000
 
   return {
     timing: `[${totalMs.toFixed(0)}ms +${stepMs.toFixed(0)}ms]`,
@@ -70,7 +70,11 @@ const formatDebugStep = (
 
 function ProductMatcher() {
   const navigate = useNavigate()
-  const { text: searchText, backend: searchBackend, threshold: searchThreshold } = useSearch({ from: "/_layout/matcher" })
+  const {
+    text: searchText,
+    backend: searchBackend,
+    threshold: searchThreshold,
+  } = useSearch({ from: "/_layout/matcher" })
   const [result, setResult] = useState<MatchResult | null>(null)
   const [lastInputText, setLastInputText] = useState<string>("")
 
@@ -351,7 +355,7 @@ function ProductMatcher() {
                             text: lastInputText,
                             backend: selectedBackend,
                             threshold: watch("threshold"),
-                          }
+                          },
                         })
                       }
                     />
@@ -401,7 +405,9 @@ function ProductMatcher() {
                       onClick={() =>
                         navigate({
                           to: "/pending",
-                          search: { queryId: result.pending_query_id || undefined }
+                          search: {
+                            queryId: result.pending_query_id || undefined,
+                          },
                         })
                       }
                       title="Click to resolve this query"
@@ -428,14 +434,15 @@ function ProductMatcher() {
                     color="fg.muted"
                   >
                     <Text fontSize="sm" fontWeight="semibold">
-                      Debug Information ({result.debug_info.steps.length} steps,{" "}
-                      {(
-                        (result.debug_info.steps[
-                          result.debug_info.steps.length - 1
-                        ]?.timestamp -
-                          result.debug_info.start_time) *
-                        1000
-                      ).toFixed(0)}
+                      Debug Information ({result.debug_info.length} steps,{" "}
+                      {result.debug_info.length > 0
+                        ? (
+                            (result.debug_info[result.debug_info.length - 1]
+                              ?.timestamp -
+                              result.debug_info[0]?.timestamp) *
+                            1000
+                          ).toFixed(0)
+                        : 0}
                       ms total)
                     </Text>
                     <Text fontSize="xs">▼</Text>
@@ -444,7 +451,7 @@ function ProductMatcher() {
                 <CollapsibleContent>
                   <Box mt={3} p={3} bg="bg.muted" borderRadius="md">
                     <VStack gap={2} align="stretch">
-                      {result.debug_info.steps.map((step, index) => {
+                      {result.debug_info.map((step, index) => {
                         const formatted = formatDebugStep(
                           step,
                           index,
@@ -460,15 +467,29 @@ function ProductMatcher() {
                             borderColor="blue.500"
                           >
                             <HStack gap={4} align="flex-start">
-                              <Text
-                                fontSize="xs"
-                                color="fg.muted"
-                                fontFamily="mono"
-                                textAlign="right"
-                                flexShrink={0}
-                              >
-                                {`+${(index === 0 ? ((step.timestamp - result.debug_info!.start_time) * 1000) : ((step.timestamp - result.debug_info!.steps[index - 1].timestamp) * 1000)).toFixed(0)}ms`}
-                              </Text>
+                              <Box width="60px" flexShrink={0}>
+                                <Text
+                                  fontSize="xs"
+                                  color="fg.muted"
+                                  fontFamily="mono"
+                                  textAlign="right"
+                                  whiteSpace="nowrap"
+                                >
+                                  {`${(
+                                    index === result.debug_info.length - 1
+                                      ? index === 0
+                                        ? 0
+                                        : (step.timestamp -
+                                            result.debug_info![index - 1]
+                                              .timestamp) *
+                                          1000
+                                      : (result.debug_info![index + 1]
+                                          .timestamp -
+                                          step.timestamp) *
+                                        1000
+                                  ).toFixed(0)}ms`}
+                                </Text>
+                              </Box>
                               <VStack gap={1} align="stretch" flex={1}>
                                 <Text fontSize="xs" fontWeight="medium">
                                   {formatted.message}
@@ -501,7 +522,11 @@ function ProductMatcher() {
                                         maxHeight="200px"
                                         overflowY="auto"
                                       >
-                                        {formatted.data}
+                                        {JSON.stringify(
+                                          formatted.data,
+                                          null,
+                                          2,
+                                        )}
                                       </Code>
                                     </CollapsibleContent>
                                   </CollapsibleRoot>

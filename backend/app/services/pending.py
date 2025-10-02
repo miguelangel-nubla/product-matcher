@@ -5,7 +5,7 @@ Pending queries queue management service.
 import uuid
 from datetime import datetime
 
-from sqlmodel import Session, select
+from sqlmodel import Session, desc, select
 
 from app.models import PendingQuery
 
@@ -88,7 +88,7 @@ class PendingQueueManager:
         statement = (
             select(PendingQuery)
             .where(PendingQuery.owner_id == owner_id, PendingQuery.status == status)
-            .order_by(PendingQuery.created_at.desc())
+            .order_by(desc(PendingQuery.created_at))
             .offset(offset)
             .limit(limit)
         )

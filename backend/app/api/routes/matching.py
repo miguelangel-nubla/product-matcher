@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.adapters.registry import get_backend
+from app.adapters.registry import get_backend, get_backend_language
 from app.api.deps import CurrentUser, SessionDep
 from app.config.loader import get_global_settings
 from app.models import (
@@ -24,7 +24,7 @@ from app.models import (
     PendingQueryPublic,
     ResolveRequest,
 )
-from app.services.matcher import ProductMatcher
+from app.services.matcher.matcher import ProductMatcher
 from app.services.pending import PendingQueueManager
 
 router = APIRouter()
@@ -38,17 +38,24 @@ def match_product(
     Match a text string against external product database.
     Returns either a matched product or adds to pending queue.
     """
-    # Get specified backend from registry
-    adapter = get_backend(query.backend)
-    matcher = ProductMatcher(session, adapter)
+    # Initialize the refactored matcher
+    matcher = ProductMatcher()
 
+    # Get backend language for matching
+    language = get_backend_language(query.backend)
 
     # Attempt to match the product
     try:
+        # Get global settings and ensure valid threshold
+        global_settings = get_global_settings()
+        threshold = query.threshold or global_settings.default_threshold
+
         success, normalized_input, candidates, debug_info = matcher.match_product(
-            text=query.text,
-            backend_name=query.backend,
-            threshold=query.threshold,
+            input_query=query.text,
+            language=language,
+            backend_config={"type": query.backend},
+            threshold=threshold,
+            max_candidates=global_settings.max_candidates,
         )
     except RuntimeError as e:
         # Backend adapter connection or configuration error
@@ -91,7 +98,7 @@ def match_product(
                 normalized_text=normalized_input,
                 owner_id=current_user.id,
                 backend=query.backend,
-                threshold=query.threshold,
+                threshold=threshold,
                 candidates=candidates,
             )
             pending_item_id = pending_query.id
@@ -244,7 +251,10 @@ def get_external_products(backend: str) -> Any:
     Get external products from the specified backend adapter.
     """
     # Get specified backend from registry
-    adapter = get_backend(backend)
+    try:
+        adapter = get_backend(backend)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid backend: {str(e)}")
 
     # Get all external products
     external_products = adapter.get_all_products()
@@ -292,8 +302,11 @@ def get_matching_stats(
     """
     pending_manager = PendingQueueManager(session)
 
-    # Get specified backend from registry
-    adapter = get_backend(backend)
+    # Get specified backend from registry (just to validate it exists)
+    try:
+        adapter = get_backend(backend)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid backend: {str(e)}")
 
     pending_count = pending_manager.get_pending_count(current_user.id, "pending")
     resolved_count = pending_manager.get_pending_count(current_user.id, "resolved")
@@ -327,10 +340,7 @@ def get_matching_settings() -> GlobalSettings:
     Get global matching settings from configuration.
     """
     settings = get_global_settings()
-    return GlobalSettings(
-        default_threshold=settings.get("default_threshold", 0.8),
-        max_candidates=settings.get("max_candidates", 5),
-    )
+    return settings
 
 
 @router.get("/logs", response_model=MatchLogsPublic)
@@ -343,13 +353,13 @@ def get_match_logs(
     """
     Get match logs for the current user.
     """
-    from sqlmodel import select, func
+    from sqlmodel import desc, func, select
 
     # Get match logs for the current user, sorted by timestamp (newest first)
     statement = (
         select(MatchLog)
         .where(MatchLog.owner_id == current_user.id)
-        .order_by(MatchLog.created_at.desc())
+        .order_by(desc(MatchLog.created_at))
         .offset(skip)
         .limit(limit)
     )

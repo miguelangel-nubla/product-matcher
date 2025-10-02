@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from app.models import GlobalSettings
+
 
 def _substitute_env_vars(value: Any) -> Any:
     """
@@ -109,13 +111,17 @@ def get_available_backends() -> list[str]:
     return list(config.get("backends", {}).keys())
 
 
-def get_global_settings() -> dict[str, Any]:
+def get_global_settings() -> GlobalSettings:
     """
     Get global configuration settings.
 
     Returns:
-        Global settings dictionary
+        GlobalSettings object
     """
     config = load_backends_config()
     settings = config.get("settings", {})
-    return settings if isinstance(settings, dict) else {}
+
+    return GlobalSettings(
+        default_threshold=settings["default_threshold"],
+        max_candidates=settings["max_candidates"],
+    )
