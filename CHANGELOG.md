@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.2...v1.3.3) (2025-10-08)
+
+
+### Bug Fixes
+
+* remove docker compose test step from PR workflow ([9042b85](https://github.com/miguelangel-nubla/product-matcher/commit/9042b85e0134730ffce712f544dfc4be791d58db))
+
 ## [1.3.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.1...v1.3.2) (2025-10-08)
 
 
