@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.1.2...v1.2.0) (2025-10-08)
+
+
+### Features
+
+* add debugging info to Playwright CI workflow ([6b97635](https://github.com/miguelangel-nubla/product-matcher/commit/6b9763507e5a561edcd8dce0fc771d0531f94af4))
+
 ## [1.1.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.1.1...v1.1.2) (2025-10-08)
 
 
