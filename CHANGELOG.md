@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.1...v1.3.2) (2025-10-08)
+
+
+### Bug Fixes
+
+* use docker-compose.dev.yml for testing in CI ([48f78c4](https://github.com/miguelangel-nubla/product-matcher/commit/48f78c43e4784b4b810b49f6b715311732f1bbef))
+
 ## [1.3.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.0...v1.3.1) (2025-10-08)
 
 
