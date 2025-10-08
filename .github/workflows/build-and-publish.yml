@@ -65,13 +65,13 @@ jobs:
             VITE_API_URL=http://localhost:8000
             NODE_ENV=production
 
-      - name: Test images with simple docker compose
+      - name: Test images with docker compose dev
         run: |
           echo "Testing built images..."
-          docker compose -f docker-compose.yml up -d --wait
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
           curl --fail --retry 5 --retry-delay 2 http://localhost:8000/api/v1/utils/health-check
           curl --fail --retry 5 --retry-delay 2 http://localhost:5173
-          docker compose -f docker-compose.yml down -v --remove-orphans
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans
 
   build-and-publish:
     runs-on: ubuntu-latest
@@ -134,13 +134,13 @@ jobs:
             VITE_API_URL=http://localhost:8000
             NODE_ENV=production
 
-      - name: Test images with simple docker compose
+      - name: Test images with docker compose dev
         run: |
           echo "Testing built images..."
-          docker compose -f docker-compose.yml up -d --wait
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
           curl --fail --retry 5 --retry-delay 2 http://localhost:8000/api/v1/utils/health-check
           curl --fail --retry 5 --retry-delay 2 http://localhost:5173
-          docker compose -f docker-compose.yml down -v --remove-orphans
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
