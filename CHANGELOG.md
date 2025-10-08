@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.3...v1.3.4) (2025-10-08)
+
+
+### Bug Fixes
+
+* resolve debug info validation error in matching API ([da82ece](https://github.com/miguelangel-nubla/product-matcher/commit/da82eceff0b77c6694feb35ea4a40b031d933ef9))
+
 ## [1.3.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.2...v1.3.3) (2025-10-08)
 
 
