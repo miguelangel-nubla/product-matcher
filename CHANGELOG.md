@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.0.0...v1.1.0) (2025-10-08)
+
+
+### Features
+
+* implement proper DebugStep type and fix email functionality ([5d3ef39](https://github.com/miguelangel-nubla/product-matcher/commit/5d3ef39d54d3f69f50986741337d178f37f9365d))
+
 # 1.0.0 (2025-10-08)
 
 
