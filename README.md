@@ -30,9 +30,11 @@ A flexible, multilingual, backend-agnostic service for mapping free-text product
 
 ## Quick Start
 
-1. **Download the simple compose file:**
+Deploy using pre-built Docker images - no building required!
+
+1. **Download the compose file:**
    ```bash
-   curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.simple.yml
+   curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.yml
    ```
 
 2. **Start the application:**
@@ -42,11 +44,16 @@ A flexible, multilingual, backend-agnostic service for mapping free-text product
 
 3. **Access the application:**
    - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000/docs
+   - Adminer (Database UI): http://localhost:8080
 
 ## Default Credentials
 
 - **Admin User:** admin@example.com
 - **Admin Password:** changethis
+- **Database:** postgres/changethis
+
+> **📖 For detailed deployment options, environment variables, troubleshooting, and production setup, see [DEPLOY.md](DEPLOY.md)**
 
 ## Configuration
 
@@ -135,41 +142,6 @@ class MyCustomAdapter(ProductDatabaseAdapter):
         pass
 ```
 
-## Deployment
-
-### Production Deployment
-
-1. Update environment variables for production
-2. Generate secure secret keys
-3. Configure your domain and SSL certificates
-4. Deploy with Docker Compose
-
-```bash
-# Generate secure keys
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-
-# Deploy
-docker-compose -f docker-compose.yml up -d
-```
-
-### Security Configuration
-
-Before deploying, update these critical settings in `.env`:
-
-- `SECRET_KEY` - JWT signing key
-- `FIRST_SUPERUSER_PASSWORD` - Admin password
-- `POSTGRES_PASSWORD` - Database password
-
-## Architecture
-
-ProductMatcher uses a clean architecture with:
-
-- **Adapter Pattern** for backend integration
-- **Normalization Pipeline** for text processing
-- **Fuzzy Matching Engine** with configurable algorithms
-- **Pending Resolution System** for interactive learning
-- **Multi-language Support** with extensible normalization
-
 ## Contributing
 
 1. Fork the repository
@@ -184,4 +156,4 @@ ProductMatcher is licensed under the terms of the MIT license.
 
 ## Acknowledgments
 
-Built on the excellent [FastAPI Full Stack Template](https://github.com/fastapi/full-stack-fastapi-template) by [@tiangolo](https://github.com/tiangolo).
+Built on the [FastAPI Full Stack Template](https://github.com/fastapi/full-stack-fastapi-template) by [@tiangolo](https://github.com/tiangolo).

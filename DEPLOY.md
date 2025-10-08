@@ -1,12 +1,12 @@
-# Simple Deployment with Docker Compose
+# Deployment with Docker Compose
 
 This guide shows how to deploy the Product Matcher application using pre-built Docker images from GitHub Container Registry. No building required!
 
 ## Quick Start
 
-1. **Download the simple compose file:**
+1. **Download the compose file:**
    ```bash
-   curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.simple.yml
+   curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.yml
    ```
 
 2. **Start the application:**
@@ -84,7 +84,6 @@ docker compose down -v
 
 - **3000:** Frontend (React)
 - **8000:** Backend API (FastAPI)
-- **8080:** Adminer (Database management)
 - **5432:** PostgreSQL (exposed for external access)
 
 ## Troubleshooting
@@ -114,7 +113,3 @@ For production deployment:
 4. Configure proper CORS origins
 5. Set up monitoring and backups
 6. Use external database for better performance
-
-## Need Advanced Deployment?
-
-For production deployments with SSL, custom domains, and advanced features, see the full [deployment guide](deployment.md).

@@ -13,6 +13,9 @@ dist-ssr
 *.local
 openapi.json
 
+# Generated API client (built from backend schema)
+src/client/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
