@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.0...v1.3.1) (2025-10-08)
+
+
+### Bug Fixes
+
+* add missing uv and Node.js setup in build workflow ([ca073c5](https://github.com/miguelangel-nubla/product-matcher/commit/ca073c598e7f16420012ece3508bb74e437871b6))
+
 # [1.3.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.2.2...v1.3.0) (2025-10-08)
 
 
