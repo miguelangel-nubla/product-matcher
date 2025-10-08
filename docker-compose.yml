@@ -26,8 +26,6 @@ services:
       db:
         condition: service_healthy
         restart: true
-    volumes:
-      - ./backend/app/config/backends.yaml:/app/app/config/backends.yaml:ro
     environment:
       - PROJECT_NAME=${PROJECT_NAME:-Product Matcher}
       - DOMAIN=${DOMAIN:-localhost}
