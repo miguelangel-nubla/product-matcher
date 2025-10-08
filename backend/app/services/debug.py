@@ -66,12 +66,9 @@ class DebugStepTracker:
         step = DebugStep(message=message, timestamp=time.time(), data=data)
         self.steps.append(step)
 
-    def get_debug_info(self) -> list[dict[str, Any]]:
-        """Get debug info as list of dictionaries."""
-        return [
-            {"message": step.message, "timestamp": step.timestamp, "data": step.data}
-            for step in self.steps
-        ]
+    def get_debug_info(self) -> list["DebugStep"]:
+        """Get debug info as list of DebugStep objects."""
+        return self.steps
 
     def to_matching_debug_info(self) -> MatchingDebugInfo:
         """Convert to MatchingDebugInfo object."""

@@ -4,7 +4,7 @@ from typing import Any
 
 from app.models import BackendConfig
 
-from ..debug import DebugStepTracker
+from ..debug import DebugStep, DebugStepTracker
 from .data_preparation import DataPreparation
 from .pipeline import MatchingPipeline
 
@@ -39,7 +39,7 @@ class ProductMatcher:
         threshold: float = 0.8,
         max_candidates: int = 10,
         debug: DebugStepTracker | None = None,
-    ) -> tuple[bool, str, list[tuple[str, float]], list[dict[str, Any]]]:
+    ) -> tuple[bool, str, list[tuple[str, float]], list[DebugStep]]:
         """
         Match a product using the modular strategy-based pipeline.
 
@@ -55,7 +55,7 @@ class ProductMatcher:
             - success: Whether a confident match was found
             - normalized_input: The normalized input query
             - matches: List of (product_id, score) tuples
-            - debug_info: Debug information list
+            - debug_info: Debug information as list of DebugStep objects
         """
         if debug is None:
             debug = DebugStepTracker()

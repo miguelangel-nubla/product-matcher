@@ -476,7 +476,7 @@ function ProductMatcher() {
                                   whiteSpace="nowrap"
                                 >
                                   {`${(
-                                    index === result.debug_info.length - 1
+                                    index === result.debug_info!.length - 1
                                       ? index === 0
                                         ? 0
                                         : (step.timestamp -
@@ -494,7 +494,7 @@ function ProductMatcher() {
                                 <Text fontSize="xs" fontWeight="medium">
                                   {formatted.message}
                                 </Text>
-                                {formatted.data && (
+                                {Boolean(formatted.data) && (
                                   <CollapsibleRoot>
                                     <CollapsibleTrigger asChild>
                                       <Button
@@ -522,11 +522,13 @@ function ProductMatcher() {
                                         maxHeight="200px"
                                         overflowY="auto"
                                       >
-                                        {JSON.stringify(
-                                          formatted.data,
-                                          null,
-                                          2,
-                                        )}
+                                        {
+                                          JSON.stringify(
+                                            formatted.data,
+                                            null,
+                                            2,
+                                          ) as string
+                                        }
                                       </Code>
                                     </CollapsibleContent>
                                   </CollapsibleRoot>

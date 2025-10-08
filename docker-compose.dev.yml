@@ -3,16 +3,19 @@
 # Adds mailcatcher for email testing and development
 services:
   mailcatcher:
-    image: dockage/mailcatcher:0.9.0
-    restart: always
+    image: schickling/mailcatcher
     ports:
       - "1080:1080"
       - "1025:1025"
 
   prestart:
+    build:
+      context: ./backend
     environment:
       - SMTP_HOST=mailcatcher
       - SMTP_PORT=1025
+      - SMTP_TLS=false
+      - EMAILS_FROM_EMAIL=noreply@example.com
     depends_on:
       db:
         condition: service_healthy
@@ -21,9 +24,13 @@ services:
         condition: service_started
 
   backend:
+    build:
+      context: ./backend
     environment:
       - SMTP_HOST=mailcatcher
       - SMTP_PORT=1025
+      - SMTP_TLS=false
+      - EMAILS_FROM_EMAIL=noreply@example.com
     depends_on:
       db:
         condition: service_healthy
@@ -32,6 +39,10 @@ services:
         condition: service_completed_successfully
       mailcatcher:
         condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
 
   playwright:
     build:
