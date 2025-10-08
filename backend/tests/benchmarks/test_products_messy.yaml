@@ -1,0 +1,1423 @@
+# Comprehensive Messy Test Product Database
+# Reflects real-world data quality issues at scale
+# 200+ products with realistic data problems
+
+metadata:
+  version: "1.0"
+  description: "Large-scale messy test product database with real-world data quality issues"
+  language: "es"
+  total_products: 250
+  data_quality_issues:
+    - "Duplicate products with different IDs"
+    - "Products with no aliases"
+    - "Typos in product names and aliases"
+    - "Inconsistent naming conventions"
+    - "Missing accent marks"
+    - "Mixed languages (Spanish/English)"
+    - "Wrong categorizations"
+    - "Overly specific vs overly generic names"
+    - "Marketing fluff in product names"
+    - "Abbreviations without expansions"
+    - "Regional language variations"
+    - "Brand names mixed with product names"
+    - "Empty or corrupted entries"
+    - "Inconsistent plural/singular forms"
+    - "Technical specifications in names"
+
+products:
+  # FRUITS AND VEGETABLES (40 entries with issues)
+  "1":
+    name: "manzanas"
+    aliases:
+      - "manzanas"
+      - "manzana"
+      - "manzanas rojas"
+      - "apple"
+
+  "2":
+    name: "manzana roja gala premium"
+    aliases:
+      - "manzana gala"
+      - "gala apple"
+
+  "3":
+    name: "MANZANA"  # All caps
+    aliases: []
+
+  "4":
+    name: "apple red"  # Wrong language
+    aliases:
+      - "manzana roja"
+
+  "5":
+    name: "pera conferencia"
+    aliases:
+      - "pera conferencia"
+      - "peras conferencia"
+
+  "6":
+    name: "pera"
+    aliases: []
+
+  "7":
+    name: "peras conferencia premium calidad extra"
+    aliases:
+      - "peras conferencia"
+
+  "8":
+    name: "platanos"  # Missing accent
+    aliases:
+      - "platanos"
+      - "plátanos"
+      - "bananas"
+
+  "9":
+    name: "plátanos de Canarias IGP"  # Geographic designation
+    aliases:
+      - "plátanos"
+
+  "10":
+    name: "bananas"  # Regional variant
+    aliases:
+      - "plátanos"
+
+  "11":
+    name: "banana"  # Singular
+    aliases:
+      - "plátano"
+
+  "12":
+    name: "champinones"  # Missing tilde
+    aliases:
+      - "champinones"
+      - "champiñones"
+      - "setas"
+
+  "13":
+    name: "champiñones portobello"
+    aliases:
+      - "portobello"
+      - "champiñones grandes"
+
+  "14":
+    name: "Champiñones Frescos A Granel"  # Retail description
+    aliases:
+      - "champiñones frescos"
+
+  "15":
+    name: "chambinones"  # Common typo
+    aliases:
+      - "champiñones"
+
+  "16":
+    name: "setas"
+    aliases:
+      - "setas"
+      - "hongos"
+      - "mushrooms"
+
+  "17":
+    name: "tomate cherry"
+    aliases:
+      - "tomate cherry"
+      - "tomates cherry"
+
+  "18":
+    name: "tomatos cherry"  # Typo
+    aliases:
+      - "tomate cherry"
+
+  "19":
+    name: "tomate cherry 250g bandeja"  # Package description
+    aliases:
+      - "tomate cherry"
+
+  "20":
+    name: "tomate"
+    aliases:
+      - "tomate"
+      - "tomates"
+      - "tomato"
+
+  "21":
+    name: "tomatos"  # Typo
+    aliases:
+      - "tomates"
+
+  "22":
+    name: "tomate maduro"
+    aliases:
+      - "tomate maduro"
+      - "tomates maduros"
+
+  "23":
+    name: "limones"
+    aliases:
+      - "limones"
+      - "limón"
+      - "lemon"
+
+  "24":
+    name: "limon"  # Missing accent
+    aliases:
+      - "limón"
+
+  "25":
+    name: "lime"  # Different citrus in English
+    aliases:
+      - "lima"
+
+  "26":
+    name: "lima"
+    aliases:
+      - "lima"
+      - "limas"
+
+  "27":
+    name: "naranjas"
+    aliases:
+      - "naranjas"
+      - "naranja"
+      - "orange"
+
+  "28":
+    name: "naranja valencia"
+    aliases:
+      - "naranja valencia"
+      - "valencia orange"
+
+  "29":
+    name: "zanahoria"
+    aliases:
+      - "zanahoria"
+      - "zanahorias"
+      - "carrot"
+
+  "30":
+    name: "zanahorias baby"
+    aliases:
+      - "zanahoria baby"
+      - "mini zanahorias"
+
+  "31":
+    name: "patata"
+    aliases:
+      - "patata"
+      - "patatas"
+      - "papa"  # Regional
+      - "potato"
+
+  "32":
+    name: "patatas nuevas"
+    aliases:
+      - "patata nueva"
+      - "patatas tempranas"
+
+  "33":
+    name: "papa"  # Regional
+    aliases:
+      - "patata"
+
+  "34":
+    name: "cebolla"
+    aliases:
+      - "cebolla"
+      - "cebollas"
+      - "onion"
+
+  "35":
+    name: "cebolla blanca"
+    aliases:
+      - "cebolla blanca"
+      - "cebollas blancas"
+
+  "36":
+    name: "cebolla morada"
+    aliases:
+      - "cebolla morada"
+      - "cebolla roja"
+
+  "37":
+    name: "ajo"
+    aliases:
+      - "ajo"
+      - "ajos"
+      - "garlic"
+
+  "38":
+    name: "ajos"
+    aliases:
+      - "ajos"
+      - "ajo"
+
+  "39":
+    name: "dientes de ajo"
+    aliases:
+      - "ajo"
+
+  "40":
+    name: "pimiento"
+    aliases:
+      - "pimiento"
+      - "pimientos"
+      - "pepper"
+
+  # DAIRY PRODUCTS (30 entries)
+  "50":
+    name: "leche"
+    aliases:
+      - "leche"
+      - "leche entera"
+      - "milk"
+
+  "51":
+    name: "Leche Entera 1L Brick"  # Package details
+    aliases:
+      - "leche entera"
+
+  "52":
+    name: "LECHE ENTERA"  # All caps
+    aliases: []
+
+  "53":
+    name: "milk"  # Wrong language
+    aliases:
+      - "leche"
+
+  "54":
+    name: "leche desnatada"
+    aliases:
+      - "leche desnatada"
+      - "leche desnat"
+      - "skim milk"
+
+  "55":
+    name: "leche desnat"  # Abbreviation as main name
+    aliases:
+      - "leche desnatada"
+
+  "56":
+    name: "leche 0% M.G."  # Technical specification
+    aliases:
+      - "leche desnatada"
+
+  "57":
+    name: "leche semidesnatada"
+    aliases:
+      - "leche semidesnatada"
+      - "leche semidesn"
+      - "semi-skimmed milk"
+
+  "58":
+    name: "leche semidesn"  # Abbreviation
+    aliases:
+      - "leche semidesnatada"
+
+  "59":
+    name: "leche semi"  # Very abbreviated
+    aliases:
+      - "leche semidesnatada"
+
+  "60":
+    name: "yogur"
+    aliases:
+      - "yogur"
+      - "yogurt"
+      - "yogur natural"
+
+  "61":
+    name: "yogurt"  # Alternative spelling
+    aliases:
+      - "yogur"
+
+  "62":
+    name: "yogur natural"
+    aliases:
+      - "yogur natural"
+      - "yogurt natural"
+
+  "63":
+    name: "Yogur Natural Sin Azúcar Añadido Ecológico"  # Marketing text
+    aliases:
+      - "yogur natural"
+
+  "64":
+    name: "yogur desnatado"
+    aliases:
+      - "yogur desnatado"
+      - "yogur desnat"
+      - "yogurt desnatado"
+
+  "65":
+    name: "yogur griego"
+    aliases:
+      - "yogur griego"
+      - "greek yogurt"
+
+  "66":
+    name: "yogurt griego"
+    aliases:
+      - "yogur griego"
+
+  "67":
+    name: "yogur con frutas"
+    aliases:
+      - "yogur con frutas"
+      - "yogur de frutas"
+
+  "68":
+    name: "yogur fresa"
+    aliases:
+      - "yogur de fresa"
+      - "yogur sabor fresa"
+
+  "69":
+    name: "queso"
+    aliases:
+      - "queso"
+      - "cheese"
+
+  "70":
+    name: "queso rallado"
+    aliases:
+      - "queso rallado"
+      - "queso rayado"  # Misspelling
+
+  "71":
+    name: "queso parmesano"
+    aliases:
+      - "queso parmesano"
+      - "parmesano"
+      - "parmesan"
+
+  "72":
+    name: "queso parmesano rallado"
+    aliases:
+      - "parmesano rallado"
+
+  "73":
+    name: "queso manchego"
+    aliases:
+      - "queso manchego"
+      - "manchego"
+
+  "74":
+    name: "mantequilla"
+    aliases:
+      - "mantequilla"
+      - "manteca"  # Regional but could confuse
+      - "butter"
+
+  "75":
+    name: "manteca"  # Regional
+    aliases:
+      - "mantequilla"
+
+  "76":
+    name: "nata"
+    aliases:
+      - "nata"
+      - "crema"
+      - "cream"
+
+  "77":
+    name: "nata para montar"
+    aliases:
+      - "nata para montar"
+      - "nata montada"
+
+  "78":
+    name: "huevos"
+    aliases:
+      - "huevos"
+      - "huevo"
+      - "eggs"
+
+  "79":
+    name: "huevo"  # Singular
+    aliases:
+      - "huevos"
+
+  # MEAT PRODUCTS (25 entries)
+  "100":
+    name: "carne"
+    aliases:
+      - "carne"
+      - "meat"
+
+  "101":
+    name: "carne de ternera"
+    aliases:
+      - "carne de ternera"
+      - "ternera"
+      - "beef"
+
+  "102":
+    name: "ternera"
+    aliases:
+      - "ternera"
+      - "carne de ternera"
+
+  "103":
+    name: "carne de res"  # Synonym for ternera
+    aliases:
+      - "ternera"
+      - "beef"
+
+  "104":
+    name: "beef"  # English
+    aliases:
+      - "ternera"
+
+  "105":
+    name: "bistec de ternera"
+    aliases:
+      - "bistec"
+      - "steak"
+
+  "106":
+    name: "pollo"
+    aliases:
+      - "pollo"
+      - "carne de pollo"
+      - "chicken"
+
+  "107":
+    name: "carne de pollo"
+    aliases:
+      - "pollo"
+
+  "108":
+    name: "chicken"  # English
+    aliases:
+      - "pollo"
+
+  "109":
+    name: "pechuga de pollo"
+    aliases:
+      - "pechuga pollo"
+      - "chicken breast"
+
+  "110":
+    name: "muslos de pollo"
+    aliases:
+      - "muslos pollo"
+      - "chicken thighs"
+
+  "111":
+    name: "muslitos pollo"  # Colloquial
+    aliases:
+      - "muslos de pollo"
+
+  "112":
+    name: "alas de pollo"
+    aliases:
+      - "alas pollo"
+      - "chicken wings"
+
+  "113":
+    name: "cerdo"
+    aliases:
+      - "cerdo"
+      - "carne de cerdo"
+      - "pork"
+
+  "114":
+    name: "carne de cerdo"
+    aliases:
+      - "cerdo"
+
+  "115":
+    name: "jamón"
+    aliases:
+      - "jamón"
+      - "jamon"  # No accent
+      - "ham"
+
+  "116":
+    name: "jamon"  # No accent
+    aliases:
+      - "jamón"
+
+  "117":
+    name: "jamón serrano"
+    aliases:
+      - "jamón serrano"
+      - "serrano"
+
+  "118":
+    name: "jamón ibérico"
+    aliases:
+      - "jamón ibérico"
+      - "ibérico"
+
+  "119":
+    name: "chorizo"
+    aliases:
+      - "chorizo"
+      - "chorizos"
+
+  "120":
+    name: "salchichas"
+    aliases:
+      - "salchichas"
+      - "salchicha"
+      - "sausages"
+
+  "121":
+    name: "salchicha"
+    aliases:
+      - "salchichas"
+
+  "122":
+    name: "bacon"
+    aliases:
+      - "bacon"
+      - "beicon"
+      - "tocino"
+
+  "123":
+    name: "pescado"
+    aliases:
+      - "pescado"
+      - "fish"
+
+  "124":
+    name: "salmón"
+    aliases:
+      - "salmón"
+      - "salmon"  # No accent
+      - "salmon fish"
+
+  # BEVERAGES (40 entries)
+  "150":
+    name: "agua"
+    aliases:
+      - "agua"
+      - "water"
+
+  "151":
+    name: "agua mineral"
+    aliases:
+      - "agua mineral"
+      - "mineral water"
+
+  "152":
+    name: "agua natural"
+    aliases:
+      - "agua natural"
+      - "natural water"
+
+  "153":
+    name: "water"  # English
+    aliases:
+      - "agua"
+
+  "154":
+    name: "coca cola"
+    aliases:
+      - "coca cola"
+      - "cocacola"
+      - "coca-cola"
+      - "coke"
+
+  "155":
+    name: "cocacola"  # No space
+    aliases:
+      - "coca cola"
+
+  "156":
+    name: "coca-cola"  # With hyphen
+    aliases:
+      - "coca cola"
+
+  "157":
+    name: "coke"  # Brand nickname
+    aliases:
+      - "coca cola"
+
+  "158":
+    name: "Coca-Cola Original 330ml Lata"  # Full product description
+    aliases:
+      - "coca cola"
+
+  "159":
+    name: "pepsi"
+    aliases:
+      - "pepsi"
+      - "pepsi cola"
+
+  "160":
+    name: "fanta"
+    aliases:
+      - "fanta"
+      - "fanta naranja"
+
+  "161":
+    name: "sprite"
+    aliases:
+      - "sprite"
+      - "lima-limón"
+
+  "162":
+    name: "zumo"
+    aliases:
+      - "zumo"
+      - "jugo"  # Regional
+      - "juice"
+
+  "163":
+    name: "jugo"  # Regional
+    aliases:
+      - "zumo"
+
+  "164":
+    name: "zumo de naranja"
+    aliases:
+      - "zumo de naranja"
+      - "zumo naranja"
+      - "orange juice"
+
+  "165":
+    name: "jugo de naranja"  # Regional
+    aliases:
+      - "zumo de naranja"
+
+  "166":
+    name: "zumo naranja"  # Abbreviated
+    aliases:
+      - "zumo de naranja"
+
+  "167":
+    name: "orange juice"  # English
+    aliases:
+      - "zumo de naranja"
+
+  "168":
+    name: "zumo de manzana"
+    aliases:
+      - "zumo de manzana"
+      - "zumo manzana"
+      - "apple juice"
+
+  "169":
+    name: "cerveza"
+    aliases:
+      - "cerveza"
+      - "beer"
+
+  "170":
+    name: "beer"  # English
+    aliases:
+      - "cerveza"
+
+  "171":
+    name: "cerveza rubia"
+    aliases:
+      - "cerveza rubia"
+      - "rubia"
+
+  "172":
+    name: "vino"
+    aliases:
+      - "vino"
+      - "wine"
+
+  "173":
+    name: "vino tinto"
+    aliases:
+      - "vino tinto"
+      - "tinto"
+      - "red wine"
+
+  "174":
+    name: "vino blanco"
+    aliases:
+      - "vino blanco"
+      - "blanco"
+      - "white wine"
+
+  "175":
+    name: "café"
+    aliases:
+      - "café"
+      - "cafe"  # No accent
+      - "coffee"
+
+  "176":
+    name: "cafe"  # No accent
+    aliases:
+      - "café"
+
+  "177":
+    name: "coffee"  # English
+    aliases:
+      - "café"
+
+  "178":
+    name: "té"
+    aliases:
+      - "té"
+      - "te"  # No accent
+      - "tea"
+
+  "179":
+    name: "te"  # No accent
+    aliases:
+      - "té"
+
+  "180":
+    name: "tea"  # English
+    aliases:
+      - "té"
+
+  "181":
+    name: "té verde"
+    aliases:
+      - "té verde"
+      - "green tea"
+
+  "182":
+    name: "infusión"
+    aliases:
+      - "infusión"
+      - "infusion"
+      - "tisana"
+
+  "183":
+    name: "manzanilla"
+    aliases:
+      - "manzanilla"
+      - "chamomile"
+
+  "184":
+    name: "leche"  # Duplicate from dairy section
+    aliases:
+      - "leche"
+
+  "185":
+    name: "batido"
+    aliases:
+      - "batido"
+      - "smoothie"
+      - "shake"
+
+  "186":
+    name: "smoothie"  # English
+    aliases:
+      - "batido"
+
+  "187":
+    name: "refresco"
+    aliases:
+      - "refresco"
+      - "soft drink"
+      - "bebida"
+
+  "188":
+    name: "bebida"  # Too generic
+    aliases:
+      - "refresco"
+
+  "189":
+    name: "energy drink"  # English
+    aliases:
+      - "bebida energética"
+
+  # PANTRY ITEMS (30 entries)
+  "200":
+    name: "aceite"
+    aliases:
+      - "aceite"
+      - "oil"
+
+  "201":
+    name: "aceite de oliva"
+    aliases:
+      - "aceite de oliva"
+      - "aceite oliva"
+      - "olive oil"
+
+  "202":
+    name: "aceite oliva"  # Missing "de"
+    aliases:
+      - "aceite de oliva"
+
+  "203":
+    name: "olive oil"  # English
+    aliases:
+      - "aceite de oliva"
+
+  "204":
+    name: "aceite de oliva extra virgen"
+    aliases:
+      - "aceite oliva extra virgen"
+      - "extra virgin olive oil"
+
+  "205":
+    name: "aceite oliva extra virgen"  # Missing "de"
+    aliases:
+      - "aceite de oliva extra virgen"
+
+  "206":
+    name: "AOVE"  # Abbreviation
+    aliases:
+      - "aceite de oliva virgen extra"
+
+  "207":
+    name: "aceite de girasol"
+    aliases:
+      - "aceite de girasol"
+      - "aceite girasol"
+      - "sunflower oil"
+
+  "208":
+    name: "aceite girasol"  # Missing "de"
+    aliases:
+      - "aceite de girasol"
+
+  "209":
+    name: "sal"
+    aliases:
+      - "sal"
+      - "salt"
+
+  "210":
+    name: "sal marina"
+    aliases:
+      - "sal marina"
+      - "sea salt"
+
+  "211":
+    name: "salt"  # English
+    aliases:
+      - "sal"
+
+  "212":
+    name: "azúcar"
+    aliases:
+      - "azúcar"
+      - "azucar"  # No accent
+      - "sugar"
+
+  "213":
+    name: "azucar"  # No accent
+    aliases:
+      - "azúcar"
+
+  "214":
+    name: "sugar"  # English
+    aliases:
+      - "azúcar"
+
+  "215":
+    name: "harina"
+    aliases:
+      - "harina"
+      - "flour"
+
+  "216":
+    name: "harina de trigo"
+    aliases:
+      - "harina de trigo"
+      - "wheat flour"
+
+  "217":
+    name: "flour"  # English
+    aliases:
+      - "harina"
+
+  "218":
+    name: "arroz"
+    aliases:
+      - "arroz"
+      - "rice"
+
+  "219":
+    name: "arroz blanco"
+    aliases:
+      - "arroz blanco"
+      - "white rice"
+
+  "220":
+    name: "rice"  # English
+    aliases:
+      - "arroz"
+
+  "221":
+    name: "pasta"
+    aliases:
+      - "pasta"
+
+  "222":
+    name: "espaguetis"
+    aliases:
+      - "espaguetis"
+      - "espaghetis"  # Typo
+      - "spaghetti"
+
+  "223":
+    name: "espaghetis"  # Typo
+    aliases:
+      - "espaguetis"
+
+  "224":
+    name: "spaghetti"  # English
+    aliases:
+      - "espaguetis"
+
+  "225":
+    name: "macarrones"
+    aliases:
+      - "macarrones"
+      - "macaroni"
+
+  "226":
+    name: "macaroni"  # English
+    aliases:
+      - "macarrones"
+
+  "227":
+    name: "pan"
+    aliases:
+      - "pan"
+      - "bread"
+
+  "228":
+    name: "pan integral"
+    aliases:
+      - "pan integral"
+      - "whole wheat bread"
+
+  "229":
+    name: "bread"  # English
+    aliases:
+      - "pan"
+
+  # PROBLEMATIC ENTRIES (20 entries with clear issues)
+  "240":
+    name: ""  # Empty name
+    aliases:
+      - "producto desconocido"
+
+  "241":
+    name: "PRODUCTO SIN NOMBRE"  # All caps, generic
+    aliases: []
+
+  "242":
+    name: "XXX ERROR XXX"  # Clear error
+    aliases:
+      - "error en base de datos"
+
+  "243":
+    name: "limones/lemons/citrus"  # Multiple languages mixed
+    aliases:
+      - "limones"
+
+  "244":
+    name: "test product"  # Test data
+    aliases:
+      - "producto de prueba"
+
+  "245":
+    name: "DELETE ME"  # Data to be deleted
+    aliases: []
+
+  "246":
+    name: "NULL"  # Technical value
+    aliases: []
+
+  "247":
+    name: "undefined"  # Programming value
+    aliases:
+      - "no definido"
+
+  "248":
+    name: "123456"  # Numeric ID as name
+    aliases: []
+
+  "249":
+    name: "???"  # Question marks
+    aliases:
+      - "producto desconocido"
+
+  "250":
+    name: "DUPLICATE_ENTRY_ERROR"  # Database error
+    aliases: []
+
+  # NON-FOOD ITEMS FOR DISAMBIGUATION TESTING (50 entries)
+  # These products share words with food items but are different categories
+
+  # PERSONAL CARE PRODUCTS
+  "301":
+    name: "pasta de dientes fresa"
+    aliases:
+      - "pasta de dientes fresa"
+      - "pasta dental fresa"
+      - "dentífrico fresa"
+      - "toothpaste strawberry"
+
+  "302":
+    name: "champú manzana"
+    aliases:
+      - "champú manzana"
+      - "shampoo manzana"
+      - "champú apple"
+      - "apple shampoo"
+
+  "303":
+    name: "gel ducha"
+    aliases:
+      - "gel ducha"
+      - "gel de ducha"
+      - "shower gel"
+      - "jabón líquido"
+
+  "304":
+    name: "crema facial"
+    aliases:
+      - "crema facial"
+      - "face cream"
+      - "crema hidratante"
+
+  "305":
+    name: "jabón pastilla"
+    aliases:
+      - "jabón pastilla"
+      - "jabón en barra"
+      - "soap bar"
+
+  "306":
+    name: "leche bronceadora"
+    aliases:
+      - "leche bronceadora"
+      - "protector solar"
+      - "suntan lotion"
+      - "bronzing milk"
+
+  "307":
+    name: "aceite esencial lavanda"
+    aliases:
+      - "aceite esencial lavanda"
+      - "essential oil lavender"
+      - "aceite aromático"
+
+  "308":
+    name: "manteca de cacao"
+    aliases:
+      - "manteca de cacao"
+      - "cocoa butter"
+      - "manteca cacao"
+
+  "309":
+    name: "cera depilar"
+    aliases:
+      - "cera depilar"
+      - "wax hair removal"
+      - "cera depilación"
+
+  "310":
+    name: "perfume mujer"
+    aliases:
+      - "perfume mujer"
+      - "fragancia femenina"
+      - "women's perfume"
+
+  # CLEANING PRODUCTS
+  "311":
+    name: "agua oxigenada"
+    aliases:
+      - "agua oxigenada"
+      - "peróxido de hidrógeno"
+      - "hydrogen peroxide"
+
+  "312":
+    name: "alcohol etílico"
+    aliases:
+      - "alcohol etílico"
+      - "alcohol medicinal"
+      - "ethyl alcohol"
+      - "alcohol desinfectante"
+
+  "313":
+    name: "vinagre limpieza"
+    aliases:
+      - "vinagre limpieza"
+      - "vinagre blanco limpieza"
+      - "cleaning vinegar"
+
+  "314":
+    name: "papel aluminio"
+    aliases:
+      - "papel aluminio"
+      - "papel de aluminio"
+      - "aluminum foil"
+      - "papel plata"
+
+  "315":
+    name: "papel regalo"
+    aliases:
+      - "papel regalo"
+      - "papel de regalo"
+      - "gift wrap"
+      - "wrapping paper"
+
+  # AUTOMOTIVE/INDUSTRIAL
+  "316":
+    name: "aceite motor"
+    aliases:
+      - "aceite motor"
+      - "aceite de motor"
+      - "motor oil"
+      - "aceite coche"
+
+  "317":
+    name: "batería coche"
+    aliases:
+      - "batería coche"
+      - "batería automóvil"
+      - "car battery"
+
+  "318":
+    name: "pintura pared"
+    aliases:
+      - "pintura pared"
+      - "pintura interior"
+      - "wall paint"
+
+  # ELECTRONICS
+  "319":
+    name: "cargador móvil"
+    aliases:
+      - "cargador móvil"
+      - "cargador teléfono"
+      - "phone charger"
+      - "mobile charger"
+
+  "320":
+    name: "batería móvil"
+    aliases:
+      - "batería móvil"
+      - "battery phone"
+      - "pila móvil"
+
+  # CLOTHING AND ACCESSORIES
+  "321":
+    name: "zapatos deportivos"
+    aliases:
+      - "zapatos deportivos"
+      - "zapatillas deporte"
+      - "sneakers"
+      - "running shoes"
+
+  "322":
+    name: "camiseta algodón"
+    aliases:
+      - "camiseta algodón"
+      - "t-shirt cotton"
+      - "playera algodón"
+
+  # FURNITURE AND HOME
+  "323":
+    name: "lámpara escritorio"
+    aliases:
+      - "lámpara escritorio"
+      - "desk lamp"
+      - "luz escritorio"
+
+  "324":
+    name: "plantas interior"
+    aliases:
+      - "plantas interior"
+      - "plantas decorativas"
+      - "indoor plants"
+      - "houseplants"
+
+  # BOOKS AND MEDIA
+  "325":
+    name: "libro cocina"
+    aliases:
+      - "libro cocina"
+      - "cookbook"
+      - "recetario"
+      - "libro recetas"
+
+  "326":
+    name: "software ordenador"
+    aliases:
+      - "software ordenador"
+      - "computer software"
+      - "programa informático"
+
+  # TOOLS
+  "327":
+    name: "herramienta jardín"
+    aliases:
+      - "herramienta jardín"
+      - "garden tool"
+      - "utensilio jardín"
+
+  # TOYS AND GAMES
+  "328":
+    name: "juguete niños"
+    aliases:
+      - "juguete niños"
+      - "toy kids"
+      - "juguete infantil"
+
+  # MEDICAL/PHARMACY
+  "329":
+    name: "medicamento ibuprofeno"
+    aliases:
+      - "medicamento ibuprofeno"
+      - "ibuprofeno"
+      - "ibuprofen"
+      - "analgésico"
+
+  "330":
+    name: "mascarilla quirúrgica"
+    aliases:
+      - "mascarilla quirúrgica"
+      - "surgical mask"
+      - "mascarilla médica"
+
+  # ADDITIONAL CONFUSING ITEMS
+  "331":
+    name: "crema manos"
+    aliases:
+      - "crema manos"
+      - "hand cream"
+      - "loción manos"
+
+  "332":
+    name: "aceite masaje"
+    aliases:
+      - "aceite masaje"
+      - "massage oil"
+      - "aceite corporal"
+
+  "333":
+    name: "sal baño"
+    aliases:
+      - "sal baño"
+      - "sales de baño"
+      - "bath salts"
+
+  "334":
+    name: "azúcar exfoliante"
+    aliases:
+      - "azúcar exfoliante"
+      - "sugar scrub"
+      - "exfoliante corporal"
+
+  "335":
+    name: "miel cosmética"
+    aliases:
+      - "miel cosmética"
+      - "honey cosmetic"
+      - "mascarilla miel"
+
+  "336":
+    name: "café exfoliante"
+    aliases:
+      - "café exfoliante"
+      - "coffee scrub"
+      - "exfoliante café"
+
+  "337":
+    name: "té adelgazante"
+    aliases:
+      - "té adelgazante"
+      - "weight loss tea"
+      - "té diet"
+
+  "338":
+    name: "agua perfumada"
+    aliases:
+      - "agua perfumada"
+      - "scented water"
+      - "agua colonia"
+
+  "339":
+    name: "leche limpiadora"
+    aliases:
+      - "leche limpiadora"
+      - "cleansing milk"
+      - "desmaquillante"
+
+  "340":
+    name: "mantequilla corporal"
+    aliases:
+      - "mantequilla corporal"
+      - "body butter"
+      - "crema corporal densa"
+
+  "341":
+    name: "vino tinto mancha"
+    aliases:
+      - "vino tinto mancha"
+      - "wine stain"
+      - "mancha vino"
+
+  "342":
+    name: "cerveza champú"
+    aliases:
+      - "cerveza champú"
+      - "beer shampoo"
+      - "champú cerveza"
+
+  "343":
+    name: "huevo champú"
+    aliases:
+      - "huevo champú"
+      - "egg shampoo"
+      - "champú huevo"
+
+  "344":
+    name: "pan jabón"
+    aliases:
+      - "pan jabón"
+      - "soap loaf"
+      - "barra jabón grande"
+
+  "345":
+    name: "queso vela"
+    aliases:
+      - "queso vela"
+      - "cheese candle"
+      - "vela forma queso"
+
+  "346":
+    name: "pasta modelar"
+    aliases:
+      - "pasta modelar"
+      - "modeling paste"
+      - "masa modelar"
+
+  "347":
+    name: "arroz papel"
+    aliases:
+      - "arroz papel"
+      - "rice paper"
+      - "papel arroz"
+
+  "348":
+    name: "harina talco"
+    aliases:
+      - "harina talco"
+      - "talcum powder"
+      - "talco bebé"
+
+  "349":
+    name: "aceite lámpara"
+    aliases:
+      - "aceite lámpara"
+      - "lamp oil"
+      - "aceite queroseno"
+
+  "350":
+    name: "agua destilada"
+    aliases:
+      - "agua destilada"
+      - "distilled water"
+      - "agua pura"

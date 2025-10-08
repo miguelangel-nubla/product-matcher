@@ -22,13 +22,13 @@ class TestMockAdapter:
 
     def test_get_product_details(self, adapter):
         """Test getting product details."""
-        product = adapter.get_product_details("productId1")
+        product = adapter.get_product_details("1")
         assert product is not None
-        assert product.id == "productId1"
+        assert product.id == "1"
 
     def test_add_alias_success(self, adapter):
         """Test adding alias to mock adapter."""
-        success, error = adapter.add_alias("productId1", "New Alias")
+        success, error = adapter.add_alias("1", "New Alias")
         assert success is True
         assert error is None
 
@@ -45,6 +45,6 @@ class TestMockAdapter:
 
     def test_get_product_url(self, adapter):
         """Test getting product URL."""
-        url = adapter.get_product_url("productId1")
+        url = adapter.get_product_url("1")
         assert url is not None
-        assert "productId1" in url
+        assert "1" in url

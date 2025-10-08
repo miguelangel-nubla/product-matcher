@@ -183,9 +183,9 @@ class MatchResult(SQLModel):
     normalized_input: str
     pending_query_id: uuid.UUID | None = None
     candidates: list[MatchCandidate] = []  # Top 5 best matches found
-    debug_info: list[
-        DebugStep
-    ] | None = None  # Debug information as list of step objects
+    debug_info: list[DebugStep] | None = (
+        None  # Debug information as list of step objects
+    )
 
 
 # Model for resolving pending queries

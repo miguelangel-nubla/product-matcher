@@ -17,21 +17,21 @@ repos:
             )$
       - id: trailing-whitespace
         exclude: ^frontend/src/client/.*
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.2.2
-    hooks:
-      - id: ruff
-        args:
-          - --fix
-      - id: ruff-format
   - repo: local
     hooks:
-      - id: mypy-backend
-        name: mypy
-        entry: bash -c 'cd backend && uv run mypy app'
+      - id: backend-lint
+        name: backend lint
+        entry: bash -c 'cd backend && bash scripts/lint.sh --fix'
         language: system
         types: [python]
         files: ^backend/
+      - id: backend-tests
+        name: backend tests
+        entry: bash -c 'cd backend && bash scripts/tests-start.sh'
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
   - repo: local
     hooks:
       - id: local-biome-check
