@@ -1,4 +1,6 @@
-![Product Matcher Logo](frontend/public/assets/images/logo.png)
+<p align="center">
+  <img src="frontend/public/assets/images/logo.png" alt="Product Matcher Logo" width="300">
+</p>
 
 # ProductMatcher
 
