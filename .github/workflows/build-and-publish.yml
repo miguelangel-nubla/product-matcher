@@ -95,6 +95,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Generate API client
+        run: |
+          cd backend
+          uv sync
+          uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../openapi.json
+          cd ../frontend
+          mv ../openapi.json ./
+          npm install
+          npm run generate-client
+
       - name: Build and test backend image
         uses: docker/build-push-action@v5
         with:
