@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.2.0...v1.2.1) (2025-10-08)
+
+
+### Bug Fixes
+
+* remove volume mount from prestart service to allow backends.yaml creation ([f85f1b7](https://github.com/miguelangel-nubla/product-matcher/commit/f85f1b763b2e2ebf203b5b08f582be3cf88cf9a8))
+
 # [1.2.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.1.2...v1.2.0) (2025-10-08)
 
 
