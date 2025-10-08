@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.1.0...v1.1.1) (2025-10-08)
+
+
+### Bug Fixes
+
+* update UV to latest version in CI workflows ([db8acf1](https://github.com/miguelangel-nubla/product-matcher/commit/db8acf129d8b4e42ebf507c4f32a82c47ee6ce77))
+
 # [1.1.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.0.0...v1.1.0) (2025-10-08)
 
 
