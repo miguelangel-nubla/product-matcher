@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.2.1...v1.2.2) (2025-10-08)
+
+
+### Bug Fixes
+
+* correct semantic-release action outputs for Docker image building ([6f4af5e](https://github.com/miguelangel-nubla/product-matcher/commit/6f4af5ee5de2d3827abb81a181c69827c328babe))
+
 ## [1.2.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.2.0...v1.2.1) (2025-10-08)
 
 
