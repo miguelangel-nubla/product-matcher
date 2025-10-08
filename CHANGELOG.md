@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.1.1...v1.1.2) (2025-10-08)
+
+
+### Bug Fixes
+
+* update pre-commit config and fix failing tests ([65a02b2](https://github.com/miguelangel-nubla/product-matcher/commit/65a02b2719b800af5a1766ba9adc16c59dad7ba0))
+
 ## [1.1.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.1.0...v1.1.1) (2025-10-08)
 
 
