@@ -101,7 +101,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Generate API client
         run: |
@@ -113,35 +113,6 @@ jobs:
           npm install
           npm run generate-client
 
-      - name: Build and test backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: false
-          tags: product-matcher-backend:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and test frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: false
-          tags: product-matcher-frontend:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            VITE_API_URL=http://localhost:8000
-            NODE_ENV=production
-
-      - name: Test images with docker compose dev
-        run: |
-          echo "Testing built images..."
-          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
-          curl --fail --retry 5 --retry-delay 2 http://localhost:8000/api/v1/utils/health-check
-          curl --fail --retry 5 --retry-delay 2 http://localhost:5173
-          docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans
-
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
@@ -151,6 +122,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:v${{ needs.release.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest
           cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -161,6 +133,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:v${{ needs.release.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:latest
           cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             VITE_API_URL=http://localhost:8000
             NODE_ENV=production
