@@ -4,14 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-
-@dataclass
-class DebugStep:
-    """Represents a single debug step."""
-
-    message: str
-    timestamp: float
-    data: Any = None
+from app.models import DebugStep
 
 
 @dataclass

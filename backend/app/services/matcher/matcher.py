@@ -4,7 +4,8 @@ from typing import Any
 
 from app.models import BackendConfig
 
-from ..debug import DebugStep, DebugStepTracker
+from ...models import DebugStep
+from ..debug import DebugStepTracker
 from .data_preparation import DataPreparation
 from .pipeline import MatchingPipeline
 

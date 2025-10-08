@@ -178,7 +178,7 @@ class DebugStep(BaseModel):
     data: Any = None
 
 
-class MatchResult(SQLModel):
+class MatchResult(BaseModel):
     success: bool  # True if match exceeded threshold
     normalized_input: str
     pending_query_id: uuid.UUID | None = None
