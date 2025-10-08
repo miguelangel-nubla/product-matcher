@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.2.2...v1.3.0) (2025-10-08)
+
+
+### Features
+
+* add API client generation to Docker build workflow ([d88224f](https://github.com/miguelangel-nubla/product-matcher/commit/d88224f4c3acf8840b3e87779d7caa1bd35d5cb7))
+
 ## [1.2.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.2.1...v1.2.2) (2025-10-08)
 
 
