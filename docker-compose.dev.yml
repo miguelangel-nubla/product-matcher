@@ -1,0 +1,59 @@
+# Development/testing compose extension
+# Use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Adds mailcatcher for email testing and development
+services:
+  mailcatcher:
+    image: dockage/mailcatcher:0.9.0
+    restart: always
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
+  prestart:
+    environment:
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      mailcatcher:
+        condition: service_started
+
+  backend:
+    environment:
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      prestart:
+        condition: service_completed_successfully
+      mailcatcher:
+        condition: service_started
+
+  playwright:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.playwright
+      args:
+        - VITE_API_URL=http://backend:8000
+        - NODE_ENV=production
+    ipc: host
+    depends_on:
+      - backend
+      - mailcatcher
+    env_file:
+      - .env
+    environment:
+      - VITE_API_URL=http://backend:8000
+      - MAILCATCHER_HOST=http://mailcatcher:1080
+      # For the reports when run locally
+      - PLAYWRIGHT_HTML_HOST=0.0.0.0
+      - CI=${CI}
+    volumes:
+      - ./frontend/blob-report:/app/blob-report
+      - ./frontend/test-results:/app/test-results
+    ports:
+      - 9323:9323
