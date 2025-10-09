@@ -55,9 +55,7 @@ def load_backends_config() -> dict[str, Any]:
     Returns:
         Dictionary containing the parsed and processed configuration
     """
-    # Allow environment variable to override config path (for tests)
-    config_path_str = os.getenv("BACKENDS_CONFIG_PATH", "/app/config/backends.yaml")
-    config_path = Path(config_path_str)
+    config_path = Path(__file__).parent / "backends.yaml"
 
     if not config_path.exists():
         raise FileNotFoundError(f"Backend configuration file not found: {config_path}")
