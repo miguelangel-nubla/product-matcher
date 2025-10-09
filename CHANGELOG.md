@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.4...v1.5.5) (2025-10-09)
+
+
+### Bug Fixes
+
+* resolve backend configuration mounting issues ([55c3b78](https://github.com/miguelangel-nubla/product-matcher/commit/55c3b78b77bbaafd605c1fb8e8791402a7c51abd))
+
 ## [1.5.4](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.3...v1.5.4) (2025-10-09)
 
 
