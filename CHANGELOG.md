@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.3...v1.5.4) (2025-10-09)
+
+
+### Bug Fixes
+
+* correct bash syntax in debug workflow ([ede2cd9](https://github.com/miguelangel-nubla/product-matcher/commit/ede2cd9fd1c208f275f7dd8cafc3b805848bea2c))
+
 ## [1.5.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.2...v1.5.3) (2025-10-09)
 
 
