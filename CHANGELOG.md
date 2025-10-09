@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.2...v1.5.3) (2025-10-09)
+
+
+### Bug Fixes
+
+* restore original health check timeouts ([dcf78c6](https://github.com/miguelangel-nubla/product-matcher/commit/dcf78c6adeb22b1157a1cdfd16b4173cf512903b))
+
 ## [1.5.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.1...v1.5.2) (2025-10-09)
 
 
