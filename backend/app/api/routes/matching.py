@@ -83,7 +83,7 @@ def match_product(
             matched_product_id=best_match[0],  # product_id
             matched_text="",  # We don't track this anymore
             confidence_score=best_match[1],  # confidence
-            threshold_used=query.threshold,
+            threshold_used=threshold,
             owner_id=current_user.id,
         )
         session.add(match_log)
