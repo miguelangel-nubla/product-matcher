@@ -83,9 +83,9 @@ services:
       - "8000:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 15s
+      timeout: 10s
+      retries: 8
 
   frontend:
     image: ghcr.io/miguelangel-nubla/product-matcher-frontend:latest
