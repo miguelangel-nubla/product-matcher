@@ -53,8 +53,10 @@ services:
       dockerfile: Dockerfile.playwright
     ipc: host
     depends_on:
-      - backend
-      - mailcatcher
+      backend:
+        condition: service_healthy
+      mailcatcher:
+        condition: service_started
     env_file:
       - .env
     environment:
