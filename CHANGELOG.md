@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.6.0...v1.7.0) (2025-10-09)
+
+
+### Features
+
+* expand test coverage to 71% with comprehensive test suites ([357d051](https://github.com/miguelangel-nubla/product-matcher/commit/357d051d6694cf24d069e9e19997fa1c1ecf9585))
+* improve test coverage from 58% to 76% and fix threshold logging bug ([7a39809](https://github.com/miguelangel-nubla/product-matcher/commit/7a398098ec3fd493518f66ce8bc47f32d9f1f3bf))
+
 # [1.6.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.5...v1.6.0) (2025-10-09)
 
 
