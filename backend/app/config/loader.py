@@ -55,7 +55,7 @@ def load_backends_config() -> dict[str, Any]:
     Returns:
         Dictionary containing the parsed and processed configuration
     """
-    config_path = Path(__file__).parent / "backends.yaml"
+    config_path = Path(__file__).parent / "user" / "backends.yaml"
 
     if not config_path.exists():
         raise FileNotFoundError(f"Backend configuration file not found: {config_path}")

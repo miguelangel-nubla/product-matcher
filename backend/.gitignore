@@ -7,4 +7,4 @@ htmlcov
 .cache
 .venv
 
-app/config/backends.yaml
+app/config/user/backends.yaml

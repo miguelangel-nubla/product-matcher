@@ -61,7 +61,7 @@ Deploy using pre-built Docker images - no building required!
 
 ### Backend Adapters
 
-Configure your inventory systems in `backend/app/config/backends.yaml`:
+Configure your inventory systems in `backend/app/config/user/backends.yaml`:
 
 ```yaml
 backends:
