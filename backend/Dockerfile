@@ -41,4 +41,5 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
 
-CMD ["fastapi", "run", "--workers", "4", "app/main.py"]
+# CMD ["fastapi", "run", "--workers", "4", "app/main.py"]  # UVICORN_LOG_LEVEL env var not working as expected
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -77,6 +77,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changethis}
       - SENTRY_DSN=${SENTRY_DSN:-}
+      - LOG_LEVEL=${LOG_LEVEL:-warning}
+      - UVICORN_LOG_LEVEL=${LOG_LEVEL:-warning}
     ports:
       - "8000:8000"
     healthcheck:
