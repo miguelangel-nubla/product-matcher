@@ -43,14 +43,14 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        - VITE_API_URL=__VITE_API_URL__
+        - NODE_ENV=production
 
   playwright:
     build:
       context: ./frontend
       dockerfile: Dockerfile.playwright
-      args:
-        - VITE_API_URL=http://backend:8000
-        - NODE_ENV=production
     ipc: host
     depends_on:
       - backend
