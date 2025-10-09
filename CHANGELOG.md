@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.1...v1.5.2) (2025-10-09)
+
+
+### Bug Fixes
+
+* increase backend health check timeouts for CI stability ([acc9bb4](https://github.com/miguelangel-nubla/product-matcher/commit/acc9bb457614a2ec3a60798d4b93e56e83524a7b))
+
 ## [1.5.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.0...v1.5.1) (2025-10-09)
 
 
