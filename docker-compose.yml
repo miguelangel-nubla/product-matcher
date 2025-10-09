@@ -1,5 +1,5 @@
 # Simple deployment with published Docker images
-# REQUIRED: Create backend/app/config/backends.yaml from backends.example.yaml
+# REQUIRED: Create config/backends.yaml from config/backends.example.yaml
 services:
   db:
     image: postgres:17
@@ -22,6 +22,8 @@ services:
 
   prestart:
     image: ghcr.io/miguelangel-nubla/product-matcher-backend:latest
+    volumes:
+      - ./config:/app/config
     depends_on:
       db:
         condition: service_healthy
@@ -57,7 +59,7 @@ services:
       prestart:
         condition: service_completed_successfully
     volumes:
-      - ./backend/app/config/backends.yaml:/app/app/config/backends.yaml:ro
+      - ./config:/app/config
     environment:
       - PROJECT_NAME=${PROJECT_NAME:-Product Matcher}
       - DOMAIN=${DOMAIN:-localhost}
