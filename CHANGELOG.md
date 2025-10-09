@@ -1,3 +1,15 @@
+# [1.6.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.5...v1.6.0) (2025-10-09)
+
+
+### Features
+
+* reorganize backend config structure to user subdirectory ([e8c39f5](https://github.com/miguelangel-nubla/product-matcher/commit/e8c39f5cfd17adbf96345244a241a2670d9aa3ad))
+
+
+### Reverts
+
+* backend configuration mounting issues ([180f9b5](https://github.com/miguelangel-nubla/product-matcher/commit/180f9b5f856859082a1ec3395345ee5949cb54f9))
+
 ## [1.5.5](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.4...v1.5.5) (2025-10-09)
 
 
