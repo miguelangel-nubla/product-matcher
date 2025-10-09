@@ -90,7 +90,7 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.dev.yml logs --tail=10 backend
             echo "Health check test:"
             docker compose -f docker-compose.yml -f docker-compose.dev.yml exec backend curl -f http://localhost:8000/api/v1/utils/health-check/ || echo "Health check failed"
-            if docker compose -f docker-compose.yml -f docker-compose.dev.yml ps backend | grep healthy; do
+            if docker compose -f docker-compose.yml -f docker-compose.dev.yml ps backend | grep healthy; then
               echo "Backend is healthy!"
               break
             fi
