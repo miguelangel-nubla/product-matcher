@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.5.0...v1.5.1) (2025-10-09)
+
+
+### Bug Fixes
+
+* wait for backend health check before running Playwright tests ([5f4d7e1](https://github.com/miguelangel-nubla/product-matcher/commit/5f4d7e1ff4bc91e839b3b9733d5e80433f4887d2))
+
 # [1.5.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.4.0...v1.5.0) (2025-10-09)
 
 
