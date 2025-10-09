@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.4...v1.4.0) (2025-10-09)
+
+
+### Features
+
+* suppress health check log spam with configurable log level ([714ddb4](https://github.com/miguelangel-nubla/product-matcher/commit/714ddb4e0e7ed21e719e17062b2a05b2b9d02565))
+
 ## [1.3.4](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.3...v1.3.4) (2025-10-08)
 
 
