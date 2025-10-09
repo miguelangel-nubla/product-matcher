@@ -72,6 +72,30 @@ jobs:
           VIRTUAL_ENV: backend/.venv
       - run: docker compose -f docker-compose.yml -f docker-compose.dev.yml build
       - run: docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans
+      - name: Start services and debug backend startup
+        run: |
+          echo "Starting services..."
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db mailcatcher
+          echo "Waiting for database to be healthy..."
+          timeout 60 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.dev.yml ps db | grep healthy; do sleep 2; done'
+          echo "Starting prestart..."
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm prestart
+          echo "Starting backend..."
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend
+          echo "Monitoring backend startup for 60 seconds..."
+          for i in {1..12}; do
+            echo "--- Check $i ($(date)) ---"
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml ps backend
+            echo "Backend logs:"
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml logs --tail=10 backend
+            echo "Health check test:"
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec backend curl -f http://localhost:8000/api/v1/utils/health-check/ || echo "Health check failed"
+            if docker compose -f docker-compose.yml -f docker-compose.dev.yml ps backend | grep healthy; do
+              echo "Backend is healthy!"
+              break
+            fi
+            sleep 5
+          done
       - name: Run Playwright tests
         run: docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm playwright npx playwright test --fail-on-flaky-tests --trace=retain-on-failure --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
       - run: docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v --remove-orphans
