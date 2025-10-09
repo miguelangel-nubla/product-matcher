@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.4.0...v1.5.0) (2025-10-09)
+
+
+### Features
+
+* add dynamic environment variable injection for frontend Docker builds ([4be9dfd](https://github.com/miguelangel-nubla/product-matcher/commit/4be9dfd35a56c81d4bc39e4291ea454753aa3496))
+
 # [1.4.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.3.4...v1.4.0) (2025-10-09)
 
 
