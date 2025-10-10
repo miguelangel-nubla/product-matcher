@@ -27,7 +27,7 @@ repos:
         files: ^backend/
       - id: backend-tests
         name: backend tests
-        entry: bash scripts/test.sh
+        entry: uv run bash scripts/test.sh
         language: system
         types: [python]
         files: ^backend/
