@@ -2,6 +2,9 @@
 # Use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 # Adds mailcatcher for email testing and development
 services:
+  db:
+    ports:
+      - "5432:5432"
   mailcatcher:
     image: schickling/mailcatcher
     ports:

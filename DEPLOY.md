@@ -27,31 +27,7 @@ This guide shows how to deploy the Product Matcher application using pre-built D
 
 ## Environment Variables (Optional)
 
-Create a `.env` file to customize settings:
-
-```env
-# Database
-POSTGRES_PASSWORD=your_secure_password
-POSTGRES_USER=postgres
-POSTGRES_DB=app
-
-# Admin User
-FIRST_SUPERUSER=your@email.com
-FIRST_SUPERUSER_PASSWORD=your_secure_password
-
-# Security
-SECRET_KEY=your_secret_key_here
-
-# Frontend URL (if different)
-FRONTEND_HOST=http://localhost:3000
-VITE_API_URL=http://localhost:8000
-
-# Email (optional)
-SMTP_HOST=your_smtp_host
-SMTP_USER=your_smtp_user
-SMTP_PASSWORD=your_smtp_password
-EMAILS_FROM_EMAIL=noreply@yourdomain.com
-```
+Modify the `.env` file to customize settings:
 
 ## Generate Secure Keys
 
