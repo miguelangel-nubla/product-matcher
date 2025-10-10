@@ -1,4 +1,5 @@
 import logging
+import logging.config
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -12,7 +13,14 @@ from jwt.exceptions import InvalidTokenError
 from app.core import security
 from app.core.config import settings
 
-logging.basicConfig(level=logging.INFO)
+
+def setup_logging() -> None:
+    """Setup logging using logging.conf file."""
+    config_path = Path(__file__).parent.parent / "logging.conf"
+    logging.config.fileConfig(config_path)
+
+
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
