@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.2...v1.7.3) (2025-10-10)
+
+
+### Bug Fixes
+
+* resolve permission issues and rename dev compose file ([3eca80b](https://github.com/miguelangel-nubla/product-matcher/commit/3eca80ba8b6ca549425381758df38c34ca3d91fa))
+
 ## [1.7.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.1...v1.7.2) (2025-10-10)
 
 
