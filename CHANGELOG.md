@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.9.0...v1.9.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* update test API URL to use backend port 80 ([9550437](https://github.com/miguelangel-nubla/product-matcher/commit/95504376d7880caed9caa5526161c25c407f6aa2))
+
 # [1.9.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.8.2...v1.9.0) (2025-10-10)
 
 
