@@ -43,9 +43,6 @@ services:
   frontend:
     build:
       context: ./frontend
-      args:
-        - VITE_API_URL=__VITE_API_URL__
-        - NODE_ENV=production
 
   playwright:
     build:
