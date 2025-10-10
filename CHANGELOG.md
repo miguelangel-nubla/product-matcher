@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.12.0...v1.12.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* propagate backend errors as HTTP errors instead of failed matches ([92a769c](https://github.com/miguelangel-nubla/product-matcher/commit/92a769cb354e3c817aa7155aab719e3444594243))
+
 # [1.12.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.11.1...v1.12.0) (2025-10-10)
 
 
