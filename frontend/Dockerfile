@@ -33,15 +33,5 @@ COPY ./nginx-backend-not-found.conf /etc/nginx/extra-conf.d/backend-not-found.co
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Create non-root user for nginx
-RUN addgroup -g 101 -S nginx || true
-RUN adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx || true
-
-# Set proper ownership
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx
-
-# Run as non-root user
-USER nginx
-
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
