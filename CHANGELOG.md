@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.9.2...v1.10.0) (2025-10-10)
+
+
+### Features
+
+* add configurable reverse proxy for frontend API requests ([22cec23](https://github.com/miguelangel-nubla/product-matcher/commit/22cec236482b44be9570ad1baf55dd76cc6e639e))
+
 ## [1.9.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.9.1...v1.9.2) (2025-10-10)
 
 
