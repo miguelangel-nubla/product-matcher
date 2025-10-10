@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.11.1...v1.12.0) (2025-10-10)
+
+
+### Features
+
+* **normalization:** add Roman numeral removal to Spanish normalizer ([23c8b3c](https://github.com/miguelangel-nubla/product-matcher/commit/23c8b3cc0d8351e92029817bf853232ea1ddbeb1))
+
 ## [1.11.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.11.0...v1.11.1) (2025-10-10)
 
 
