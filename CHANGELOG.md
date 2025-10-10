@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.8.0...v1.8.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* simplify frontend Dockerfile and fix entrypoint shell ([571e00f](https://github.com/miguelangel-nubla/product-matcher/commit/571e00f3adaca0c1f3c949894b5504f458dc0e2d))
+
 # [1.8.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.5...v1.8.0) (2025-10-10)
 
 
