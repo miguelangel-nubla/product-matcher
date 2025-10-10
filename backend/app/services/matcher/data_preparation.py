@@ -2,7 +2,8 @@
 
 from typing import Any
 
-from app.models import BackendConfig
+from app.adapters.base import ProductDatabaseAdapter
+from app.services.backend import Backend
 
 from ..debug import DebugStepTracker
 from .context import MatchingContext
@@ -18,7 +19,7 @@ class DataPreparation:
         self,
         normalizer: Any,
         input_query: str,
-        backend_config: BackendConfig,
+        backend: Backend,
         debug: DebugStepTracker,
     ) -> MatchingContext:
         """
@@ -27,7 +28,7 @@ class DataPreparation:
         Args:
             normalizer: Configured normalizer instance
             input_query: Raw input query to match
-            backend_config: Backend configuration
+            backend: Backend instance with adapter and configuration
             debug: Debug tracker
 
         Returns:
@@ -45,7 +46,7 @@ class DataPreparation:
 
         # Get normalized aliases - pass normalizer instance
         normalized_aliases = self._get_normalized_aliases(
-            normalizer, backend_config, debug
+            normalizer, debug, backend.adapter
         )
 
         # Prepare debug data with input tokens and all aliases
@@ -70,12 +71,15 @@ class DataPreparation:
             input_tokens=input_tokens,
             normalized_input=normalized_input,
             normalized_aliases=normalized_aliases,
-            backend_config=backend_config,
+            backend=backend,
             debug=debug,
         )
 
     def _get_normalized_aliases(
-        self, normalizer: Any, backend_config: BackendConfig, debug: DebugStepTracker
+        self,
+        normalizer: Any,
+        debug: DebugStepTracker,
+        backend_adapter: ProductDatabaseAdapter,
     ) -> list[tuple[str, str, list[str]]]:
         """
         Get normalized aliases with immediate cache expiry.
@@ -87,7 +91,7 @@ class DataPreparation:
 
         # Fetch and normalize aliases
         debug.add("Starting backend alias fetch")
-        aliases = self._fetch_aliases_from_backend(backend_config)
+        aliases = backend_adapter.get_all_aliases()
 
         debug.add(f"Alias fetch completed, normalizing {len(aliases)} aliases")
         normalized_aliases = []
@@ -101,36 +105,6 @@ class DataPreparation:
             f"Alias normalization completed: processed {len(normalized_aliases)} aliases"
         )
         return normalized_aliases
-
-    def _fetch_aliases_from_backend(
-        self, backend_config: BackendConfig
-    ) -> list[tuple[str, str]]:
-        """
-        Fetch aliases from the backend system.
-
-        Args:
-            backend_config: Backend configuration (should contain backend name)
-
-        Returns:
-            List of (product_id, alias) tuples
-        """
-        # Import here to avoid circular imports
-        from ...adapters.registry import get_backend
-
-        # Extract backend type from typed config
-        backend_name = backend_config.adapter.type
-
-        backend = get_backend(backend_name)
-        products = backend.get_all_products()
-
-        aliases = []
-        for product in products:
-            # Add all aliases (including primary name)
-            if hasattr(product, "aliases") and product.aliases:
-                for alias in product.aliases:
-                    aliases.append((product.id, alias))
-
-        return aliases
 
     def clear_cache(self, normalizer: Any) -> None:
         """Clear the normalization cache in the provided normalizer."""

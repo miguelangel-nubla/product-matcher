@@ -5,7 +5,6 @@ from unittest.mock import Mock
 
 from app.services.matcher.strategies.fuzzy import FuzzyMatchingStrategy
 from app.services.matcher.context import MatchingContext, MatchingResult
-from app.models import BackendConfig
 
 
 class TestFuzzyMatchingStrategy:
@@ -19,16 +18,13 @@ class TestFuzzyMatchingStrategy:
 
     def create_context(self, input_tokens, normalized_aliases):
         """Create a MatchingContext for testing."""
-        from app.models import AdapterConfig
+        mock_backend = Mock()
+        mock_backend.language = "en"
         return MatchingContext(
             input_tokens=input_tokens,
             normalized_input=" ".join(input_tokens),
             normalized_aliases=normalized_aliases,
-            backend_config=BackendConfig(
-                description="Test backend",
-                language="en",
-                adapter=AdapterConfig(type="mock", config={})
-            ),
+            backend=mock_backend,
             debug=self.mock_debug
         )
 

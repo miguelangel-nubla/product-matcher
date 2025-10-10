@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from app.models import BackendConfig
+from app.services.backend import Backend
 
 # Import will be added after DebugStepTracker is moved to shared location
 
@@ -17,7 +17,7 @@ class MatchingContext:
     normalized_aliases: list[
         tuple[str, str, list[str]]
     ]  # (product_id, original_alias, tokens)
-    backend_config: BackendConfig
+    backend: Backend
     debug: Any  # DebugStepTracker - will be properly typed after refactor
 
 

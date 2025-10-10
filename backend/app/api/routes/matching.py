@@ -41,9 +41,6 @@ def match_product(
     # Initialize the refactored matcher
     matcher = ProductMatcher()
 
-    # Get typed backend configuration
-    backend_config = get_backend_config(query.backend)
-
     # Attempt to match the product
     try:
         # Get global settings and ensure valid threshold
@@ -52,7 +49,7 @@ def match_product(
 
         success, normalized_input, candidates, debug_info = matcher.match_product(
             input_query=query.text,
-            backend_config=backend_config,
+            backend_name=query.backend,
             threshold=threshold,
             max_candidates=global_settings.max_candidates,
         )

@@ -9,7 +9,7 @@ backends:
 
   # Example Grocy instance 1 (using default English normalization)
   grocy1:
-    description: "Production Grocy instance (English)"
+    description: "Production Grocy instance"
     language: es
     adapter:
       type: grocy

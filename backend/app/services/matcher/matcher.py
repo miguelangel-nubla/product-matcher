@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from app.models import BackendConfig
+from app.services.backend import Backend, get_backend_instance
 
 from ...models import DebugStep
 from ..debug import DebugStepTracker
@@ -33,10 +33,21 @@ class ProductMatcher:
 
         return get_normalizer(language)
 
+    def _get_backend(self, backend_name: str) -> Backend:
+        """Get backend instance with both adapter and normalizer.
+
+        Args:
+            backend_name: Backend name from configuration (e.g., "grocy1", "mock")
+
+        Returns:
+            Backend instance with adapter and normalizer ready
+        """
+        return get_backend_instance(backend_name)
+
     def match_product(
         self,
         input_query: str,
-        backend_config: BackendConfig,
+        backend_name: str,
         threshold: float = 0.8,
         max_candidates: int = 10,
         debug: DebugStepTracker | None = None,
@@ -46,7 +57,7 @@ class ProductMatcher:
 
         Args:
             input_query: The user's product query
-            backend_config: Backend configuration (contains language and adapter info)
+            backend_name: Backend name (e.g., "grocy1", "mock")
             threshold: Minimum score threshold for fuzzy matching (final fallback)
             max_candidates: Maximum number of candidates to return
             debug: Debug tracker (created if not provided)
@@ -62,16 +73,16 @@ class ProductMatcher:
             debug = DebugStepTracker()
 
         debug.add(
-            f"ProductMatcher.match_product called with: '{input_query}' (language: {backend_config.language}, threshold: {threshold})"
+            f"ProductMatcher.match_product called with: '{input_query}' (backend: {backend_name}, threshold: {threshold})"
         )
 
         try:
-            # Step 1: Get normalizer for the requested language from registry
-            normalizer = self._get_normalizer(backend_config.language)
+            # Step 1: Get backend instance with both adapter and normalizer
+            backend = self._get_backend(backend_name)
 
-            # Step 2: Prepare data and context with normalizer
+            # Step 2: Prepare data and context with backend
             context = self.data_preparation.prepare_context(
-                normalizer, input_query, backend_config, debug
+                backend.normalizer, input_query, backend, debug
             )
 
             # Step 2: Execute matching pipeline using user-provided threshold for all strategies

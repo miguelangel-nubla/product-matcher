@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 from app.services.matcher.data_preparation import DataPreparation
 from app.services.matcher.context import MatchingContext
-from app.models import BackendConfig, AdapterConfig
+from app.services.backend import Backend
 from app.services.debug import DebugStepTracker
 from app.adapters.base import ExternalProduct
 
@@ -16,11 +16,10 @@ class TestDataPreparation:
     def setup_method(self):
         """Set up test fixtures."""
         self.data_prep = DataPreparation()
-        self.backend_config = BackendConfig(
-            description="Test backend",
-            language="en",
-            adapter=AdapterConfig(type="mock", config={})
-        )
+        self.mock_backend = Mock()
+        self.mock_backend.name = "mock"
+        self.mock_backend.language = "en"
+        self.mock_backend.adapter = Mock()
         self.debug = DebugStepTracker()
 
     def test_init(self):
@@ -46,7 +45,7 @@ class TestDataPreparation:
 
         # Execute
         context = self.data_prep.prepare_context(
-            mock_normalizer, "Apple Juice", self.backend_config, self.debug
+            mock_normalizer, "Apple Juice", self.mock_backend, self.debug
         )
 
         # Verify
@@ -54,7 +53,7 @@ class TestDataPreparation:
         assert context.input_tokens == ["apple", "juice"]
         assert context.normalized_input == "apple juice"
         assert context.normalized_aliases == mock_aliases
-        assert context.backend_config == self.backend_config
+        assert context.backend == self.mock_backend
         assert context.debug == self.debug
 
         # Verify normalizer was called for input
@@ -74,7 +73,7 @@ class TestDataPreparation:
         self.data_prep._get_normalized_aliases = Mock(return_value=[])
 
         context = self.data_prep.prepare_context(
-            mock_normalizer, "", self.backend_config, self.debug
+            mock_normalizer, "", self.mock_backend, self.debug
         )
 
         assert context.input_tokens == []
@@ -88,18 +87,11 @@ class TestDataPreparation:
 
         with pytest.raises(Exception, match="Normalization error"):
             self.data_prep.prepare_context(
-                mock_normalizer, "test input", self.backend_config, self.debug
+                mock_normalizer, "test input", self.mock_backend, self.debug
             )
 
-    @patch('app.services.matcher.data_preparation.DataPreparation._fetch_aliases_from_backend')
-    def test_get_normalized_aliases_success(self, mock_fetch_aliases):
+    def test_get_normalized_aliases_success(self):
         """Test successful alias normalization."""
-        # Mock fetched aliases
-        mock_fetch_aliases.return_value = [
-            ("product1", "Apple Juice"),
-            ("product2", "Orange Juice"),
-            ("product3", "Banana Smoothie"),
-        ]
 
         # Mock normalizer
         mock_normalizer = Mock()
@@ -109,9 +101,16 @@ class TestDataPreparation:
             ["banana", "smoothie"],
         ]
 
+        # Mock backend adapter
+        self.mock_backend.adapter.get_all_aliases.return_value = [
+            ("product1", "Apple Juice"),
+            ("product2", "Orange Juice"),
+            ("product3", "Banana Smoothie"),
+        ]
+
         # Execute
         result = self.data_prep._get_normalized_aliases(
-            mock_normalizer, self.backend_config, self.debug
+            mock_normalizer, self.debug, self.mock_backend.adapter
         )
 
         # Verify
@@ -124,148 +123,31 @@ class TestDataPreparation:
 
         # Verify all aliases were normalized
         assert mock_normalizer.normalize.call_count == 3
-        mock_fetch_aliases.assert_called_once_with(self.backend_config)
+        self.mock_backend.adapter.get_all_aliases.assert_called_once()
 
-    @patch('app.services.matcher.data_preparation.DataPreparation._fetch_aliases_from_backend')
-    def test_get_normalized_aliases_empty_backend(self, mock_fetch_aliases):
+    def test_get_normalized_aliases_empty_backend(self):
         """Test alias normalization with empty backend."""
-        mock_fetch_aliases.return_value = []
+        self.mock_backend.adapter.get_all_aliases.return_value = []
         mock_normalizer = Mock()
 
         result = self.data_prep._get_normalized_aliases(
-            mock_normalizer, self.backend_config, self.debug
+            mock_normalizer, self.debug, self.mock_backend.adapter
         )
 
         assert result == []
         mock_normalizer.normalize.assert_not_called()
 
-    @patch('app.services.matcher.data_preparation.DataPreparation._fetch_aliases_from_backend')
-    def test_get_normalized_aliases_normalization_error(self, mock_fetch_aliases):
+    def test_get_normalized_aliases_normalization_error(self):
         """Test alias normalization with normalization error."""
-        mock_fetch_aliases.return_value = [("product1", "Test Product")]
+        self.mock_backend.adapter.get_all_aliases.return_value = [("product1", "Test Product")]
         mock_normalizer = Mock()
         mock_normalizer.normalize.side_effect = Exception("Normalization failed")
 
         with pytest.raises(Exception, match="Normalization failed"):
             self.data_prep._get_normalized_aliases(
-                mock_normalizer, self.backend_config, self.debug
+                mock_normalizer, self.debug, self.mock_backend.adapter
             )
 
-    @patch('app.adapters.registry.get_backend')
-    def test_fetch_aliases_from_backend_success(self, mock_get_backend):
-        """Test successful alias fetching from backend."""
-        # Mock products
-        mock_products = [
-            ExternalProduct(
-                id="product1",
-                aliases=["Apple Juice", "Organic Apple Juice"],
-                description="Fresh apple juice"
-            ),
-            ExternalProduct(
-                id="product2",
-                aliases=["Orange Juice"],
-                description="Fresh orange juice"
-            ),
-        ]
-
-        # Mock backend
-        mock_backend = Mock()
-        mock_backend.get_all_products.return_value = mock_products
-        mock_get_backend.return_value = mock_backend
-
-        # Execute
-        result = self.data_prep._fetch_aliases_from_backend(self.backend_config)
-
-        # Verify
-        expected = [
-            ("product1", "Apple Juice"),
-            ("product1", "Organic Apple Juice"),
-            ("product2", "Orange Juice"),
-        ]
-        assert result == expected
-
-        mock_get_backend.assert_called_once_with("mock")
-        mock_backend.get_all_products.assert_called_once()
-
-    @patch('app.adapters.registry.get_backend')
-    def test_fetch_aliases_from_backend_no_aliases(self, mock_get_backend):
-        """Test alias fetching with products that have no aliases."""
-        # Mock product without aliases
-        mock_product = Mock()
-        mock_product.id = "product1"
-        mock_product.aliases = None
-
-        mock_backend = Mock()
-        mock_backend.get_all_products.return_value = [mock_product]
-        mock_get_backend.return_value = mock_backend
-
-        # Execute
-        result = self.data_prep._fetch_aliases_from_backend(self.backend_config)
-
-        # Verify - should return empty list
-        assert result == []
-
-    @patch('app.adapters.registry.get_backend')
-    def test_fetch_aliases_from_backend_empty_aliases(self, mock_get_backend):
-        """Test alias fetching with products that have empty aliases."""
-        mock_product = ExternalProduct(
-            id="product1",
-            aliases=[],
-            description="Product with no aliases"
-        )
-
-        mock_backend = Mock()
-        mock_backend.get_all_products.return_value = [mock_product]
-        mock_get_backend.return_value = mock_backend
-
-        # Execute
-        result = self.data_prep._fetch_aliases_from_backend(self.backend_config)
-
-        # Verify
-        assert result == []
-
-    @patch('app.adapters.registry.get_backend')
-    def test_fetch_aliases_from_backend_error(self, mock_get_backend):
-        """Test alias fetching when backend raises error."""
-        mock_get_backend.side_effect = Exception("Backend connection error")
-
-        with pytest.raises(Exception, match="Backend connection error"):
-            self.data_prep._fetch_aliases_from_backend(self.backend_config)
-
-    @patch('app.adapters.registry.get_backend')
-    def test_fetch_aliases_from_backend_get_products_error(self, mock_get_backend):
-        """Test alias fetching when get_all_products raises error."""
-        mock_backend = Mock()
-        mock_backend.get_all_products.side_effect = Exception("Products fetch error")
-        mock_get_backend.return_value = mock_backend
-
-        with pytest.raises(Exception, match="Products fetch error"):
-            self.data_prep._fetch_aliases_from_backend(self.backend_config)
-
-    @patch('app.adapters.registry.get_backend')
-    def test_fetch_aliases_from_backend_mixed_products(self, mock_get_backend):
-        """Test alias fetching with mixed product types."""
-        # Mix of products with and without aliases
-        mock_products = [
-            ExternalProduct(id="product1", aliases=["Apple"], description="Apple"),
-            Mock(id="product2", aliases=None),  # Product without aliases attribute
-            ExternalProduct(id="product3", aliases=["Orange", "Citrus"], description="Orange"),
-        ]
-
-        mock_backend = Mock()
-        mock_backend.get_all_products.return_value = mock_products
-        mock_get_backend.return_value = mock_backend
-
-        # Execute
-        result = self.data_prep._fetch_aliases_from_backend(self.backend_config)
-
-        # Verify - should only include products with valid aliases
-        expected = [
-            ("product1", "Apple"),
-            ("product3", "Orange"),
-            ("product3", "Citrus"),
-        ]
-        assert result == expected
 
     def test_clear_cache(self):
         """Test cache clearing."""
@@ -296,7 +178,7 @@ class TestDataPreparation:
         self.data_prep._get_normalized_aliases = Mock(return_value=mock_aliases)
 
         context = self.data_prep.prepare_context(
-            mock_normalizer, "test input", self.backend_config, self.debug
+            mock_normalizer, "test input", self.mock_backend, self.debug
         )
 
         # Get debug steps with data

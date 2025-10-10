@@ -129,3 +129,19 @@ class ProductDatabaseAdapter(ABC):
             URL to view the product in the external system, or None if not supported
         """
         return None
+
+    def get_all_aliases(self) -> list[tuple[str, str]]:
+        """
+        Get all aliases from all products as (product_id, alias) tuples.
+        Default implementation extracts aliases from get_all_products().
+
+        Returns:
+            List of (product_id, alias) tuples
+        """
+        products = self.get_all_products()
+        aliases = []
+        for product in products:
+            if hasattr(product, "aliases") and product.aliases:
+                for alias in product.aliases:
+                    aliases.append((product.id, alias))
+        return aliases

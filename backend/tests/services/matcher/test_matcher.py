@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import Mock, patch
 
 from app.services.matcher.matcher import ProductMatcher
-from app.models import BackendConfig, AdapterConfig
+from app.models import AdapterConfig
 from app.services.debug import DebugStepTracker
 
 
@@ -14,42 +14,22 @@ class TestProductMatcher:
     def setup_method(self):
         """Set up test fixtures."""
         self.matcher = ProductMatcher()
-        self.backend_config = BackendConfig(
-            description="Test backend",
-            language="en",
-            adapter=AdapterConfig(type="mock", config={})
-        )
+        self.backend_name = "mock"
 
     def test_init(self):
         """Test ProductMatcher initialization."""
         assert self.matcher.data_preparation is not None
         assert self.matcher.pipeline is not None
 
-    @patch('app.services.normalization.registry.get_normalizer')
-    def test_get_normalizer_success(self, mock_get_normalizer):
-        """Test successful normalizer retrieval."""
-        mock_normalizer = Mock()
-        mock_get_normalizer.return_value = mock_normalizer
 
-        result = self.matcher._get_normalizer("en")
-
-        assert result == mock_normalizer
-        mock_get_normalizer.assert_called_once_with("en")
-
-    @patch('app.services.normalization.registry.get_normalizer')
-    def test_get_normalizer_error(self, mock_get_normalizer):
-        """Test normalizer retrieval error."""
-        mock_get_normalizer.side_effect = ValueError("Unsupported language")
-
-        with pytest.raises(ValueError, match="Unsupported language"):
-            self.matcher._get_normalizer("invalid")
-
-    @patch('app.services.matcher.matcher.ProductMatcher._get_normalizer')
-    def test_match_product_success(self, mock_get_normalizer):
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_success(self, mock_get_backend):
         """Test successful product matching."""
-        # Mock normalizer
-        mock_normalizer = Mock()
-        mock_get_normalizer.return_value = mock_normalizer
+        # Mock backend
+        mock_backend = Mock()
+        mock_backend.normalizer = Mock()
+        mock_backend.language = "en"
+        mock_get_backend.return_value = mock_backend
 
         # Mock data preparation
         mock_context = Mock()
@@ -65,7 +45,7 @@ class TestProductMatcher:
         # Execute
         success, normalized_input, matches, debug_info = self.matcher.match_product(
             input_query="apple juice",
-            backend_config=self.backend_config,
+            backend_name=self.backend_name,
             threshold=0.8,
             max_candidates=5
         )
@@ -77,7 +57,7 @@ class TestProductMatcher:
         assert isinstance(debug_info, list)
 
         # Verify method calls
-        mock_get_normalizer.assert_called_once_with("en")
+        mock_get_backend.assert_called_once_with("mock")
         self.matcher.data_preparation.prepare_context.assert_called_once()
         self.matcher.pipeline.execute.assert_called_once_with(
             context=mock_context,
@@ -86,11 +66,12 @@ class TestProductMatcher:
             max_candidates=5
         )
 
-    @patch('app.services.matcher.matcher.ProductMatcher._get_normalizer')
-    def test_match_product_with_debug_tracker(self, mock_get_normalizer):
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_with_debug_tracker(self, mock_get_backend):
         """Test product matching with provided debug tracker."""
-        mock_normalizer = Mock()
-        mock_get_normalizer.return_value = mock_normalizer
+        mock_backend = Mock()
+        mock_backend.normalizer = Mock()
+        mock_get_backend.return_value = mock_backend
 
         mock_context = Mock()
         mock_context.normalized_input = "normalized text"
@@ -107,7 +88,7 @@ class TestProductMatcher:
         # Execute
         success, normalized_input, matches, debug_info = self.matcher.match_product(
             input_query="test query",
-            backend_config=self.backend_config,
+            backend_name=self.backend_name,
             debug=debug_tracker
         )
 
@@ -115,15 +96,15 @@ class TestProductMatcher:
         assert success is False
         assert len(debug_info) > 0  # Should have debug steps
 
-    @patch('app.services.matcher.matcher.ProductMatcher._get_normalizer')
-    def test_match_product_normalizer_error(self, mock_get_normalizer):
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_normalizer_error(self, mock_get_backend):
         """Test product matching when normalizer fails."""
-        mock_get_normalizer.side_effect = Exception("Normalizer error")
+        mock_get_backend.side_effect = Exception("Normalizer error")
 
         # Execute
         success, normalized_input, matches, debug_info = self.matcher.match_product(
             input_query="apple juice",
-            backend_config=self.backend_config
+            backend_name=self.backend_name
         )
 
         # Verify error handling
@@ -132,11 +113,12 @@ class TestProductMatcher:
         assert matches == []
         assert len(debug_info) > 0  # Should have error debug info
 
-    @patch('app.services.matcher.matcher.ProductMatcher._get_normalizer')
-    def test_match_product_data_preparation_error(self, mock_get_normalizer):
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_data_preparation_error(self, mock_get_backend):
         """Test product matching when data preparation fails."""
-        mock_normalizer = Mock()
-        mock_get_normalizer.return_value = mock_normalizer
+        mock_backend = Mock()
+        mock_backend.normalizer = Mock()
+        mock_get_backend.return_value = mock_backend
 
         self.matcher.data_preparation.prepare_context = Mock(
             side_effect=Exception("Data preparation error")
@@ -145,7 +127,7 @@ class TestProductMatcher:
         # Execute
         success, normalized_input, matches, debug_info = self.matcher.match_product(
             input_query="apple juice",
-            backend_config=self.backend_config
+            backend_name=self.backend_name
         )
 
         # Verify error handling
@@ -154,11 +136,12 @@ class TestProductMatcher:
         assert matches == []
         assert len(debug_info) > 0
 
-    @patch('app.services.matcher.matcher.ProductMatcher._get_normalizer')
-    def test_match_product_pipeline_error(self, mock_get_normalizer):
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_pipeline_error(self, mock_get_backend):
         """Test product matching when pipeline execution fails."""
-        mock_normalizer = Mock()
-        mock_get_normalizer.return_value = mock_normalizer
+        mock_backend = Mock()
+        mock_backend.normalizer = Mock()
+        mock_get_backend.return_value = mock_backend
 
         mock_context = Mock()
         self.matcher.data_preparation.prepare_context = Mock(return_value=mock_context)
@@ -170,7 +153,7 @@ class TestProductMatcher:
         # Execute
         success, normalized_input, matches, debug_info = self.matcher.match_product(
             input_query="apple juice",
-            backend_config=self.backend_config
+            backend_name=self.backend_name
         )
 
         # Verify error handling
@@ -179,11 +162,12 @@ class TestProductMatcher:
         assert matches == []
         assert len(debug_info) > 0
 
-    @patch('app.services.matcher.matcher.ProductMatcher._get_normalizer')
-    def test_match_product_different_thresholds(self, mock_get_normalizer):
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_different_thresholds(self, mock_get_backend):
         """Test product matching with different threshold values."""
-        mock_normalizer = Mock()
-        mock_get_normalizer.return_value = mock_normalizer
+        mock_backend = Mock()
+        mock_backend.normalizer = Mock()
+        mock_get_backend.return_value = mock_backend
 
         mock_context = Mock()
         mock_context.normalized_input = "normalized text"
@@ -197,7 +181,7 @@ class TestProductMatcher:
         # Test with custom threshold
         self.matcher.match_product(
             input_query="test",
-            backend_config=self.backend_config,
+            backend_name=self.backend_name,
             threshold=0.9,
             max_candidates=3
         )

@@ -27,7 +27,7 @@ class SemanticMatchingStrategy(MatchingStrategy):
             # Get matching utilities for semantic similarity
             from ...matching.utils.registry import get_matching_utils
 
-            matching_utils = get_matching_utils(context.backend_config.language)
+            matching_utils = get_matching_utils(context.backend.language)
 
             context.debug.add(
                 f"Running semantic similarity calculation on {len(context.normalized_aliases)} pre-normalized aliases"

@@ -14,12 +14,10 @@ class TestMatchingRoutes:
     """Test cases for matching API routes."""
 
     @patch('app.api.routes.matching.ProductMatcher')
-    @patch('app.api.routes.matching.get_backend_config')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_success(
         self,
         mock_get_global_settings,
-        mock_get_backend_config,
         mock_product_matcher,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
@@ -30,10 +28,6 @@ class TestMatchingRoutes:
         mock_global_settings.default_threshold = 0.8
         mock_global_settings.max_candidates = 10
         mock_get_global_settings.return_value = mock_global_settings
-
-        mock_backend_config = Mock()
-        mock_backend_config.name = "test-backend"
-        mock_get_backend_config.return_value = mock_backend_config
 
         # Mock matcher
         mock_matcher_instance = Mock()
@@ -74,18 +68,16 @@ class TestMatchingRoutes:
         # Verify matcher was called correctly
         mock_matcher_instance.match_product.assert_called_once_with(
             input_query="apple juice",
-            backend_config=mock_backend_config,
+            backend_name="test-backend",
             threshold=0.9,
             max_candidates=10,
         )
 
     @patch('app.api.routes.matching.ProductMatcher')
-    @patch('app.api.routes.matching.get_backend_config')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_use_default_threshold(
         self,
         mock_get_global_settings,
-        mock_get_backend_config,
         mock_product_matcher,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
@@ -96,9 +88,6 @@ class TestMatchingRoutes:
         mock_global_settings.default_threshold = 0.7
         mock_global_settings.max_candidates = 10
         mock_get_global_settings.return_value = mock_global_settings
-
-        mock_backend_config = Mock()
-        mock_get_backend_config.return_value = mock_backend_config
 
         mock_matcher_instance = Mock()
         mock_matcher_instance.match_product.return_value = (
@@ -127,14 +116,12 @@ class TestMatchingRoutes:
         assert call_args[1]["threshold"] == 0.7
 
     @patch('app.api.routes.matching.ProductMatcher')
-    @patch('app.api.routes.matching.get_backend_config')
     @patch('app.api.routes.matching.get_global_settings')
     @patch('app.api.routes.matching.PendingQueueManager')
     def test_match_product_no_match_create_pending(
         self,
         mock_pending_queue_manager,
         mock_get_global_settings,
-        mock_get_backend_config,
         mock_product_matcher,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
@@ -145,9 +132,6 @@ class TestMatchingRoutes:
         mock_global_settings.default_threshold = 0.8
         mock_global_settings.max_candidates = 10
         mock_get_global_settings.return_value = mock_global_settings
-
-        mock_backend_config = Mock()
-        mock_get_backend_config.return_value = mock_backend_config
 
         # Mock matcher returning no success
         mock_matcher_instance = Mock()
@@ -190,18 +174,13 @@ class TestMatchingRoutes:
         mock_pending_manager_instance.add_to_pending.assert_called_once()
 
     @patch('app.api.routes.matching.ProductMatcher')
-    @patch('app.api.routes.matching.get_backend_config')
     def test_match_product_backend_error(
         self,
-        mock_get_backend_config,
         mock_product_matcher,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
     ):
         """Test product matching with backend error."""
-        mock_backend_config = Mock()
-        mock_get_backend_config.return_value = mock_backend_config
-
         # Mock matcher raising RuntimeError
         mock_matcher_instance = Mock()
         mock_matcher_instance.match_product.side_effect = RuntimeError("Backend connection failed")
@@ -339,12 +318,10 @@ class TestMatchingRoutes:
         assert len(data["data"]) == 0
 
     @patch('app.api.routes.matching.ProductMatcher')
-    @patch('app.api.routes.matching.get_backend_config')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_invalid_request_data(
         self,
         mock_get_global_settings,
-        mock_get_backend_config,
         mock_product_matcher,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
@@ -365,12 +342,10 @@ class TestMatchingRoutes:
         assert response.status_code == 422  # Validation error
 
     @patch('app.api.routes.matching.ProductMatcher')
-    @patch('app.api.routes.matching.get_backend_config')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_logs_successful_match(
         self,
         mock_get_global_settings,
-        mock_get_backend_config,
         mock_product_matcher,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
@@ -382,9 +357,6 @@ class TestMatchingRoutes:
         mock_global_settings.default_threshold = 0.8
         mock_global_settings.max_candidates = 10
         mock_get_global_settings.return_value = mock_global_settings
-
-        mock_backend_config = Mock()
-        mock_get_backend_config.return_value = mock_backend_config
 
         # Mock successful match
         mock_matcher_instance = Mock()
