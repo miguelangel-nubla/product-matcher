@@ -235,6 +235,9 @@ def post_process_tokens(
     # Strip numbers from tokens
     tokens = [re.sub(r"\d+", "", token) for token in tokens]
 
+    # Remove Roman numerals (i, ii, iii, iv, v, vi, vii, viii, ix, x, etc.)
+    tokens = [re.sub(r"^[ivx]+$", "", token) for token in tokens]
+
     # Expand abbreviations
     tokens = [expansions.get(token, token) for token in tokens]
 
