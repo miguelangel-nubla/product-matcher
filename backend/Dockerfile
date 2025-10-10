@@ -59,4 +59,4 @@ RUN mkdir -p /app/logs && chown appuser:appuser /app/logs && chmod +x /app/entry
 USER appuser
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-config", "/app/logging.conf"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "4", "--log-config", "/app/logging.conf"]

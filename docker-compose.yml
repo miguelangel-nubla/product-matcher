@@ -30,9 +30,9 @@ services:
     environment:
       - POSTGRES_SERVER=db
     ports:
-      - "8000:8000"
+      - "8000:80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/v1/utils/health-check/"]
       interval: 10s
       timeout: 5s
       retries: 5
