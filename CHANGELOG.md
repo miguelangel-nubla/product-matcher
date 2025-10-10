@@ -1,3 +1,11 @@
+# [1.9.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.8.2...v1.9.0) (2025-10-10)
+
+
+### Features
+
+* add frontend dependency on healthy backend ([b9aca96](https://github.com/miguelangel-nubla/product-matcher/commit/b9aca9692c897b9c930b91964745928d730fb09f))
+* standardize backend to use port 80 internally ([dc90187](https://github.com/miguelangel-nubla/product-matcher/commit/dc90187efc7eba40384475078b61a7102a52a45c))
+
 ## [1.8.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.8.1...v1.8.2) (2025-10-10)
 
 
