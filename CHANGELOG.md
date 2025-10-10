@@ -1,3 +1,10 @@
+## [1.7.5](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.4...v1.7.5) (2025-10-10)
+
+
+### Bug Fixes
+
+* add default backends.yaml and fix gitignore scope ([51cb22c](https://github.com/miguelangel-nubla/product-matcher/commit/51cb22c4321a87baa4fa9c5294f1d60007dde59d))
+
 ## [1.7.4](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.3...v1.7.4) (2025-10-10)
 
 
