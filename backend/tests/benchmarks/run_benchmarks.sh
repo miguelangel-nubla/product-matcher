@@ -12,13 +12,7 @@ echo "Working directory: $BACKEND_DIR"
 cd "$BACKEND_DIR"
 
 # Ensure we're using the right Python environment
-if command -v uv &> /dev/null; then
-    PYTHON_CMD="uv run python3"
-    echo "Using uv environment"
-else
-    PYTHON_CMD="python3"
-    echo "Using system Python"
-fi
+PYTHON_CMD="uv run python3"
 
 # Set default format to table for interactive use, CI for automated
 FORMAT=${1:-table}
