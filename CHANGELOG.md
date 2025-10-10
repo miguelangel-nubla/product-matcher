@@ -1,3 +1,15 @@
+## [1.7.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.0...v1.7.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* enable runtime VITE_API_URL configuration in frontend Docker image ([2ed1b36](https://github.com/miguelangel-nubla/product-matcher/commit/2ed1b36c4a563f319697412ea83f2667856a09f2))
+
+
+### Reverts
+
+* downgrade Playwright Docker image to v1.55.0 ([1432a5d](https://github.com/miguelangel-nubla/product-matcher/commit/1432a5dc5253009cc515ce98b3cc3e4968b2befb))
+
 # [1.7.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.6.0...v1.7.0) (2025-10-09)
 
 
