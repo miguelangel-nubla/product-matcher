@@ -1,3 +1,11 @@
+## [1.7.4](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.3...v1.7.4) (2025-10-10)
+
+
+### Bug Fixes
+
+* ensure prestart works with built-in config ([5da4575](https://github.com/miguelangel-nubla/product-matcher/commit/5da4575a3c993c441a564ae47c4030ae30d781db))
+* resolve CI test failures with backends config ([0741b17](https://github.com/miguelangel-nubla/product-matcher/commit/0741b17b878f0930ca8f171dc5c89fcc81e52108))
+
 ## [1.7.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.2...v1.7.3) (2025-10-10)
 
 
