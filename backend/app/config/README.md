@@ -4,7 +4,7 @@ Backend configurations are managed via YAML instead of environment variables for
 
 ## Configuration File
 
-Create `app/config/user/backends.yaml` based on `backends.example.yaml` template. This file contains your local backend configurations.
+Customize `app/config/user/backends.yaml` for your deployment. This file contains your backend configurations.
 
 The configuration file has the following structure:
 

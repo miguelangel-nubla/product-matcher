@@ -4,3 +4,7 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Local development overrides
+docker-compose.override.yml
+backends.yaml

@@ -19,8 +19,6 @@ services:
       - SMTP_PORT=1025
       - SMTP_TLS=false
       - EMAILS_FROM_EMAIL=noreply@example.com
-    # Remove volume mount for dev - use built-in config
-    volumes: []
     depends_on:
       db:
         condition: service_healthy
@@ -36,8 +34,6 @@ services:
       - SMTP_PORT=1025
       - SMTP_TLS=false
       - EMAILS_FROM_EMAIL=noreply@example.com
-    # Remove volume mount for dev - use built-in config
-    volumes: []
     depends_on:
       db:
         condition: service_healthy

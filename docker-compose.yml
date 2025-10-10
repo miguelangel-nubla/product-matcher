@@ -1,5 +1,3 @@
-# Simple deployment with published Docker images
-# REQUIRED: Create backend/app/config/user/backends.yaml from backends.example.yaml
 services:
   db:
     image: postgres:17
@@ -19,8 +17,9 @@ services:
 
   prestart:
     image: ghcr.io/miguelangel-nubla/product-matcher-backend:latest
-    volumes:
-      - ./backend/app/config/user:/app/app/config/user
+    # # REQUIRED: Customize backend/app/config/user/backends.yaml for your deployment
+    # volumes:
+    #   - ./backend/app/config/user:/app/app/config/user
     depends_on:
       db:
         condition: service_healthy
@@ -40,8 +39,9 @@ services:
         restart: true
       prestart:
         condition: service_completed_successfully
-    volumes:
-      - ./backend/app/config/user:/app/app/config/user
+    # # REQUIRED: Customize backend/app/config/user/backends.yaml for your deployment
+    # volumes:
+    #   - ./backend/app/config/user:/app/app/config/user
     env_file:
       - .env
     environment:
