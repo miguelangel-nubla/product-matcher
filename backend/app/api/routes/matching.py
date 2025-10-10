@@ -41,24 +41,19 @@ def match_product(
     # Initialize the refactored matcher
     matcher = ProductMatcher()
 
-    # Attempt to match the product
-    try:
-        # Get global settings and ensure valid threshold
-        global_settings = get_global_settings()
-        threshold = query.threshold or global_settings.default_threshold
+    # Get global settings and ensure valid threshold
+    global_settings = get_global_settings()
+    threshold = query.threshold or global_settings.default_threshold
 
+    try:
         success, normalized_input, candidates, debug_info = matcher.match_product(
             input_query=query.text,
             backend_name=query.backend,
             threshold=threshold,
             max_candidates=global_settings.max_candidates,
         )
-    except RuntimeError as e:
-        # Backend adapter connection or configuration error
-        raise HTTPException(
-            status_code=503,  # Service Unavailable
-            detail=f"Backend '{query.backend}' is not available: {str(e)}",
-        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     pending_item_id = None
 

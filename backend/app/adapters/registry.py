@@ -37,10 +37,7 @@ class AdapterRegistry:
             - Creates grocy adapter with specified settings
         """
         # Get backend configuration from YAML
-        try:
-            backend_config = get_backend_config(backend_name)
-        except ValueError as e:
-            raise ValueError(f"Backend {backend_name} not configured: {e}")
+        backend_config = get_backend_config(backend_name)
 
         adapter_info = backend_config.adapter
         if not adapter_info:

@@ -76,38 +76,33 @@ class ProductMatcher:
             f"ProductMatcher.match_product called with: '{input_query}' (backend: {backend_name}, threshold: {threshold})"
         )
 
-        try:
-            # Step 1: Get backend instance with both adapter and normalizer
-            backend = self._get_backend(backend_name)
+        # Step 1: Get backend instance with both adapter and normalizer
+        backend = self._get_backend(backend_name)
 
-            # Step 2: Prepare data and context with backend
-            context = self.data_preparation.prepare_context(
-                backend.normalizer, input_query, backend, debug
-            )
+        # Step 2: Prepare data and context with backend
+        context = self.data_preparation.prepare_context(
+            backend.normalizer, input_query, backend, debug
+        )
 
-            # Step 2: Execute matching pipeline using user-provided threshold for all strategies
-            success, result = self.pipeline.execute(
-                context=context,
-                semantic_threshold=threshold,  # Use user-provided threshold
-                fuzzy_threshold=threshold,  # Use user-provided threshold
-                max_candidates=max_candidates,
-            )
+        # Step 3: Execute matching pipeline using user-provided threshold for all strategies
+        success, result = self.pipeline.execute(
+            context=context,
+            semantic_threshold=threshold,  # Use user-provided threshold
+            fuzzy_threshold=threshold,  # Use user-provided threshold
+            max_candidates=max_candidates,
+        )
 
-            # Step 3: Return results in original format
-            debug.add(
-                f"Pipeline execution completed: success={success}, strategy={result.strategy_name}, matches={len(result.matches)}"
-            )
+        # Step 4: Return results in original format
+        debug.add(
+            f"Pipeline execution completed: success={success}, strategy={result.strategy_name}, matches={len(result.matches)}"
+        )
 
-            return (
-                success,
-                context.normalized_input,
-                result.matches,
-                debug.get_debug_info(),
-            )
-
-        except Exception as e:
-            debug.add(f"Error in match_product: {str(e)}")
-            return False, input_query, [], debug.get_debug_info()
+        return (
+            success,
+            context.normalized_input,
+            result.matches,
+            debug.get_debug_info(),
+        )
 
     def add_learned_alias(
         self, external_product_id: str, alias: str, backend: str

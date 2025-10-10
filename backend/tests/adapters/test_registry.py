@@ -88,7 +88,7 @@ class TestAdapterRegistry:
         """Test backend creation when configuration not found."""
         mock_get_config.side_effect = ValueError("Backend not found")
 
-        with pytest.raises(ValueError, match="Backend test-backend not configured"):
+        with pytest.raises(ValueError, match="Backend not found"):
             self.registry.create_backend("test-backend")
 
     @patch('app.adapters.registry.get_backend_config')

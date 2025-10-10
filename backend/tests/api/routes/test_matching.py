@@ -198,8 +198,8 @@ class TestMatchingRoutes:
             json=request_data,
         )
 
-        assert response.status_code == 503
-        assert "not available" in response.json()["detail"]
+        assert response.status_code == 400
+        assert "Backend connection failed" in response.json()["detail"]
 
     def test_match_product_unauthorized(self, client: TestClient):
         """Test product matching without authentication."""

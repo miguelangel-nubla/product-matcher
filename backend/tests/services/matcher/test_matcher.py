@@ -101,17 +101,12 @@ class TestProductMatcher:
         """Test product matching when normalizer fails."""
         mock_get_backend.side_effect = Exception("Normalizer error")
 
-        # Execute
-        success, normalized_input, matches, debug_info = self.matcher.match_product(
-            input_query="apple juice",
-            backend_name=self.backend_name
-        )
-
-        # Verify error handling
-        assert success is False
-        assert normalized_input == "apple juice"  # Should return original input
-        assert matches == []
-        assert len(debug_info) > 0  # Should have error debug info
+        # Execute and expect exception
+        with pytest.raises(Exception, match="Normalizer error"):
+            self.matcher.match_product(
+                input_query="apple juice",
+                backend_name=self.backend_name
+            )
 
     @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
     def test_match_product_data_preparation_error(self, mock_get_backend):
@@ -124,17 +119,12 @@ class TestProductMatcher:
             side_effect=Exception("Data preparation error")
         )
 
-        # Execute
-        success, normalized_input, matches, debug_info = self.matcher.match_product(
-            input_query="apple juice",
-            backend_name=self.backend_name
-        )
-
-        # Verify error handling
-        assert success is False
-        assert normalized_input == "apple juice"
-        assert matches == []
-        assert len(debug_info) > 0
+        # Execute and expect exception
+        with pytest.raises(Exception, match="Data preparation error"):
+            self.matcher.match_product(
+                input_query="apple juice",
+                backend_name=self.backend_name
+            )
 
     @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
     def test_match_product_pipeline_error(self, mock_get_backend):
@@ -150,17 +140,12 @@ class TestProductMatcher:
             side_effect=Exception("Pipeline error")
         )
 
-        # Execute
-        success, normalized_input, matches, debug_info = self.matcher.match_product(
-            input_query="apple juice",
-            backend_name=self.backend_name
-        )
-
-        # Verify error handling
-        assert success is False
-        assert normalized_input == "apple juice"
-        assert matches == []
-        assert len(debug_info) > 0
+        # Execute and expect exception
+        with pytest.raises(Exception, match="Pipeline error"):
+            self.matcher.match_product(
+                input_query="apple juice",
+                backend_name=self.backend_name
+            )
 
     @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
     def test_match_product_different_thresholds(self, mock_get_backend):
