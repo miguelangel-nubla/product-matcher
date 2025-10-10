@@ -27,7 +27,7 @@ repos:
         files: ^backend/
       - id: backend-tests
         name: backend tests
-        entry: bash -c 'cd backend && bash scripts/tests-start.sh'
+        entry: bash scripts/test.sh
         language: system
         types: [python]
         files: ^backend/
