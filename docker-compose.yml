@@ -40,6 +40,10 @@ services:
   frontend:
     image: ghcr.io/miguelangel-nubla/product-matcher-frontend:latest
     restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+        restart: true
     ports:
       - "3000:80"
     env_file:
