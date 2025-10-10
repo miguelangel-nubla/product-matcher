@@ -15,21 +15,6 @@ services:
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
 
-  prestart:
-    image: ghcr.io/miguelangel-nubla/product-matcher-backend:latest
-    # # REQUIRED: Customize backend/app/config/user/backends.yaml for your deployment
-    # volumes:
-    #   - ./backend/app/config/user:/app/app/config/user
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_SERVER=db
-    command: bash scripts/prestart.sh
-
   backend:
     image: ghcr.io/miguelangel-nubla/product-matcher-backend:latest
     restart: always
@@ -37,8 +22,6 @@ services:
       db:
         condition: service_healthy
         restart: true
-      prestart:
-        condition: service_completed_successfully
     # # REQUIRED: Customize backend/app/config/user/backends.yaml for your deployment
     # volumes:
     #   - ./backend/app/config/user:/app/app/config/user

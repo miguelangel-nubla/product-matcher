@@ -11,21 +11,6 @@ services:
       - "1080:1080"
       - "1025:1025"
 
-  prestart:
-    build:
-      context: ./backend
-    environment:
-      - SMTP_HOST=mailcatcher
-      - SMTP_PORT=1025
-      - SMTP_TLS=false
-      - EMAILS_FROM_EMAIL=noreply@example.com
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-      mailcatcher:
-        condition: service_started
-
   backend:
     build:
       context: ./backend
@@ -38,8 +23,6 @@ services:
       db:
         condition: service_healthy
         restart: true
-      prestart:
-        condition: service_completed_successfully
       mailcatcher:
         condition: service_started
 

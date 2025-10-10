@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 # Copy application files
-COPY ./pyproject.toml ./uv.lock ./alembic.ini ./logging.conf /app/
+COPY ./pyproject.toml ./uv.lock ./alembic.ini ./logging.conf ./entrypoint.sh /app/
 COPY ./app /app/app
 COPY ./scripts /app/scripts
 
@@ -46,15 +46,17 @@ COPY --from=builder --chown=appuser:appuser /app/app /app/app
 COPY --from=builder --chown=appuser:appuser /app/scripts /app/scripts
 COPY --from=builder --chown=appuser:appuser /app/alembic.ini /app/
 COPY --from=builder --chown=appuser:appuser /app/logging.conf /app/
+COPY --from=builder --chown=appuser:appuser /app/entrypoint.sh /app/
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Create log directory with proper permissions
-RUN mkdir -p /app/logs && chown appuser:appuser /app/logs
+# Create log directory with proper permissions and make entrypoint executable
+RUN mkdir -p /app/logs && chown appuser:appuser /app/logs && chmod +x /app/entrypoint.sh
 
 USER appuser
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-config", "/app/logging.conf"]
