@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.5...v1.8.0) (2025-10-10)
+
+
+### Features
+
+* implement file-based logging and fix test database initialization ([f09a4ff](https://github.com/miguelangel-nubla/product-matcher/commit/f09a4ff86f486cf601aa7d7584dce3bd998964db))
+
 ## [1.7.5](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.4...v1.7.5) (2025-10-10)
 
 
