@@ -1,3 +1,10 @@
+## [1.9.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.9.1...v1.9.2) (2025-10-10)
+
+
+### Bug Fixes
+
+* resolve backend configuration error and add startup error logging ([81a869e](https://github.com/miguelangel-nubla/product-matcher/commit/81a869e42ed64ade9ffd784ffab64ae63de47253))
+
 ## [1.9.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.9.0...v1.9.1) (2025-10-10)
 
 
