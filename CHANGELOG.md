@@ -1,3 +1,15 @@
+# [1.11.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.10.0...v1.11.0) (2025-10-10)
+
+
+### Bug Fixes
+
+* remove uv run from scripts and simplify test execution ([4afd92a](https://github.com/miguelangel-nubla/product-matcher/commit/4afd92ab25000f8538288e38e8ef0b4997941860))
+
+
+### Features
+
+* unify and improve test scripts with auto-database startup ([fd803c2](https://github.com/miguelangel-nubla/product-matcher/commit/fd803c2069dd5984c5cbe1035ae868bcc214afbf))
+
 # [1.10.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.9.2...v1.10.0) (2025-10-10)
 
 
