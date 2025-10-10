@@ -1,72 +1,43 @@
-# Backend Configuration
-# Define all available backend instances here
-
 backends:
   # Mock backend for testing and development
   mock:
     description: "Mock adapter for testing"
-    language: en
+    language: es
     adapter:
       type: mock
       config: {}
-    # normalization section is optional - if not specified, uses language defaults
 
   # Example Grocy instance 1 (using default English normalization)
   grocy1:
     description: "Production Grocy instance (English)"
-    language: en
+    language: es
     adapter:
       type: grocy
       config:
         base_url: "https://grocy1.example.com"
-        api_key: "${GROCY1_API_KEY:-demo_api_key_1}" # Environment variable with default
+        api_key: "${GROCY1_API_KEY:-demo_api_key_1}"
         verify_ssl: true
         external_url: "https://grocy1.example.com"
-    # No normalization section = uses default English stopwords/expansions
-
-  # Example Grocy instance 2 (custom German normalization)
-  grocy2:
-    description: "German Grocy instance"
-    language: de
-    adapter:
-      type: grocy
-      config:
-        base_url: "https://grocy2.example.com"
-        api_key: "${GROCY2_API_KEY:-demo_api_key_2}" # Environment variable with default
-        verify_ssl: true
 
 # Global settings
 settings:
   default_threshold: 0.8
   max_candidates: 5
-# # Language-specific normalizer configurations. Overrides the defaults for the specified language.
-# languages:
-#   es:
-#     # Spanish normalization configuration
-#     stopwords:
-#       - "la"
-#       - "las"
-#       - "el"
-#       - "los"
-#       - "de"
-#       - "del"
-#       - "al"
-#     expansions:
-#       "kg": "kilogramo"
-#       "gr": "gramo"
-#       "l": "litro"
-#       "ml": "mililitro"
 
-#   en:
-#     # English normalization configuration
-#     stopwords:
-#       - "the"
-#       - "a"
-#       - "an"
-#       - "of"
-#       - "with"
-#     expansions:
-#       "lb": "pound"
-#       "oz": "ounce"
-#       "pt": "pint"
-#       "qt": "quart"
+# Language-specific normalizer configurations. Overrides the defaults for the specified language.
+languages:
+  es:
+  #     # Spanish normalization configuration
+  #     stopwords:
+  #       - "la"
+  #       - "las"
+  #       - "el"
+  #       - "los"
+  #       - "de"
+  #       - "del"
+  #       - "al"
+  #     expansions:
+  #       "kg": "kilogramo"
+  #       "gr": "gramo"
+  #       "l": "litro"
+  #       "ml": "mililitro"

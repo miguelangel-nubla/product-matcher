@@ -38,11 +38,28 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.on_event("startup")
 async def startup_event() -> None:
     """Initialize application components on startup."""
-    # Initialize normalizer registry with language configurations
-    from app.config.loader import get_language_configs
-    from app.services.matching.utils.registry import initialize_matching_utils
-    from app.services.normalization.registry import initialize_normalizers
+    import logging
 
-    language_configs = get_language_configs()
-    initialize_normalizers(language_configs)
-    initialize_matching_utils(language_configs)
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Initialize normalizer registry with language configurations
+        from app.config.loader import get_language_configs
+        from app.services.matching.utils.registry import initialize_matching_utils
+        from app.services.normalization.registry import initialize_normalizers
+
+        language_configs = get_language_configs()
+        logger.info(
+            f"Initializing normalizers for languages: {list(language_configs.keys())}"
+        )
+        initialize_normalizers(language_configs)
+
+        logger.info("Initializing matching utils")
+        initialize_matching_utils(language_configs)
+
+        logger.info("Application startup completed successfully")
+
+    except Exception as e:
+        logger.error(f"Application startup failed: {e}")
+        logger.exception("Startup error details:")
+        raise

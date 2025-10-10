@@ -99,7 +99,7 @@ class ProductMatcher:
             return False, input_query, [], debug.get_debug_info()
 
     def add_learned_alias(
-        self, external_product_id: str, alias: str
+        self, external_product_id: str, alias: str, backend: str
     ) -> tuple[bool, str | None]:
         """
         Add a learned alias to the external system.
@@ -119,11 +119,10 @@ class ProductMatcher:
             # Note: We don't have backend info here, so this would need to be
             # passed in or stored as instance variable if needed
             # For now, keeping the same signature but noting the limitation
-            backend_name = "grocy"  # This would need to be provided somehow
-            backend = get_backend(backend_name)
+            backend_adapter = get_backend(backend)
 
-            if hasattr(backend, "add_alias"):
-                success = backend.add_alias(external_product_id, alias)
+            if hasattr(backend_adapter, "add_alias"):
+                success = backend_adapter.add_alias(external_product_id, alias)
                 if success:
                     return True, None
                 else:

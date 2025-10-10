@@ -218,12 +218,12 @@ class TestProductMatcher:
         mock_get_backend.return_value = mock_backend
 
         # Execute
-        success, error = self.matcher.add_learned_alias("product123", "new alias")
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
 
         # Verify
         assert success is True
         assert error is None
-        mock_get_backend.assert_called_once_with("grocy")
+        mock_get_backend.assert_called_once_with("grocy1")
         mock_backend.add_alias.assert_called_once_with("product123", "new alias")
 
     @patch('app.adapters.registry.get_backend')
@@ -234,7 +234,7 @@ class TestProductMatcher:
         mock_get_backend.return_value = mock_backend
 
         # Execute
-        success, error = self.matcher.add_learned_alias("product123", "new alias")
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
 
         # Verify
         assert success is False
@@ -248,7 +248,7 @@ class TestProductMatcher:
         mock_get_backend.return_value = mock_backend
 
         # Execute
-        success, error = self.matcher.add_learned_alias("product123", "new alias")
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
 
         # Verify
         assert success is False
@@ -260,7 +260,7 @@ class TestProductMatcher:
         mock_get_backend.side_effect = Exception("Backend connection error")
 
         # Execute
-        success, error = self.matcher.add_learned_alias("product123", "new alias")
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
 
         # Verify
         assert success is False
@@ -275,7 +275,7 @@ class TestProductMatcher:
         mock_get_backend.return_value = mock_backend
 
         # Execute
-        success, error = self.matcher.add_learned_alias("product123", "new alias")
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
 
         # Verify
         assert success is False
