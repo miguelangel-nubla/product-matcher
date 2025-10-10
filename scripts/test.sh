@@ -14,11 +14,10 @@ if [ $(uname -s) = "Linux" ]; then
 fi
 
 # Build and start services
-docker compose -f docker-compose.yml -f docker-compose.test.yml build backend
-docker compose -f docker-compose.yml -f docker-compose.test.yml up -d db backend
+docker compose -f docker-compose.yml -f docker-compose.test.yml up -d db
 
 # Run tests
-docker compose -f docker-compose.yml -f docker-compose.test.yml exec -T backend bash scripts/tests-start.sh "$@"
+cd backend && uv run bash scripts/test.sh && cd ..
 
 # Clean up (optional - can be controlled with --no-cleanup flag)
 if [[ "$*" != *"--no-cleanup"* ]]; then

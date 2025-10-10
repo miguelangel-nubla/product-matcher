@@ -11,10 +11,10 @@ repos:
           - --unsafe
       - id: end-of-file-fixer
         exclude: |
-            (?x)^(
-                frontend/src/client/.*|
-                backend/app/email-templates/build/.*
-            )$
+          (?x)^(
+              frontend/src/client/.*|
+              backend/app/email-templates/build/.*
+          )$
       - id: trailing-whitespace
         exclude: ^frontend/src/client/.*
   - repo: local
@@ -27,7 +27,7 @@ repos:
         files: ^backend/
       - id: backend-tests
         name: backend tests
-        entry: bash -c 'docker compose -f docker-compose.yml -f docker-compose.test.yml up -d db && cd backend && uv run bash scripts/tests-start.sh'
+        entry: bash scripts/test.sh
         language: system
         types: [python]
         files: ^backend/
