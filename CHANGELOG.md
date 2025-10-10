@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.8.1...v1.8.2) (2025-10-10)
+
+
+### Bug Fixes
+
+* remove prestart debugging from playwright workflow ([cb8a619](https://github.com/miguelangel-nubla/product-matcher/commit/cb8a619fc3874b141411d8c9c78a449cf5b795c1))
+
 ## [1.8.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.8.0...v1.8.1) (2025-10-10)
 
 
