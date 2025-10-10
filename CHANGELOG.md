@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.1...v1.7.2) (2025-10-10)
+
+
+### Performance Improvements
+
+* reduce Docker image sizes by 48-63% ([cf7e59f](https://github.com/miguelangel-nubla/product-matcher/commit/cf7e59fdf48d7bd45f6b57e19177b76e69935237))
+
 ## [1.7.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.7.0...v1.7.1) (2025-10-10)
 
 
