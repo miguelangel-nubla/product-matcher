@@ -1,3 +1,11 @@
+## [1.11.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.11.0...v1.11.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* update test scripts and pre-commit configuration ([fffe6c0](https://github.com/miguelangel-nubla/product-matcher/commit/fffe6c0051f6c4bd6dccedb92c4bead96926a74e))
+* use unified test.sh script in CI and pre-commit ([0f47292](https://github.com/miguelangel-nubla/product-matcher/commit/0f47292fbb37011a628286bc8b3cd79e3e64d2a7))
+
 # [1.11.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.10.0...v1.11.0) (2025-10-10)
 
 
