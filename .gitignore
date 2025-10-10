@@ -6,5 +6,5 @@ node_modules/
 /playwright/.cache/
 
 # Local development overrides
-docker-compose.override.yml
-backends.yaml
+/docker-compose.override.yml
+/backends.yaml
