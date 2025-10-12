@@ -1,3 +1,15 @@
+# [1.13.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.12.1...v1.13.0) (2025-10-12)
+
+
+### Bug Fixes
+
+* **test:** add explicit Docker build step to test script ([63c3267](https://github.com/miguelangel-nubla/product-matcher/commit/63c3267a6e5ef53fa769cbe355cde27c33f6cd6c))
+
+
+### Features
+
+* add API key management system ([a808053](https://github.com/miguelangel-nubla/product-matcher/commit/a8080533de52c4002f7a51da369cfe675bef3a76))
+
 ## [1.12.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.12.0...v1.12.1) (2025-10-10)
 
 
