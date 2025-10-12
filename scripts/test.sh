@@ -13,7 +13,10 @@ if [ $(uname -s) = "Linux" ]; then
     sudo find . -type d -name __pycache__ -exec rm -r {} \+ 2>/dev/null || true
 fi
 
-# Build and start services
+# Build images first to ensure everything is up to date
+docker compose -f docker-compose.yml -f docker-compose.test.yml build
+
+# Start services
 docker compose -f docker-compose.yml -f docker-compose.test.yml up -d db backend
 
 # Wait for backend health
