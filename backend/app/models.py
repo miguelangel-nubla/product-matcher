@@ -71,6 +71,7 @@ class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
     match_logs: list["MatchLog"] = Relationship(cascade_delete=True)
+    access_tokens: list["AccessToken"] = Relationship(cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -217,3 +218,47 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+# Long-lived access token model
+class AccessToken(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(min_length=1, max_length=100)  # Human-readable name
+    token_hash: str = Field(min_length=1)  # Hashed version of the token
+    prefix: str = Field(
+        min_length=1, max_length=10
+    )  # First few chars for identification
+    is_active: bool = Field(default=True)
+    expires_at: datetime = Field()  # Required expiration date
+    last_used_at: datetime | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User = Relationship()
+
+
+# API models for access tokens
+class AccessTokenCreate(SQLModel):
+    name: str = Field(min_length=1, max_length=100)
+    expires_at: datetime
+
+
+class AccessTokenPublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    prefix: str
+    is_active: bool
+    expires_at: datetime
+    last_used_at: datetime | None
+    created_at: datetime
+
+
+class AccessTokenCreated(SQLModel):
+    token: str  # The actual token (only shown once)
+    access_token: AccessTokenPublic
+
+
+class AccessTokensPublic(SQLModel):
+    data: list[AccessTokenPublic]
+    count: int

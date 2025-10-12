@@ -7,7 +7,7 @@ import { FiLock } from "react-icons/fi"
 import { type ApiError, LoginService, type NewPassword } from "@/client"
 import { Button } from "@/components/ui/button"
 import { PasswordInput } from "@/components/ui/password-input"
-import { isLoggedIn } from "@/hooks/useAuth"
+import { isAuthenticated } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
 
@@ -18,7 +18,7 @@ interface NewPasswordForm extends NewPassword {
 export const Route = createFileRoute("/reset-password")({
   component: ResetPassword,
   beforeLoad: async () => {
-    if (isLoggedIn()) {
+    if (await isAuthenticated()) {
       throw redirect({
         to: "/",
       })

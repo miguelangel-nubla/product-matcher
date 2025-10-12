@@ -237,7 +237,7 @@ def delete_pending_query(
 
 
 @router.get("/external-products")
-def get_external_products(backend: str) -> Any:
+def get_external_products(_current_user: CurrentUser, backend: str) -> Any:
     """
     Get external products from the specified backend adapter.
     """
@@ -258,7 +258,7 @@ def get_external_products(backend: str) -> Any:
 
 
 @router.get("/backends")
-def get_available_backends() -> list[BackendInfo]:
+def get_available_backends(_current_user: CurrentUser) -> list[BackendInfo]:
     """
     Get list of available backend adapters with descriptions.
     """
@@ -273,7 +273,7 @@ def get_available_backends() -> list[BackendInfo]:
 
 
 @router.get("/languages")
-def get_available_languages() -> Any:
+def get_available_languages(_current_user: CurrentUser) -> Any:
     """
     Get list of supported languages for matching.
     """
@@ -325,7 +325,7 @@ def get_matching_stats(
 
 
 @router.get("/settings", response_model=GlobalSettings)
-def get_matching_settings() -> GlobalSettings:
+def get_matching_settings(_current_user: CurrentUser) -> GlobalSettings:
     """
     Get global matching settings from configuration.
     """

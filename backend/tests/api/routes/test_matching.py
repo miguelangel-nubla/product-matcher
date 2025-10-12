@@ -387,3 +387,151 @@ class TestMatchingRoutes:
         # Note: In a real test, you might want to verify that a MatchLog was
         # actually added to the database, but this would require more complex
         # database setup and cleanup
+
+    @patch('app.api.routes.matching.get_backend')
+    def test_get_external_products_success(
+        self,
+        mock_get_backend,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test successful retrieval of external products."""
+        # Mock backend adapter
+        mock_adapter = Mock()
+        mock_adapter.get_all_products.return_value = [
+            {"id": "product1", "name": "Apple Juice"},
+            {"id": "product2", "name": "Orange Juice"},
+        ]
+        mock_get_backend.return_value = mock_adapter
+
+        response = client.get(
+            "/api/v1/matching/external-products?backend=test-backend",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 2
+        assert data["backend"] == "test-backend"
+        assert len(data["data"]) == 2
+        assert data["data"][0]["id"] == "product1"
+
+    def test_get_external_products_unauthorized(self, client: TestClient):
+        """Test external products endpoint without authentication."""
+        response = client.get("/api/v1/matching/external-products?backend=test-backend")
+        assert response.status_code == 401
+
+    @patch('app.api.routes.matching.get_backend')
+    def test_get_external_products_invalid_backend(
+        self,
+        mock_get_backend,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test external products with invalid backend."""
+        mock_get_backend.side_effect = ValueError("Invalid backend: nonexistent-backend")
+
+        response = client.get(
+            "/api/v1/matching/external-products?backend=nonexistent-backend",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 400
+        assert "Invalid backend" in response.json()["detail"]
+
+    @patch('app.api.routes.matching.get_backend_config')
+    @patch('app.adapters.registry.get_available_backends')
+    def test_get_available_backends_success(
+        self,
+        mock_get_available_backends,
+        mock_get_backend_config,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test successful retrieval of available backends."""
+        # Mock backend names and configs
+        mock_get_available_backends.return_value = ["grocy1", "mock"]
+
+        # Create mock configs
+        mock_config_grocy = Mock()
+        mock_config_grocy.description = "Grocy Backend"
+
+        mock_config_mock = Mock()
+        mock_config_mock.description = "Mock Backend"
+
+        mock_get_backend_config.side_effect = [mock_config_grocy, mock_config_mock]
+
+        response = client.get(
+            "/api/v1/matching/backends",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["name"] == "grocy1"
+        assert data[0]["description"] == "Grocy Backend"
+        assert data[1]["name"] == "mock"
+        assert data[1]["description"] == "Mock Backend"
+
+    def test_get_available_backends_unauthorized(self, client: TestClient):
+        """Test backends endpoint without authentication."""
+        response = client.get("/api/v1/matching/backends")
+        assert response.status_code == 401
+
+    @patch('app.config.loader.get_language_configs')
+    def test_get_available_languages_success(
+        self,
+        mock_get_language_configs,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test successful retrieval of available languages."""
+        mock_get_language_configs.return_value = {
+            "en": {"name": "English"},
+            "es": {"name": "Spanish"},
+            "fr": {"name": "French"},
+        }
+
+        response = client.get(
+            "/api/v1/matching/languages",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 3
+        assert data == ["en", "es", "fr"]
+
+    def test_get_available_languages_unauthorized(self, client: TestClient):
+        """Test languages endpoint without authentication."""
+        response = client.get("/api/v1/matching/languages")
+        assert response.status_code == 401
+
+    @patch('app.api.routes.matching.get_global_settings')
+    def test_get_matching_settings_success(
+        self,
+        mock_get_global_settings,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test successful retrieval of matching settings."""
+        mock_settings = Mock()
+        mock_settings.default_threshold = 0.8
+        mock_settings.max_candidates = 10
+        mock_get_global_settings.return_value = mock_settings
+
+        response = client.get(
+            "/api/v1/matching/settings",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["default_threshold"] == 0.8
+        assert data["max_candidates"] == 10
+
+    def test_get_matching_settings_unauthorized(self, client: TestClient):
+        """Test settings endpoint without authentication."""
+        response = client.get("/api/v1/matching/settings")
+        assert response.status_code == 401

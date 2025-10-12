@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -25,3 +26,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+def generate_access_token() -> tuple[str, str, str]:
+    """
+    Generate a new access token with prefix and hash.
+    Returns: (token, prefix, token_hash)
+    """
+    token = secrets.token_urlsafe(32)
+    prefix = token[:8]
+    token_hash = pwd_context.hash(token)
+    return token, prefix, token_hash
+
+
+def verify_access_token(token: str, token_hash: str) -> bool:
+    """Verify an access token against its hash."""
+    return pwd_context.verify(token, token_hash)

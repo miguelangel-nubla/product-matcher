@@ -12,8 +12,40 @@ import {
 } from "@/client"
 import { handleError } from "@/utils"
 
-const isLoggedIn = () => {
-  return localStorage.getItem("access_token") !== null
+const isAuthenticated = async () => {
+  try {
+    const token = localStorage.getItem("access_token")
+
+    // Try with local JWT token first (if available)
+    if (token) {
+      const response = await fetch("/api/v1/users/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      if (response.ok) return true
+    }
+
+    // If no local token or local token failed, try proxy auth (API key)
+    const proxyResponse = await fetch("/api/v1/matching/backends", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+
+    if (proxyResponse.ok) {
+      // Mark that we're using proxy auth to avoid confusion
+      sessionStorage.setItem("proxy_auth", "true")
+      return true
+    }
+
+    return false
+  } catch {
+    return false
+  }
 }
 
 const useAuth = () => {
@@ -23,7 +55,9 @@ const useAuth = () => {
   const { data: user } = useQuery<UserPublic | null, Error>({
     queryKey: ["currentUser"],
     queryFn: UsersService.readUserMe,
-    enabled: isLoggedIn(),
+    enabled:
+      localStorage.getItem("access_token") !== null &&
+      sessionStorage.getItem("proxy_auth") !== "true",
   })
 
   const signUpMutation = useMutation({
@@ -73,5 +107,5 @@ const useAuth = () => {
   }
 }
 
-export { isLoggedIn }
+export { isAuthenticated }
 export default useAuth
