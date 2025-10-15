@@ -166,6 +166,9 @@ class MatchRequest(SQLModel):
     create_pending: bool = Field(
         default=True
     )  # Whether to create pending items for unmatched queries
+    debug: bool = Field(
+        default=False
+    )  # Whether to include debug information in response
 
 
 class MatchCandidate(SQLModel):

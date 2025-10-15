@@ -167,6 +167,7 @@ function ProductMatcher() {
       backend: data.backend,
       threshold: data.threshold,
       create_pending: !data.createPending, // Invert: Test Mode checked = don't create pending
+      debug: true, // Always include debug info in frontend match UI
     }
     matchMutation.mutate(matchRequest)
   }

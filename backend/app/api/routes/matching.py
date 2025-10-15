@@ -99,7 +99,7 @@ def match_product(
         normalized_input=normalized_input,
         pending_query_id=pending_item_id,
         candidates=match_candidates,
-        debug_info=debug_info,
+        debug_info=debug_info if query.debug else [],
     )
 
 
