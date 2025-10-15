@@ -123,7 +123,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
 
                 # Get all products from Grocy (1 API call)
                 response = client.get(
-                    f"{self.base_url}/api/objects/products", headers=self.headers
+                    f"{self.base_url}/api/objects/products",
+                    headers=self.headers,
+                    params={"query[]": "no_own_stock=0"},
                 )
                 response.raise_for_status()
 
