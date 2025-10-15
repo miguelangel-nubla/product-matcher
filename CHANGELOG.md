@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.13.0...v1.14.0) (2025-10-15)
+
+
+### Features
+
+* add debug parameter to MatchRequest with conditional logic ([1f06601](https://github.com/miguelangel-nubla/product-matcher/commit/1f06601e95c4005dbb8ab10b3a7537b3bc5fe9a9))
+
 # [1.13.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.12.1...v1.13.0) (2025-10-12)
 
 
