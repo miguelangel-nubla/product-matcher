@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.14.0...v1.15.0) (2025-10-15)
+
+
+### Features
+
+* **grocy:** filter products with no_own_stock=0 parameter ([e42b62e](https://github.com/miguelangel-nubla/product-matcher/commit/e42b62e0a8276924b3625ce030a25206e5ef078d))
+
 # [1.14.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.13.0...v1.14.0) (2025-10-15)
 
 
