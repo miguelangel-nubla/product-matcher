@@ -3,7 +3,7 @@ Pending queries queue management service.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlmodel import Session, desc, select
 
@@ -50,6 +50,24 @@ class PendingQueueManager:
                 [{"product_id": pid, "confidence": conf} for pid, conf in candidates]
             )
 
+        existing_query_statement = select(PendingQuery).where(
+            PendingQuery.owner_id == owner_id,
+            PendingQuery.status == "pending",
+            PendingQuery.original_text == original_text,
+        )
+        existing_query = self.session.exec(existing_query_statement).first()
+
+        if existing_query:
+            existing_query.normalized_text = normalized_text
+            existing_query.candidates = candidates_json
+            existing_query.backend = backend
+            existing_query.threshold = threshold
+            existing_query.created_at = datetime.now(timezone.utc)
+            self.session.add(existing_query)
+            self.session.commit()
+            self.session.refresh(existing_query)
+            return existing_query
+
         pending_query = PendingQuery(
             original_text=original_text,
             normalized_text=normalized_text,
@@ -57,7 +75,7 @@ class PendingQueueManager:
             backend=backend,
             threshold=threshold,
             owner_id=owner_id,
-            created_at=datetime.now().isoformat(),
+            created_at=datetime.now(timezone.utc),
         )
 
         self.session.add(pending_query)

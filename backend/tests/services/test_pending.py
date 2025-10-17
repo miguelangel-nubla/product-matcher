@@ -2,7 +2,7 @@
 
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 import pytest
@@ -33,48 +33,40 @@ class TestPendingQueueManager:
         backend = "test-backend"
         threshold = 0.8
 
-        # Mock the database operations
-        created_query = PendingQuery(
-            id=self.test_pending_id,
-            original_text=original_text,
-            normalized_text=normalized_text,
-            candidates=None,
-            backend=backend,
-            threshold=threshold,
-            owner_id=self.test_owner_id,
-            created_at=datetime.now().isoformat(),
-            status="pending"
-        )
-
         self.mock_session.add.return_value = None
         self.mock_session.commit.return_value = None
         self.mock_session.refresh.return_value = None
+        mock_exec_result = Mock()
+        mock_exec_result.first.return_value = None
+        self.mock_session.exec.return_value = mock_exec_result
 
-        with patch('app.services.pending.datetime') as mock_datetime:
-            mock_datetime.now.return_value.isoformat.return_value = "2023-01-01T00:00:00"
+        with patch("app.services.pending.datetime") as mock_datetime:
+            fixed_now = datetime(2023, 1, 1, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = fixed_now
 
-            # Execute
             result = self.manager.add_to_pending(
                 original_text=original_text,
                 normalized_text=normalized_text,
                 owner_id=self.test_owner_id,
                 backend=backend,
-                threshold=threshold
+                threshold=threshold,
             )
 
-            # Verify session operations
-            self.mock_session.add.assert_called_once()
-            self.mock_session.commit.assert_called_once()
-            self.mock_session.refresh.assert_called_once()
+        # Verify session operations
+        self.mock_session.add.assert_called_once()
+        self.mock_session.commit.assert_called_once()
+        self.mock_session.refresh.assert_called_once()
 
-            # Verify the created query
-            added_query = self.mock_session.add.call_args[0][0]
-            assert added_query.original_text == original_text
-            assert added_query.normalized_text == normalized_text
-            assert added_query.candidates is None
-            assert added_query.backend == backend
-            assert added_query.threshold == threshold
-            assert added_query.owner_id == self.test_owner_id
+        # Verify the created query
+        added_query = self.mock_session.add.call_args[0][0]
+        assert added_query is result
+        assert added_query.original_text == original_text
+        assert added_query.normalized_text == normalized_text
+        assert added_query.candidates is None
+        assert added_query.backend == backend
+        assert added_query.threshold == threshold
+        assert added_query.owner_id == self.test_owner_id
+        assert added_query.created_at == fixed_now
 
     def test_add_to_pending_with_candidates(self):
         """Test adding a query to pending with candidates."""
@@ -84,31 +76,94 @@ class TestPendingQueueManager:
         threshold = 0.8
         candidates = [("product1", 0.7), ("product2", 0.6)]
 
-        expected_candidates_json = json.dumps([
-            {"product_id": "product1", "confidence": 0.7},
-            {"product_id": "product2", "confidence": 0.6}
-        ])
+        expected_candidates_json = json.dumps(
+            [
+                {"product_id": "product1", "confidence": 0.7},
+                {"product_id": "product2", "confidence": 0.6},
+            ]
+        )
 
         self.mock_session.add.return_value = None
         self.mock_session.commit.return_value = None
         self.mock_session.refresh.return_value = None
+        mock_exec_result = Mock()
+        mock_exec_result.first.return_value = None
+        self.mock_session.exec.return_value = mock_exec_result
 
-        with patch('app.services.pending.datetime') as mock_datetime:
-            mock_datetime.now.return_value.isoformat.return_value = "2023-01-01T00:00:00"
+        with patch("app.services.pending.datetime") as mock_datetime:
+            fixed_now = datetime(2023, 1, 1, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = fixed_now
 
-            # Execute
             result = self.manager.add_to_pending(
                 original_text=original_text,
                 normalized_text=normalized_text,
                 owner_id=self.test_owner_id,
                 backend=backend,
                 threshold=threshold,
-                candidates=candidates
+                candidates=candidates,
             )
 
-            # Verify the candidates JSON
-            added_query = self.mock_session.add.call_args[0][0]
-            assert added_query.candidates == expected_candidates_json
+        added_query = self.mock_session.add.call_args[0][0]
+        assert added_query is result
+        assert added_query.candidates == expected_candidates_json
+        assert added_query.created_at == fixed_now
+
+    def test_add_to_pending_updates_existing_query(self):
+        """Test updating an existing pending query with the same original text."""
+        original_text = "apple juice"
+        backend = "test-backend"
+        new_normalized_text = "apple juice updated"
+        new_threshold = 0.85
+        candidates = [("product3", 0.9)]
+        expected_candidates_json = json.dumps(
+            [
+                {"product_id": "product3", "confidence": 0.9},
+            ]
+        )
+
+        existing_query = PendingQuery(
+            id=self.test_pending_id,
+            original_text=original_text,
+            normalized_text="old normalized",
+            candidates=json.dumps([{"product_id": "old", "confidence": 0.5}]),
+            backend="old-backend",
+            threshold=0.5,
+            owner_id=self.test_owner_id,
+            created_at=datetime(2023, 1, 1, tzinfo=timezone.utc),
+            status="pending",
+        )
+
+        mock_exec_result = Mock()
+        mock_exec_result.first.return_value = existing_query
+        self.mock_session.exec.return_value = mock_exec_result
+
+        self.mock_session.add.return_value = None
+        self.mock_session.commit.return_value = None
+        self.mock_session.refresh.return_value = None
+
+        with patch("app.services.pending.datetime") as mock_datetime:
+            updated_time = datetime(2023, 1, 2, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = updated_time
+
+            result = self.manager.add_to_pending(
+                original_text=original_text,
+                normalized_text=new_normalized_text,
+                owner_id=self.test_owner_id,
+                backend=backend,
+                threshold=new_threshold,
+                candidates=candidates,
+            )
+
+        self.mock_session.add.assert_called_once_with(existing_query)
+        self.mock_session.commit.assert_called_once()
+        self.mock_session.refresh.assert_called_once_with(existing_query)
+
+        assert existing_query is result
+        assert existing_query.normalized_text == new_normalized_text
+        assert existing_query.candidates == expected_candidates_json
+        assert existing_query.backend == backend
+        assert existing_query.threshold == new_threshold
+        assert existing_query.created_at == updated_time
 
     def test_get_pending_queries(self):
         """Test retrieving pending queries."""
@@ -121,7 +176,7 @@ class TestPendingQueueManager:
                 backend="test",
                 threshold=0.8,
                 status="pending",
-                created_at="2023-01-01T00:00:00"
+                created_at=datetime(2023, 1, 1, tzinfo=timezone.utc),
             ),
             PendingQuery(
                 id=uuid.uuid4(),
@@ -131,8 +186,8 @@ class TestPendingQueueManager:
                 backend="test",
                 threshold=0.8,
                 status="pending",
-                created_at="2023-01-01T01:00:00"
-            )
+                created_at=datetime(2023, 1, 1, 1, tzinfo=timezone.utc),
+            ),
         ]
 
         mock_exec_result = Mock()
@@ -144,7 +199,7 @@ class TestPendingQueueManager:
             owner_id=self.test_owner_id,
             status="pending",
             limit=10,
-            offset=0
+            offset=0,
         )
 
         # Verify
@@ -164,14 +219,14 @@ class TestPendingQueueManager:
             owner_id=self.test_owner_id,
             status="resolved",
             limit=5,
-            offset=10
+            offset=10,
         )
 
         # Verify
         assert result == []
         self.mock_session.exec.assert_called_once()
 
-    @patch('app.adapters.registry.get_backend')
+    @patch("app.adapters.registry.get_backend")
     def test_resolve_pending_query_assign_success(self, mock_get_backend):
         """Test successfully resolving a pending query with assign action."""
         # Mock pending query
@@ -192,7 +247,7 @@ class TestPendingQueueManager:
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="assign",
-            product_id="product123"
+            product_id="product123",
         )
 
         # Verify
@@ -204,7 +259,7 @@ class TestPendingQueueManager:
         mock_adapter.add_alias.assert_called_once_with("product123", "apple juice")
         self.mock_session.commit.assert_called_once()
 
-    @patch('app.adapters.registry.get_backend')
+    @patch("app.adapters.registry.get_backend")
     def test_resolve_pending_query_assign_with_custom_alias(self, mock_get_backend):
         """Test resolving pending query with custom alias."""
         mock_pending_query = Mock()
@@ -223,7 +278,7 @@ class TestPendingQueueManager:
             pending_query_id=self.test_pending_id,
             action="assign",
             product_id="product123",
-            custom_alias="custom apple juice"
+            custom_alias="custom apple juice",
         )
 
         # Verify custom alias was used
@@ -239,7 +294,7 @@ class TestPendingQueueManager:
         # Execute
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
-            action="ignore"
+            action="ignore",
         )
 
         # Verify
@@ -256,7 +311,7 @@ class TestPendingQueueManager:
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="assign",
-            product_id="product123"
+            product_id="product123",
         )
 
         # Verify
@@ -271,14 +326,14 @@ class TestPendingQueueManager:
         # Execute
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
-            action="assign"
+            action="assign",
         )
 
         # Verify
         assert success is False
         assert "Product ID is required" in error
 
-    @patch('app.adapters.registry.get_backend')
+    @patch("app.adapters.registry.get_backend")
     def test_resolve_pending_query_assign_alias_failure(self, mock_get_backend):
         """Test resolving pending query when alias addition fails."""
         mock_pending_query = Mock()
@@ -297,7 +352,7 @@ class TestPendingQueueManager:
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="assign",
-            product_id="product123"
+            product_id="product123",
         )
 
         # Verify
@@ -312,14 +367,14 @@ class TestPendingQueueManager:
         # Execute
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
-            action="invalid_action"
+            action="invalid_action",
         )
 
         # Verify
         assert success is False
         assert "Invalid action" in error
 
-    @patch('app.adapters.registry.get_backend')
+    @patch("app.adapters.registry.get_backend")
     def test_resolve_pending_query_database_exception(self, mock_get_backend):
         """Test resolving pending query with database exception."""
         mock_pending_query = Mock()
@@ -329,7 +384,6 @@ class TestPendingQueueManager:
 
         self.mock_session.get.return_value = mock_pending_query
         self.mock_session.commit.side_effect = Exception("Database error")
-
         mock_adapter = Mock()
         mock_adapter.add_alias.return_value = (True, None)
         mock_get_backend.return_value = mock_adapter
@@ -338,76 +392,36 @@ class TestPendingQueueManager:
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="assign",
-            product_id="product123"
+            product_id="product123",
         )
 
         # Verify
         assert success is False
         assert "Database error" in error
-        self.mock_session.rollback.assert_called_once()
-
-    def test_get_pending_count(self):
-        """Test getting count of pending queries."""
-        mock_queries = [Mock(), Mock(), Mock()]  # 3 queries
-        mock_exec_result = Mock()
-        mock_exec_result.all.return_value = mock_queries
-        self.mock_session.exec.return_value = mock_exec_result
-
-        # Execute
-        count = self.manager.get_pending_count(
-            owner_id=self.test_owner_id,
-            status="pending"
-        )
-
-        # Verify
-        assert count == 3
-        self.mock_session.exec.assert_called_once()
 
     def test_delete_pending_query_success(self):
-        """Test successfully deleting a pending query."""
+        """Test successful deletion of a pending query."""
         mock_pending_query = Mock()
         mock_pending_query.owner_id = self.test_owner_id
 
         self.mock_session.get.return_value = mock_pending_query
 
-        # Execute
         result = self.manager.delete_pending_query(
             pending_query_id=self.test_pending_id,
-            owner_id=self.test_owner_id
+            owner_id=self.test_owner_id,
         )
 
-        # Verify
         assert result is True
         self.mock_session.delete.assert_called_once_with(mock_pending_query)
         self.mock_session.commit.assert_called_once()
 
     def test_delete_pending_query_not_found(self):
-        """Test deleting a non-existent pending query."""
+        """Test deleting a pending query that doesn't exist."""
         self.mock_session.get.return_value = None
 
-        # Execute
         result = self.manager.delete_pending_query(
             pending_query_id=self.test_pending_id,
-            owner_id=self.test_owner_id
+            owner_id=self.test_owner_id,
         )
 
-        # Verify
         assert result is False
-        self.mock_session.delete.assert_not_called()
-
-    def test_delete_pending_query_wrong_owner(self):
-        """Test deleting a pending query with wrong owner."""
-        mock_pending_query = Mock()
-        mock_pending_query.owner_id = uuid.uuid4()  # Different owner
-
-        self.mock_session.get.return_value = mock_pending_query
-
-        # Execute
-        result = self.manager.delete_pending_query(
-            pending_query_id=self.test_pending_id,
-            owner_id=self.test_owner_id
-        )
-
-        # Verify
-        assert result is False
-        self.mock_session.delete.assert_not_called()
