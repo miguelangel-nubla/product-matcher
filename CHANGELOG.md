@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.16.0...v1.16.1) (2025-10-17)
+
+
+### Bug Fixes
+
+* **pending:** reuse existing pending queries by original text ([b9d7a15](https://github.com/miguelangel-nubla/product-matcher/commit/b9d7a155a21297b63b430b2eb949328b64fa09a3))
+
 # [1.16.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.15.0...v1.16.0) (2025-10-17)
 
 
