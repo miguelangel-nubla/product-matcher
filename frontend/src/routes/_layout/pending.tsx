@@ -36,6 +36,7 @@ import {
 } from "react-icons/fi"
 import type { PendingQueryPublic, ResolveRequest } from "../../client"
 import { MatchingService } from "../../client"
+import { Checkbox } from "../../components/ui/checkbox"
 import { getErrorMessage } from "../../utils/error"
 
 // Type for external products from adapters
@@ -74,6 +75,15 @@ const actionCollection = createListCollection({
   ],
 })
 
+const pageSizeCollection = createListCollection({
+  items: [
+    { label: "10 per page", value: "10" },
+    { label: "20 per page", value: "20" },
+    { label: "50 per page", value: "50" },
+    { label: "100 per page", value: "100" },
+  ],
+})
+
 function PendingItems() {
   const navigate = useNavigate()
   const { queryId } = useSearch({ from: "/_layout/pending" })
@@ -86,8 +96,8 @@ function PendingItems() {
   const [selectedProduct, setSelectedProduct] =
     useState<ExternalProduct | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const itemsPerPage = 20
-  const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
+  const [itemsPerPage, setItemsPerPage] = useState(20)
+  const [selectedQueryIds, setSelectedQueryIds] = useState<string[]>([])
 
   const queryClient = useQueryClient()
 
@@ -101,7 +111,7 @@ function PendingItems() {
   const action = watch("action")
 
   const { data: pendingQueries, isLoading } = useQuery({
-    queryKey: ["pending-queries", selectedStatus, currentPage],
+    queryKey: ["pending-queries", selectedStatus, currentPage, itemsPerPage],
     queryFn: () =>
       MatchingService.getPendingQueries({
         status: selectedStatus,
@@ -144,6 +154,19 @@ function PendingItems() {
     setCurrentPage(0)
   }, [])
 
+  useEffect(() => {
+    setSelectedQueryIds([])
+  }, [])
+
+  useEffect(() => {
+    if (!pendingQueries?.data) return
+    setSelectedQueryIds((prev) =>
+      prev.filter((id) =>
+        pendingQueries.data?.some((query) => query.id === id),
+      ),
+    )
+  }, [pendingQueries?.data])
+
   // Get external products based on the selected item's backend
   const { data: products, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["external-products", selectedQuery?.backend],
@@ -168,19 +191,68 @@ function PendingItems() {
     },
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: (pendingQueryId: string) => {
-      setDeletingItemId(pendingQueryId)
-      return MatchingService.deletePendingQuery({ pendingQueryId })
+  const { mutate: deleteSelectedQueries, isPending: isDeletingSelected } =
+    useMutation({
+      mutationFn: async (pendingQueryIds: string[]) => {
+        await Promise.all(
+          pendingQueryIds.map((pendingQueryId) =>
+            MatchingService.deletePendingQuery({ pendingQueryId }),
+          ),
+        )
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["pending-queries"] })
+        setSelectedQueryIds([])
+      },
+    })
+
+  const handleToggleQuerySelection = useCallback(
+    (queryId: string, isChecked: boolean) => {
+      setSelectedQueryIds((prev) => {
+        if (isChecked) {
+          if (prev.includes(queryId)) return prev
+          return [...prev, queryId]
+        }
+        return prev.filter((id) => id !== queryId)
+      })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pending-queries"] })
-      setDeletingItemId(null)
+    [],
+  )
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!selectedQueryIds.length) return
+    deleteSelectedQueries(selectedQueryIds)
+  }, [deleteSelectedQueries, selectedQueryIds])
+
+  const handleToggleAllCurrent = useCallback(
+    (isChecked: boolean) => {
+      setSelectedQueryIds((prev) => {
+        const currentIds = pendingQueries?.data?.map((query) => query.id) ?? []
+        if (isChecked) {
+          const merged = new Set([...prev, ...currentIds])
+          return Array.from(merged)
+        }
+        return prev.filter((id) => !currentIds.includes(id))
+      })
     },
-    onError: () => {
-      setDeletingItemId(null)
-    },
-  })
+    [pendingQueries?.data],
+  )
+
+  const currentPageQueryIds =
+    pendingQueries?.data?.map((query) => query.id) ?? []
+  const selectedOnPage = currentPageQueryIds.filter((id) =>
+    selectedQueryIds.includes(id),
+  )
+  const isAllCurrentSelected =
+    currentPageQueryIds.length > 0 &&
+    selectedOnPage.length === currentPageQueryIds.length
+  const isIndeterminate = selectedOnPage.length > 0 && !isAllCurrentSelected
+  const hasSelection = selectedQueryIds.length > 0
+  const headerCheckedState = isAllCurrentSelected
+    ? true
+    : isIndeterminate
+      ? "indeterminate"
+      : false
 
   const filteredProducts =
     (products as any)?.data?.filter(
@@ -271,7 +343,7 @@ function PendingItems() {
           <Card.Header>
             <HStack justify="space-between">
               <Heading size="md">Queries</Heading>
-              <HStack>
+              <HStack gap={4}>
                 <Text fontSize="sm">Status:</Text>
                 <SelectRoot
                   collection={statusCollection}
@@ -291,6 +363,39 @@ function PendingItems() {
                     ))}
                   </SelectContent>
                 </SelectRoot>
+                <Text fontSize="sm">Page size:</Text>
+                <SelectRoot
+                  collection={pageSizeCollection}
+                  value={[itemsPerPage.toString()]}
+                  onValueChange={(e) => {
+                    const newSize = Number(e.value[0])
+                    setItemsPerPage(newSize)
+                    setCurrentPage(0)
+                  }}
+                  size="sm"
+                  width="36"
+                >
+                  <SelectTrigger>
+                    <SelectValueText placeholder="Select page size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pageSizeCollection.items.map((item) => (
+                      <SelectItem key={item.value} item={item}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </SelectRoot>
+                <Button
+                  size="sm"
+                  colorScheme="red"
+                  variant="solid"
+                  onClick={handleDeleteSelected}
+                  disabled={!hasSelection || isDeletingSelected}
+                  loading={isDeletingSelected}
+                >
+                  Delete selected
+                </Button>
               </HStack>
             </HStack>
           </Card.Header>
@@ -313,6 +418,16 @@ function PendingItems() {
                 <Table.Root size="sm" variant="outline">
                   <Table.Header>
                     <Table.Row>
+                      <Table.ColumnHeader width="40px">
+                        <Checkbox
+                          size="sm"
+                          checked={headerCheckedState}
+                          onCheckedChange={({ checked }) =>
+                            handleToggleAllCurrent(checked === true)
+                          }
+                          aria-label="Select all queries on page"
+                        />
+                      </Table.ColumnHeader>
                       <Table.ColumnHeader>Original Text</Table.ColumnHeader>
                       <Table.ColumnHeader>Normalized Text</Table.ColumnHeader>
                       <Table.ColumnHeader>Backend</Table.ColumnHeader>
@@ -341,6 +456,19 @@ function PendingItems() {
 
                       return (
                         <Table.Row key={query.id}>
+                          <Table.Cell>
+                            <Checkbox
+                              size="sm"
+                              checked={selectedQueryIds.includes(query.id)}
+                              onCheckedChange={({ checked }) =>
+                                handleToggleQuerySelection(
+                                  query.id,
+                                  checked === true,
+                                )
+                              }
+                              aria-label={`Select query ${query.id}`}
+                            />
+                          </Table.Cell>
                           <Table.Cell>
                             <Button
                               variant="subtle"
@@ -429,15 +557,6 @@ function PendingItems() {
                                   Resolve
                                 </Button>
                               )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                colorScheme="red"
-                                onClick={() => deleteMutation.mutate(query.id)}
-                                loading={deletingItemId === query.id}
-                              >
-                                Delete
-                              </Button>
                             </HStack>
                           </Table.Cell>
                         </Table.Row>
