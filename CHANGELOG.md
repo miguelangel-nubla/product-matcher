@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.15.0...v1.16.0) (2025-10-17)
+
+
+### Features
+
+* **pending-queries:** add bulk delete with page-size controls ([ef01c41](https://github.com/miguelangel-nubla/product-matcher/commit/ef01c413eee0bb1f7ea9a8589ced9e3345260932))
+
 # [1.15.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.14.0...v1.15.0) (2025-10-15)
 
 
