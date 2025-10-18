@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.16.2...v1.17.0) (2025-10-18)
+
+
+### Features
+
+* **matching:** surface ignored queries across API and UI ([2d88039](https://github.com/miguelangel-nubla/product-matcher/commit/2d88039abb362eb37af9a0d3e844fe70f7ceb122))
+
 ## [1.16.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.16.1...v1.16.2) (2025-10-18)
 
 
