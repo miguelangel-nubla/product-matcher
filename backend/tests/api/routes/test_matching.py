@@ -13,12 +13,14 @@ from app.models import MatchRequest, MatchResult, PendingQuery
 class TestMatchingRoutes:
     """Test cases for matching API routes."""
 
+    @patch('app.api.routes.matching.PendingQueueManager')
     @patch('app.api.routes.matching.ProductMatcher')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_success(
         self,
         mock_get_global_settings,
         mock_product_matcher,
+        mock_pending_queue_manager,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
     ):
@@ -38,6 +40,10 @@ class TestMatchingRoutes:
             []  # debug_info (list of DebugStep objects)
         )
         mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = False
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
 
         # Make request
         request_data = {
@@ -64,6 +70,7 @@ class TestMatchingRoutes:
         assert data["candidates"][0]["product_id"] == "product123"
         assert data["candidates"][0]["confidence"] == 0.95
         assert data["debug_info"] == []
+        assert data["ignored"] is False
 
         # Verify matcher was called correctly
         mock_matcher_instance.match_product.assert_called_once_with(
@@ -73,12 +80,162 @@ class TestMatchingRoutes:
             max_candidates=10,
         )
 
+    @patch('app.api.routes.matching.PendingQueueManager')
+    @patch('app.api.routes.matching.ProductMatcher')
+    @patch('app.api.routes.matching.get_global_settings')
+    def test_match_product_returns_ignored_flag(
+        self,
+        mock_get_global_settings,
+        mock_product_matcher,
+        mock_pending_queue_manager,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test that ignored flag is surfaced when query matches ignored entries."""
+        mock_global_settings = Mock()
+        mock_global_settings.default_threshold = 0.8
+        mock_global_settings.max_candidates = 10
+        mock_get_global_settings.return_value = mock_global_settings
+
+        mock_matcher_instance = Mock()
+        mock_matcher_instance.match_product.return_value = (
+            False,
+            "normalized apple juice",
+            [],
+            [],
+        )
+        mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = True
+        mock_pending_manager_instance.add_to_pending.return_value = Mock(id=uuid.uuid4())
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
+
+        request_data = {
+            "text": "apple juice",
+            "backend": "test-backend",
+            "threshold": 0.8,
+            "create_pending": False
+        }
+
+        response = client.post(
+            "/api/v1/matching/match",
+            headers=normal_user_token_headers,
+            json=request_data,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ignored"] is True
+
+    @patch('app.api.routes.matching.PendingQueueManager')
+    @patch('app.api.routes.matching.ProductMatcher')
+    @patch('app.api.routes.matching.get_global_settings')
+    def test_match_product_does_not_create_pending_when_ignored(
+        self,
+        mock_get_global_settings,
+        mock_product_matcher,
+        mock_pending_queue_manager,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Ensure ignored queries are not added to the pending queue."""
+        mock_global_settings = Mock()
+        mock_global_settings.default_threshold = 0.8
+        mock_global_settings.max_candidates = 10
+        mock_get_global_settings.return_value = mock_global_settings
+
+        mock_matcher_instance = Mock()
+        mock_matcher_instance.match_product.return_value = (
+            False,
+            "normalized apple juice",
+            [],
+            [],
+        )
+        mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = True
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
+
+        request_data = {
+            "text": "apple juice",
+            "backend": "test-backend",
+            "threshold": 0.8,
+            "create_pending": True,
+        }
+
+        response = client.post(
+            "/api/v1/matching/match",
+            headers=normal_user_token_headers,
+            json=request_data,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ignored"] is True
+        assert data["pending_query_id"] is None
+        mock_pending_manager_instance.add_to_pending.assert_not_called()
+
+    @patch('app.api.routes.matching.PendingQueueManager')
+    @patch('app.api.routes.matching.ProductMatcher')
+    @patch('app.api.routes.matching.get_global_settings')
+    def test_match_product_debug_info_includes_ignored_step(
+        self,
+        mock_get_global_settings,
+        mock_product_matcher,
+        mock_pending_queue_manager,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Ensure ignored state is appended to debug info when debugging is enabled."""
+        mock_global_settings = Mock()
+        mock_global_settings.default_threshold = 0.8
+        mock_global_settings.max_candidates = 10
+        mock_get_global_settings.return_value = mock_global_settings
+
+        mock_matcher_instance = Mock()
+        mock_matcher_instance.match_product.return_value = (
+            False,
+            "normalized apple juice",
+            [],
+            [],
+        )
+        mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = True
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
+
+        request_data = {
+            "text": "apple juice",
+            "backend": "test-backend",
+            "threshold": 0.8,
+            "create_pending": False,
+            "debug": True,
+        }
+
+        response = client.post(
+            "/api/v1/matching/match",
+            headers=normal_user_token_headers,
+            json=request_data,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ignored"] is True
+        assert data["debug_info"]
+        assert data["debug_info"][-1]["message"] == "Ignored status evaluated"
+        assert data["debug_info"][-1]["data"]["ignored"] is True
+
+    @patch('app.api.routes.matching.PendingQueueManager')
     @patch('app.api.routes.matching.ProductMatcher')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_use_default_threshold(
         self,
         mock_get_global_settings,
         mock_product_matcher,
+        mock_pending_queue_manager,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
     ):
@@ -94,6 +251,10 @@ class TestMatchingRoutes:
             True, "normalized text", [("product1", 0.8)], []
         )
         mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = False
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
 
         # Make request without threshold
         request_data = {
@@ -148,6 +309,7 @@ class TestMatchingRoutes:
         mock_pending_query = Mock()
         mock_pending_query.id = uuid.uuid4()
         mock_pending_manager_instance.add_to_pending.return_value = mock_pending_query
+        mock_pending_manager_instance.is_query_ignored.return_value = False
         mock_pending_queue_manager.return_value = mock_pending_manager_instance
 
         # Make request with create_pending=True
@@ -169,6 +331,7 @@ class TestMatchingRoutes:
 
         assert data["success"] is False
         assert data["pending_query_id"] == str(mock_pending_query.id)
+        assert data["ignored"] is False
 
         # Verify pending query was created
         mock_pending_manager_instance.add_to_pending.assert_called_once()
@@ -341,12 +504,14 @@ class TestMatchingRoutes:
 
         assert response.status_code == 422  # Validation error
 
+    @patch('app.api.routes.matching.PendingQueueManager')
     @patch('app.api.routes.matching.ProductMatcher')
     @patch('app.api.routes.matching.get_global_settings')
     def test_match_product_logs_successful_match(
         self,
         mock_get_global_settings,
         mock_product_matcher,
+        mock_pending_queue_manager,
         client: TestClient,
         normal_user_token_headers: dict[str, str],
         db: Session,
@@ -368,6 +533,10 @@ class TestMatchingRoutes:
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = False
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
+
         request_data = {
             "text": "apple juice",
             "backend": "test-backend",
@@ -382,7 +551,9 @@ class TestMatchingRoutes:
         )
 
         assert response.status_code == 200
-        assert response.json()["success"] is True
+        response_data = response.json()
+        assert response_data["success"] is True
+        assert response_data["ignored"] is False
 
         # Note: In a real test, you might want to verify that a MatchLog was
         # actually added to the database, but this would require more complex

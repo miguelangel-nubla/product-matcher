@@ -226,6 +226,36 @@ class TestPendingQueueManager:
         assert result == []
         self.mock_session.exec.assert_called_once()
 
+    def test_is_query_ignored_true(self):
+        """Test detection of ignored queries when a record exists."""
+        mock_exec_result = Mock()
+        mock_exec_result.first.return_value = ("ignored-id",)
+        self.mock_session.exec.return_value = mock_exec_result
+
+        result = self.manager.is_query_ignored(
+            owner_id=self.test_owner_id,
+            normalized_text="apple juice",
+            backend="test-backend",
+        )
+
+        assert result is True
+        self.mock_session.exec.assert_called_once()
+
+    def test_is_query_ignored_false(self):
+        """Test detection of ignored queries when no record exists."""
+        mock_exec_result = Mock()
+        mock_exec_result.first.return_value = None
+        self.mock_session.exec.return_value = mock_exec_result
+
+        result = self.manager.is_query_ignored(
+            owner_id=self.test_owner_id,
+            normalized_text="apple juice",
+            backend="test-backend",
+        )
+
+        assert result is False
+        self.mock_session.exec.assert_called_once()
+
     @patch("app.adapters.registry.get_backend")
     def test_resolve_pending_query_assign_success(self, mock_get_backend):
         """Test successfully resolving a pending query with assign action."""

@@ -362,6 +362,15 @@ function ProductMatcher() {
                     />
                   </Box>
 
+                  {result.ignored && (
+                    <Alert.Root status="info">
+                      <Alert.Indicator />
+                      <Alert.Description>
+                        This normalized query is marked as ignored.
+                      </Alert.Description>
+                    </Alert.Root>
+                  )}
+
                   {/* Show all candidates */}
                   {result.candidates && result.candidates.length > 0 ? (
                     <VStack gap={3} align="stretch">

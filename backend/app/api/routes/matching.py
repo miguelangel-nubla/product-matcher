@@ -2,6 +2,7 @@
 Product matching API routes.
 """
 
+import time
 import uuid
 from typing import Any
 
@@ -12,6 +13,7 @@ from app.api.deps import CurrentUser, SessionDep
 from app.config.loader import get_backend_config, get_global_settings
 from app.models import (
     BackendInfo,
+    DebugStep,
     GlobalSettings,
     MatchLog,
     MatchLogPublic,
@@ -56,6 +58,7 @@ def match_product(
         raise HTTPException(status_code=400, detail=str(e))
 
     pending_item_id = None
+    pending_manager = PendingQueueManager(session)
 
     # Convert candidates to MatchCandidate objects
     from app.models import MatchCandidate
@@ -64,6 +67,25 @@ def match_product(
         MatchCandidate(product_id=product_id, confidence=confidence)
         for product_id, confidence in candidates
     ]
+
+    ignored = pending_manager.is_query_ignored(
+        owner_id=current_user.id,
+        normalized_text=normalized_input,
+        backend=query.backend,
+    )
+
+    if query.debug:
+        debug_info.append(
+            DebugStep(
+                message="Ignored status evaluated",
+                timestamp=time.time(),
+                data={
+                    "ignored": ignored,
+                    "normalized_input": normalized_input,
+                    "backend": query.backend,
+                },
+            )
+        )
 
     # If successful match, log it for reference
     if success and candidates:
@@ -82,8 +104,7 @@ def match_product(
         session.commit()
     else:
         # If no match or low confidence, optionally add to pending queue
-        if query.create_pending:
-            pending_manager = PendingQueueManager(session)
+        if query.create_pending and not ignored:
             pending_query = pending_manager.add_to_pending(
                 original_text=query.text,
                 normalized_text=normalized_input,
@@ -100,6 +121,7 @@ def match_product(
         pending_query_id=pending_item_id,
         candidates=match_candidates,
         debug_info=debug_info if query.debug else [],
+        ignored=ignored,
     )
 
 

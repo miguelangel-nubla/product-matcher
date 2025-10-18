@@ -190,6 +190,7 @@ class MatchResult(BaseModel):
     debug_info: list[DebugStep] | None = (
         None  # Debug information as list of step objects
     )
+    ignored: bool = False  # True if query matches an ignored pending item
 
 
 # Model for resolving pending queries

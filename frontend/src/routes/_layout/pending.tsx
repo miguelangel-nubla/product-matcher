@@ -71,7 +71,7 @@ const statusCollection = createListCollection({
 const actionCollection = createListCollection({
   items: [
     { label: "Add alias to existing product", value: "assign" },
-    { label: "Ignore (mark as resolved)", value: "ignore" },
+    { label: "Save as ignored", value: "ignore" },
   ],
 })
 

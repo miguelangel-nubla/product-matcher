@@ -115,6 +115,32 @@ class PendingQueueManager:
 
         return list(self.session.exec(statement).all())
 
+    def is_query_ignored(
+        self, owner_id: uuid.UUID, normalized_text: str, backend: str
+    ) -> bool:
+        """
+        Check whether a normalized query has previously been marked as ignored.
+
+        Args:
+            owner_id: ID of the owner
+            normalized_text: Normalized representation of the query text
+            backend: Backend instance name
+
+        Returns:
+            True if an ignored pending query exists for this combination
+        """
+        statement = (
+            select(PendingQuery.id)
+            .where(
+                PendingQuery.owner_id == owner_id,
+                PendingQuery.status == "ignored",
+                PendingQuery.normalized_text == normalized_text,
+                PendingQuery.backend == backend,
+            )
+            .limit(1)
+        )
+        return self.session.exec(statement).first() is not None
+
     def resolve_pending_query(
         self,
         pending_query_id: uuid.UUID,
