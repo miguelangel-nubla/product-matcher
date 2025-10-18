@@ -54,6 +54,8 @@ class PendingQueueManager:
             PendingQuery.owner_id == owner_id,
             PendingQuery.status == "pending",
             PendingQuery.original_text == original_text,
+            PendingQuery.backend == backend,
+            PendingQuery.threshold == threshold,
         )
         existing_query = self.session.exec(existing_query_statement).first()
 

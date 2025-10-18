@@ -433,7 +433,7 @@ function PendingItems() {
                       <Table.ColumnHeader>Backend</Table.ColumnHeader>
                       <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                       <Table.ColumnHeader>Status</Table.ColumnHeader>
-                      <Table.ColumnHeader>Created</Table.ColumnHeader>
+                      <Table.ColumnHeader>Last request</Table.ColumnHeader>
                       <Table.ColumnHeader textAlign="end">
                         Actions
                       </Table.ColumnHeader>
