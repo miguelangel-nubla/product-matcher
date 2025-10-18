@@ -1,3 +1,10 @@
+## [1.16.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.16.1...v1.16.2) (2025-10-18)
+
+
+### Bug Fixes
+
+* **pending:** filter existing pending by backend and threshold ([338cb9c](https://github.com/miguelangel-nubla/product-matcher/commit/338cb9cf7c8f555f814747f2253953619e62a37d))
+
 ## [1.16.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.16.0...v1.16.1) (2025-10-17)
 
 
