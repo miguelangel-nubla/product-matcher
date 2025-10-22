@@ -151,6 +151,7 @@ STOPWORDS = {
     "ªb",
     "ª",
     "º",
+    "normal",
 }
 
 # Common Spanish food/product abbreviations
