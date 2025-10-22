@@ -1,3 +1,11 @@
+## [1.17.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.0...v1.17.1) (2025-10-22)
+
+
+### Bug Fixes
+
+* **normalization:** align Spanish stopwords with expansion outputs ([aaf7193](https://github.com/miguelangel-nubla/product-matcher/commit/aaf7193509243f11665992030b0454a4fa14bebf))
+* **normalization:** only remove number-only tokens ([449d493](https://github.com/miguelangel-nubla/product-matcher/commit/449d493f45ad491b7dd79a939490beb9f7ada410))
+
 # [1.17.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.16.2...v1.17.0) (2025-10-18)
 
 
