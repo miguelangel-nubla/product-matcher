@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.1...v1.17.2) (2025-10-22)
+
+
+### Bug Fixes
+
+* **normalization:** add Spanish stopword ([16f5739](https://github.com/miguelangel-nubla/product-matcher/commit/16f5739aa24ae0768211a18d9c2ca08f7c0d115f))
+
 ## [1.17.1](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.0...v1.17.1) (2025-10-22)
 
 
