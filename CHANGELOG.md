@@ -1,3 +1,10 @@
+## [1.17.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.2...v1.17.3) (2025-11-18)
+
+
+### Bug Fixes
+
+* **normalization:** improve number handling ([84ba77e](https://github.com/miguelangel-nubla/product-matcher/commit/84ba77e673336dc45f9b662e2cda1af00973936f))
+
 ## [1.17.2](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.1...v1.17.2) (2025-10-22)
 
 
