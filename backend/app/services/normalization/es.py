@@ -152,6 +152,8 @@ STOPWORDS = {
     "ª",
     "º",
     "normal",
+    # brands
+    "ks",  # kirkland signature
 }
 
 # Common Spanish food/product abbreviations
@@ -204,6 +206,7 @@ EXPANSIONS = {
     "lat": "lata",
     "tetr": "tetrabrik",
     "brick": "tetrabrik",
+    "nectar": "zumo",
 }
 
 # Global spaCy model - loaded at module import time
@@ -239,11 +242,18 @@ def post_process_tokens(
     if stopwords is None:
         stopwords = STOPWORDS
 
-    # Strip numbers from tokens
-    tokens = [re.sub(r"^\d+$", "", token) for token in tokens]
-
     # Remove Roman numerals (i, ii, iii, iv, v, vi, vii, viii, ix, x, etc.)
     tokens = [re.sub(r"^[ivx]+$", "", token) for token in tokens]
+
+    # Split numbers and letters into separate tokens (e.g., "75ml" -> "75", "ml")
+    split_tokens: list[str] = []
+    for token in tokens:
+        parts = re.findall(r"\d+|[^\d\s]+", token)
+        split_tokens.extend(parts if parts else [token])
+    tokens = split_tokens
+
+    # Strip numbers from tokens
+    tokens = [re.sub(r"^\d+$", "", token) for token in tokens]
 
     # Expand abbreviations
     tokens = [expansions.get(token, token) for token in tokens]
