@@ -242,6 +242,9 @@ def post_process_tokens(
     if stopwords is None:
         stopwords = STOPWORDS
 
+    # Remove all symbols except alphanumeric
+    tokens = [re.sub(r"[^\w]", "", token) for token in tokens]
+
     # Remove Roman numerals (i, ii, iii, iv, v, vi, vii, viii, ix, x, etc.)
     tokens = [re.sub(r"^[ivx]+$", "", token) for token in tokens]
 
