@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.3...v1.18.0) (2026-01-13)
+
+
+### Features
+
+* **normalization:** remove symbols from Spanish tokens ([e42d36e](https://github.com/miguelangel-nubla/product-matcher/commit/e42d36e531331b2d7e0a8f9b6e0c3285c52b34cb))
+
 ## [1.17.3](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.2...v1.17.3) (2025-11-18)
 
 
