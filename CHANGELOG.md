@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.18.0...v1.19.0) (2026-02-02)
+
+
+### Features
+
+* unescape HTML entities during text normalization ([1caee02](https://github.com/miguelangel-nubla/product-matcher/commit/1caee027d2cc2b57e60d2fe8d4b2513e6f179484))
+
 # [1.18.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.17.3...v1.18.0) (2026-01-13)
 
 
