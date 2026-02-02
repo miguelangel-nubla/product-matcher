@@ -4,6 +4,7 @@ Spanish-specific normalization rules.
 
 import re
 import unicodedata
+import html
 from typing import Any
 
 import spacy
@@ -301,6 +302,7 @@ class SpanishNormalizer(BaseNormalizer):
             List of normalized tokens
         """
         # Step 1: Strip accents and clean leading/trailing punctuation
+        text = html.unescape(text)
         text = unicodedata.normalize("NFD", text)
         text = "".join(char for char in text if unicodedata.category(char) != "Mn")
 
