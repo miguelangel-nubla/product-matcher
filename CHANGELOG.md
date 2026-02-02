@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.19.0...v1.20.0) (2026-02-02)
+
+
+### Features
+
+* add size abbreviations to the Spanish normalization map ([a7c24ca](https://github.com/miguelangel-nubla/product-matcher/commit/a7c24ca4f318ac447eb8c2f2f7a3eb7bf154455c))
+
 # [1.19.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.18.0...v1.19.0) (2026-02-02)
 
 
