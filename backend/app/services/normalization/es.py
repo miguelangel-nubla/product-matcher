@@ -208,6 +208,14 @@ EXPANSIONS = {
     "tetr": "tetrabrik",
     "brick": "tetrabrik",
     "nectar": "zumo",
+    "pe": "pequeño",
+    "pq": "pequeño",
+    "md": "mediano",
+    "m": "mediano",
+    "gr": "grande",
+    "g": "grande",
+    "ex": "extra",
+    "e": "extra",
 }
 
 # Global spaCy model - loaded at module import time
