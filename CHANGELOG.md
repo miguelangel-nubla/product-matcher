@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.20.0...v1.21.0) (2026-02-08)
+
+
+### Features
+
+* add matching pipeline tests ([2edbde2](https://github.com/miguelangel-nubla/product-matcher/commit/2edbde25e57b4a44fa719deb45e2a1c1026be3cb))
+
 # [1.20.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.19.0...v1.20.0) (2026-02-02)
 
 
