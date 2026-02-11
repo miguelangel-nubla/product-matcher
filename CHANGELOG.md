@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.22.0...v1.23.0) (2026-02-11)
+
+
+### Features
+
+* strip accents from Spanish tokens during normalization ([d42a8ef](https://github.com/miguelangel-nubla/product-matcher/commit/d42a8efa479bb4ba719d7d9ce2e218799622ec76))
+
 # [1.22.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.21.0...v1.22.0) (2026-02-11)
 
 
