@@ -156,11 +156,13 @@ STOPWORDS = {
     "auto",
     "automatico",
     # brands
-    "ks",  # kirkland signature
+    "el corte ingles",
+    "kirkland signature",
 }
 
 # Common Spanish food/product abbreviations
 EXPANSIONS = {
+    "k": "kilo",
     "kg": "kilogramo",
     "gr": "gramo",
     "ml": "mililitro",
@@ -218,6 +220,9 @@ EXPANSIONS = {
     "g": "grande",
     "ex": "extra",
     "e": "extra",
+    # brands
+    "eci": "el corte ingles",
+    "ks": "kirkland signature",
 }
 
 # Global spaCy model - loaded at module import time
