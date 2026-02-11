@@ -261,6 +261,16 @@ def post_process_tokens(
     # Remove all symbols except alphanumeric
     tokens = [re.sub(r"[^\w]", "", token) for token in tokens]
 
+    # Strip accents from tokens (e.g. "él" -> "el")
+    tokens = [
+        "".join(
+            char
+            for char in unicodedata.normalize("NFD", token)
+            if unicodedata.category(char) != "Mn"
+        )
+        for token in tokens
+    ]
+
     # Remove Roman numerals (i, ii, iii, iv, v, vi, vii, viii, ix, x, etc.)
     tokens = [re.sub(r"^[ivx]+$", "", token) for token in tokens]
 

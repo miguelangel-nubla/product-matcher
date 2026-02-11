@@ -117,7 +117,22 @@ class TestNormalization:
         assert norm.custom_expansions["jug"] == "jugo"
 
         # Apply using the loaded config
+
         processed = post_process_tokens(tokens, stopwords=norm.custom_stopwords, expansions=norm.custom_expansions)
         assert "manzana" not in processed
         assert "jugo" in processed
+
+    def test_normalize_se_to_el_stopword(self):
+        """Test that 'se' which lemmatizes to 'él' is removed as a stopword."""
+        try:
+            # "SE" -> "el" (lemma) -> removed because "el" is in STOPWORDS
+            # Note: Spacy lemma for "SE" is usually "él" or "el".
+            result = self.normalizer.normalize("YOGUR NATURAL ECI SE")
+            assert "yogur" in result
+            assert "él" not in result
+            assert "se" not in result
+            assert "natural" not in result
+        except RuntimeError:
+            pytest.skip("SpaCy model not available")
+
 
