@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.21.0...v1.22.0) (2026-02-11)
+
+
+### Features
+
+* add stop words to Spanish ([06169f0](https://github.com/miguelangel-nubla/product-matcher/commit/06169f0a76d8664a420f31e0f5ca13725b76866a))
+
 # [1.21.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.20.0...v1.21.0) (2026-02-08)
 
 
