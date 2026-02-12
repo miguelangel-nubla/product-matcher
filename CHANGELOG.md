@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.23.0...v1.24.0) (2026-02-12)
+
+
+### Features
+
+* fix tests ([f8d8618](https://github.com/miguelangel-nubla/product-matcher/commit/f8d86187f794deff9ad924cd46b7fb43a89a0e46))
+
 # [1.23.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.22.0...v1.23.0) (2026-02-11)
 
 
