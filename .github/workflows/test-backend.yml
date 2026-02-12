@@ -26,7 +26,7 @@ jobs:
       - name: Run tests
         run: bash scripts/test.sh
       - name: Store coverage files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-html
           path: backend/htmlcov
