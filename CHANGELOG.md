@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.24.0...v1.25.0) (2026-02-12)
+
+
+### Features
+
+* improve Playwright tests ([32b0731](https://github.com/miguelangel-nubla/product-matcher/commit/32b07317a076e1b71c1f873ea948406f89c391b9))
+
 # [1.24.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.23.0...v1.24.0) (2026-02-12)
 
 
