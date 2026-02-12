@@ -2,9 +2,9 @@
 Spanish-specific normalization rules.
 """
 
+import html
 import re
 import unicodedata
-import html
 from typing import Any
 
 import spacy
@@ -216,8 +216,9 @@ EXPANSIONS = {
     "pq": "pequeno",
     "md": "mediano",
     "m": "mediano",
-    "gr": "grande",
-    "g": "grande",
+    # already mapped to "grande"
+    # "gr": "grande",
+    # "g": "grande",
     "ex": "extra",
     "e": "extra",
     # brands

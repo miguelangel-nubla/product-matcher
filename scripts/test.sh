@@ -14,7 +14,7 @@ if [ $(uname -s) = "Linux" ]; then
 fi
 
 # Build images first to ensure everything is up to date
-docker compose -f docker-compose.yml -f docker-compose.test.yml build
+docker compose -f docker-compose.yml -f docker-compose.test.yml build backend
 
 # Start services
 docker compose -f docker-compose.yml -f docker-compose.test.yml up -d db backend

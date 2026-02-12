@@ -48,7 +48,7 @@ class TestMatchingPipeline:
         assert result.success is True
         strategy1.match.assert_called_once()
         strategy2.match.assert_not_called()
-        
+
         # Verify debug calls
         assert self.mock_context.debug.add.call_count >= 1
 
@@ -75,7 +75,7 @@ class TestMatchingPipeline:
         assert result == result2
         strategy1.match.assert_called_once()
         strategy2.match.assert_called_once()
-        
+
         # Check threshold passed to strategy 2 (Fuzzy)
         # It should use fuzzy_threshold (0.6)
         strategy2.match.assert_called_with(self.mock_context, 0.6, 10)
@@ -122,15 +122,15 @@ class TestMatchingPipeline:
 
         # Execute
         self.pipeline.execute(
-            self.mock_context, 
-            semantic_threshold=0.85, 
+            self.mock_context,
+            semantic_threshold=0.85,
             fuzzy_threshold=0.65,
             max_candidates=5
         )
 
         # Verify Semantic strategy got semantic_threshold
         strategy1.match.assert_called_with(self.mock_context, 0.85, 5)
-        
+
         # Verify Fuzzy strategy got fuzzy_threshold
         strategy2.match.assert_called_with(self.mock_context, 0.65, 5)
 
@@ -140,8 +140,8 @@ class TestMatchingPipeline:
         strategy1 = Mock()
         strategy1.get_name.return_value = "Strategy1"
         result1 = MatchingResult(
-            success=True, 
-            matches=[("p1", 1.0)], 
+            success=True,
+            matches=[("p1", 1.0)],
             strategy_name="Strategy1",
             candidates_checked=10,
             processing_time_ms=50.0
@@ -158,4 +158,3 @@ class TestMatchingPipeline:
         assert metrics_log is not None
         assert "50.00ms" in metrics_log
         assert "candidates_checked=10" in metrics_log
-

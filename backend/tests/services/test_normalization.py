@@ -107,10 +107,10 @@ class TestNormalization:
         }
         # Create a new normalizer with custom config
         norm = SpanishNormalizer(config=custom_config)
-        
+
         # Test custom stopword via public API if possible, but easier to unit test post_process
         tokens = ["manzana", "jug"]
-        
+
         # Note: SpanishNormalizer.normalize() calls post_process with its instance config.
         # But here we want to test that the instance config was correctly loaded.
         assert "manzana" in norm.custom_stopwords
@@ -134,5 +134,3 @@ class TestNormalization:
             assert "natural" not in result
         except RuntimeError:
             pytest.skip("SpaCy model not available")
-
-
