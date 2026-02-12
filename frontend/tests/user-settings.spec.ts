@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test"
-import { firstSuperuser, firstSuperuserPassword } from "./config.ts"
 import { createUser } from "./utils/privateApi.ts"
 import { randomEmail, randomPassword } from "./utils/random"
 import { logInUser, logOutUser } from "./utils/user"
@@ -16,11 +15,19 @@ test("My profile tab is active by default", async ({ page }) => {
   )
 })
 
-test("All tabs are visible", async ({ page }) => {
-  await page.goto("/settings")
-  for (const tab of tabs) {
-    await expect(page.getByRole("tab", { name: tab })).toBeVisible()
-  }
+test.describe("Tabs visibility", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+  test("All tabs are visible", async ({ page }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+
+    await page.goto("/settings")
+    for (const tab of tabs) {
+      await expect(page.getByRole("tab", { name: tab })).toBeVisible()
+    }
+  })
 })
 
 test.describe("Edit user full name and email successfully", () => {
@@ -41,7 +48,7 @@ test.describe("Edit user full name and email successfully", () => {
     await page.getByRole("button", { name: "Edit" }).click()
     await page.getByLabel("Full name").fill(updatedName)
     await page.getByRole("button", { name: "Save" }).click()
-    await expect(page.getByText("User updated successfully")).toBeVisible()
+    await expect(page.getByText("User updated successfully").first()).toBeVisible()
     // Check if the new name is displayed on the page
     await expect(
       page.getByLabel("My profile").getByText(updatedName, { exact: true }),
@@ -63,7 +70,7 @@ test.describe("Edit user full name and email successfully", () => {
     await page.getByRole("button", { name: "Edit" }).click()
     await page.getByLabel("Email").fill(updatedEmail)
     await page.getByRole("button", { name: "Save" }).click()
-    await expect(page.getByText("User updated successfully")).toBeVisible()
+    await expect(page.getByText("User updated successfully").first()).toBeVisible()
     await expect(
       page.getByLabel("My profile").getByText(updatedEmail, { exact: true }),
     ).toBeVisible()
@@ -155,7 +162,7 @@ test.describe("Change password successfully", () => {
     await page.getByPlaceholder("New Password").fill(NewPassword)
     await page.getByPlaceholder("Confirm Password").fill(NewPassword)
     await page.getByRole("button", { name: "Save" }).click()
-    await expect(page.getByText("Password updated successfully.")).toBeVisible()
+    await expect(page.getByText("Password updated successfully.").first()).toBeVisible()
 
     await logOutUser(page)
 
@@ -225,106 +232,124 @@ test.describe("Change password with invalid data", () => {
     await page.getByPlaceholder("Confirm Password").fill(password)
     await page.getByRole("button", { name: "Save" }).click()
     await expect(
-      page.getByText("New password cannot be the same as the current one"),
+      page.getByText("New password cannot be the same as the current one").first(),
     ).toBeVisible()
   })
 })
 
 // Appearance
 
-test("Appearance tab is visible", async ({ page }) => {
-  await page.goto("/settings")
-  await page.getByRole("tab", { name: "Appearance" }).click()
-  await expect(page.getByLabel("Appearance")).toBeVisible()
-})
+test.describe("Appearance", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+  test("Appearance tab is visible", async ({ page }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    await logInUser(page, email, password)
 
-test("User can switch from light mode to dark mode and vice versa", async ({
-  page,
-}) => {
-  await page.goto("/settings")
-  await page.getByRole("tab", { name: "Appearance" }).click()
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "Appearance" }).click()
+    await expect(page.getByLabel("Appearance")).toBeVisible()
+  })
 
-  // Ensure the initial state is light mode
-  if (
-    await page.evaluate(() =>
+  test("User can switch from light mode to dark mode and vice versa", async ({
+    page,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "Appearance" }).click()
+
+    // Ensure the initial state is light mode
+    if (
+      await page.evaluate(() =>
+        document.documentElement.classList.contains("dark"),
+      )
+    ) {
+      await page
+        .locator("label")
+        .filter({ hasText: "Light Mode" })
+        .locator("span")
+        .first()
+        .click()
+    }
+
+    let isLightMode = await page.evaluate(() =>
+      document.documentElement.classList.contains("light"),
+    )
+    expect(isLightMode).toBe(true)
+
+    await page
+      .locator("label")
+      .filter({ hasText: "Dark Mode" })
+      .locator("span")
+      .first()
+      .click()
+    const isDarkMode = await page.evaluate(() =>
       document.documentElement.classList.contains("dark"),
     )
-  ) {
+    expect(isDarkMode).toBe(true)
+
     await page
       .locator("label")
       .filter({ hasText: "Light Mode" })
       .locator("span")
       .first()
       .click()
-  }
-
-  let isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("light"),
-  )
-  expect(isLightMode).toBe(true)
-
-  await page
-    .locator("label")
-    .filter({ hasText: "Dark Mode" })
-    .locator("span")
-    .first()
-    .click()
-  const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  )
-  expect(isDarkMode).toBe(true)
-
-  await page
-    .locator("label")
-    .filter({ hasText: "Light Mode" })
-    .locator("span")
-    .first()
-    .click()
-  isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("light"),
-  )
-  expect(isLightMode).toBe(true)
-})
-
-test("Selected mode is preserved across sessions", async ({ page }) => {
-  await page.goto("/settings")
-  await page.getByRole("tab", { name: "Appearance" }).click()
-
-  // Ensure the initial state is light mode
-  if (
-    await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
+    isLightMode = await page.evaluate(() =>
+      document.documentElement.classList.contains("light"),
     )
-  ) {
+    expect(isLightMode).toBe(true)
+  })
+
+  test("Selected mode is preserved across sessions", async ({ page }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "Appearance" }).click()
+
+    // Ensure the initial state is light mode
+    if (
+      await page.evaluate(() =>
+        document.documentElement.classList.contains("dark"),
+      )
+    ) {
+      await page
+        .locator("label")
+        .filter({ hasText: "Light Mode" })
+        .locator("span")
+        .first()
+        .click()
+    }
+
+    const isLightMode = await page.evaluate(() =>
+      document.documentElement.classList.contains("light"),
+    )
+    expect(isLightMode).toBe(true)
+
     await page
       .locator("label")
-      .filter({ hasText: "Light Mode" })
+      .filter({ hasText: "Dark Mode" })
       .locator("span")
       .first()
       .click()
-  }
+    let isDarkMode = await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    )
+    expect(isDarkMode).toBe(true)
 
-  const isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("light"),
-  )
-  expect(isLightMode).toBe(true)
+    await logOutUser(page)
+    await logInUser(page, email, password)
 
-  await page
-    .locator("label")
-    .filter({ hasText: "Dark Mode" })
-    .locator("span")
-    .first()
-    .click()
-  let isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  )
-  expect(isDarkMode).toBe(true)
-
-  await logOutUser(page)
-  await logInUser(page, firstSuperuser, firstSuperuserPassword)
-
-  isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  )
-  expect(isDarkMode).toBe(true)
+    isDarkMode = await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    )
+    expect(isDarkMode).toBe(true)
+  })
 })

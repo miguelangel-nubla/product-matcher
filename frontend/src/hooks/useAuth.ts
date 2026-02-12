@@ -16,29 +16,25 @@ const isAuthenticated = async () => {
   try {
     const token = localStorage.getItem("access_token")
 
-    // Try with local JWT token first (if available)
-    if (token) {
-      const response = await fetch("/api/v1/users/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
-      if (response.ok) return true
+    // Check valid session (either via local token or proxy auth)
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
     }
 
-    // If no local token or local token failed, try proxy auth (API key)
-    const proxyResponse = await fetch("/api/v1/matching/backends", {
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    const response = await fetch("/api/v1/users/me", {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
     })
 
-    if (proxyResponse.ok) {
-      // Mark that we're using proxy auth to avoid confusion
-      sessionStorage.setItem("proxy_auth", "true")
+    if (response.ok) {
+      // If we authenticated without a local token, it must be proxy auth
+      if (!token) {
+        sessionStorage.setItem("proxy_auth", "true")
+      }
       return true
     }
 
