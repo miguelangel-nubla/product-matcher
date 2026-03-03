@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.25.0...v1.26.0) (2026-03-03)
+
+
+### Features
+
+* listen on all IPv4 and IPv6 interfaces ([ee4f321](https://github.com/miguelangel-nubla/product-matcher/commit/ee4f321434b3d9f68be119951f407ea74b8e8e47))
+
 # [1.25.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.24.0...v1.25.0) (2026-02-12)
 
 
