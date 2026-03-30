@@ -1,4 +1,4 @@
-import { Container, Heading, Tabs } from "@chakra-ui/react"
+import { Alert, Container, Heading, Tabs } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import ApiKeys from "@/components/UserSettings/ApiKeys"
 import Appearance from "@/components/UserSettings/Appearance"
@@ -21,9 +21,17 @@ export const Route = createFileRoute("/_layout/settings")({
 
 function UserSettings() {
   const { user: currentUser } = useAuth()
-  const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 3)
-    : tabsConfig
+  const isProxyAuth = sessionStorage.getItem("proxy_auth") === "true"
+
+  let finalTabs = tabsConfig
+  if (currentUser?.is_superuser) {
+    finalTabs = finalTabs.slice(0, 3)
+  }
+  if (isProxyAuth) {
+    // Proxy auth limits users to endpoints that don't require CurrentUserJwtOnly
+    // Appearance is purely local state, so it's safe.
+    finalTabs = finalTabs.filter((tab) => tab.value === "appearance")
+  }
 
   if (!currentUser) {
     return null
@@ -34,6 +42,15 @@ function UserSettings() {
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} py={12}>
         User Settings
       </Heading>
+
+      {isProxyAuth && (
+        <Alert.Root status="info" mb={8}>
+          <Alert.Indicator />
+          <Alert.Description>
+            You are currently logged in via a Reverse Proxy / API Key. Sensitive account settings (like updating your password or managing API keys) are disabled and require a standard login.
+          </Alert.Description>
+        </Alert.Root>
+      )}
 
       <Tabs.Root defaultValue="my-profile" variant="subtle">
         <Tabs.List>
