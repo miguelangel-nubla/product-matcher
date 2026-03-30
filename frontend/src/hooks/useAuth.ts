@@ -52,8 +52,8 @@ const useAuth = () => {
     queryKey: ["currentUser"],
     queryFn: UsersService.readUserMe,
     enabled:
-      localStorage.getItem("access_token") !== null &&
-      sessionStorage.getItem("proxy_auth") !== "true",
+      localStorage.getItem("access_token") !== null ||
+      sessionStorage.getItem("proxy_auth") === "true",
   })
 
   const signUpMutation = useMutation({
