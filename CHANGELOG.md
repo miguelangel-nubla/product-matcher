@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.26.0...v1.27.0) (2026-03-30)
+
+
+### Features
+
+* restrict settings tabs and display info alert for proxy-authenticated users ([f571965](https://github.com/miguelangel-nubla/product-matcher/commit/f571965f62fb337b37004ff26f70bb245f7737f8))
+
 # [1.26.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.25.0...v1.26.0) (2026-03-03)
 
 
