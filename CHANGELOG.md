@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.27.0...v1.28.0) (2026-03-31)
+
+
+### Features
+
+* restrict admin actions for proxy-authenticated users and update superuser dependency to support JWT-only auth ([edb99cb](https://github.com/miguelangel-nubla/product-matcher/commit/edb99cb1ef055a184496ecb1529f6ec7479ac053))
+
 # [1.27.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.26.0...v1.27.0) (2026-03-30)
 
 
