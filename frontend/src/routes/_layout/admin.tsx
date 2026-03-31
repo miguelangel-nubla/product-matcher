@@ -1,4 +1,4 @@
-import { Badge, Container, Flex, Heading, Table } from "@chakra-ui/react"
+import { Alert, Badge, Container, Flex, Heading, Table } from "@chakra-ui/react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
@@ -116,14 +116,28 @@ function UsersTable() {
 }
 
 function Admin() {
+  const isProxyAuth = sessionStorage.getItem("proxy_auth") === "true"
+
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
         Users Management
       </Heading>
 
-      <AddUser />
-      <UsersTable />
+      {isProxyAuth ? (
+        <Alert.Root status="warning" mt={8}>
+          <Alert.Indicator />
+          <Alert.Title>Admin Actions Disabled</Alert.Title>
+          <Alert.Description>
+            You are currently authenticated via a long-lived API Key proxy. To protect the integrity of the system, superuser administrative actions (like creating, editing, or deleting users) are disabled in this mode. Please log in normally to access the admin panel.
+          </Alert.Description>
+        </Alert.Root>
+      ) : (
+        <>
+          <AddUser />
+          <UsersTable />
+        </>
+      )}
     </Container>
   )
 }
