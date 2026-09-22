@@ -245,7 +245,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
             ExternalProduct with resolved names and barcodes
         """
         # Start with the product name as first alias
-        aliases = [grocy_product["name"]]
+        aliases = [grocy_product["name"].strip()]
 
         # Add aliases from ProductAltNames userfield if present
         userfields = grocy_product.get("userfields") or {}
@@ -256,13 +256,13 @@ class GrocyAdapter(ProductDatabaseAdapter):
             ]
             aliases.extend(userfield_aliases)
 
-        # Deduplicate while preserving order
+        # Deduplicate while preserving order (case-insensitive)
         seen: set[str] = set()
         deduped_aliases: list[str] = []
         for a in aliases:
             cleaned = a.strip()
-            if cleaned and cleaned not in seen:
-                seen.add(cleaned)
+            if cleaned and cleaned.lower() not in seen:
+                seen.add(cleaned.lower())
                 deduped_aliases.append(cleaned)
 
         # Resolve category from product_group_id
@@ -401,8 +401,8 @@ class GrocyAdapter(ProductDatabaseAdapter):
                     return True, None
 
                 # Add new alias
-                if current_aliases:
-                    new_aliases_text = current_aliases + "\n" + alias
+                if current_aliases and current_aliases.strip():
+                    new_aliases_text = current_aliases.strip() + "\n" + alias
                 else:
                     new_aliases_text = alias
 

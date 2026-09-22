@@ -30,6 +30,23 @@ class TestNormalization:
         assert "apple" in result or "apples" in result
         assert "gala" in result
 
+        # Test multi-word expansions (e.g. xl -> extra large -> both are stopwords and removed)
+        res_xl = en_normalizer.normalize("Gala Apples xl")
+        assert "extra large" not in res_xl
+        assert "gala" in res_xl
+
+        # Test slash expansions (w/ -> with -> stopword; w/o -> without)
+        res_w = en_normalizer.normalize("Coffee w/ Milk")
+        assert "coffee" in res_w
+        assert "milk" in res_w
+        assert "w" not in res_w
+
+        res_wo = en_normalizer.normalize("Coffee w/o Milk")
+        assert "without" in res_wo
+        assert "coffee" in res_wo
+        assert "milk" in res_wo
+
+
     def test_normalize_text_spanish_basic(self):
         """Test basic Spanish normalization."""
         try:
@@ -141,7 +158,7 @@ class TestNormalization:
             pytest.skip("SpaCy model not available")
 
     def test_normalize_slash_and_dotted_expansions(self):
-        """Test that slash abbreviations (s/h, s/l) and dotted abbreviations (b.grandes) expand correctly."""
+        """Test that slash abbreviations (s/h, s/l) expand correctly."""
         try:
             # "s/h" and "sin hueso" expand to "deshuesado" which is a stopword and stripped
             res_sh = self.normalizer.normalize("jamon s/h")
@@ -155,15 +172,44 @@ class TestNormalization:
             assert "sin" in res_sl
             assert "lactosa" in res_sl
 
-            res_b = self.normalizer.normalize("b.grandes")
-            assert "bolsas" in res_b
-            assert "grandes" in res_b
-
             # Test packaging/noise stopwords
             assert self.normalizer.normalize("patatas box") == ["patatas"]
             assert self.normalizer.normalize("manzana caja") == ["manzana"]
             assert self.normalizer.normalize("tomate helios yo") == ["tomate", "helios"]
         except RuntimeError:
             pytest.skip("SpaCy model not available")
+
+    def test_normalize_receipt_noise_and_preparations(self):
+        """Test receipt units (u, pack, tarrina) and common POS generic truncations."""
+        try:
+            # Receipt unit abbreviations and packaging
+            assert self.normalizer.normalize("quesitos caserio u") == ["quesitos", "caserio"]
+            assert self.normalizer.normalize("pack super aspitos") == ["super", "aspitos"]
+            assert self.normalizer.normalize("fresas tarrina") == ["fresas"]
+
+            # Serving size & loose produce stopwords
+            assert self.normalizer.normalize("corvina racion") == ["corvina"]
+            assert self.normalizer.normalize("gallo racion") == ["gallo"]
+            assert self.normalizer.normalize("manzanas sueltas") == ["manzanas"]
+
+            # POS generic food & packaging truncations
+            assert "chocolate" in self.normalizer.normalize("cornetto chocola")
+            assert "chocolate" in self.normalizer.normalize("choco negro")
+            assert "caramelo" in self.normalizer.normalize("natillas carame")
+            assert "galleta" in self.normalizer.normalize("natillas gall")
+            assert "margarina" in self.normalizer.normalize("sobaos marga")
+            assert "pimiento" in self.normalizer.normalize("pimien verde")
+            assert "caldo" in self.normalizer.normalize("cald pollo")
+            assert "servilletas" in self.normalizer.normalize("servi saber")
+            assert "servilletas" in self.normalizer.normalize("servil blancas")
+            assert "iberico" in self.normalizer.normalize("paleta cebo ib")
+            assert self.normalizer.normalize("cheddar ext") == ["cheddar"]
+            assert "mantequilla" in self.normalizer.normalize("sobaos mant")
+            assert self.normalizer.normalize("regana gour") == ["regana"]
+            assert self.normalizer.normalize("uva semil") == ["uva", "semilla"]
+        except RuntimeError:
+            pytest.skip("SpaCy model not available")
+
+
 
 

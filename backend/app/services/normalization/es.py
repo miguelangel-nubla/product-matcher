@@ -91,10 +91,14 @@ STOPWORDS = {
     "maxi",
     "envase",
     "paquete",
+    "pack",
     "caja",
     "box",
     "unidad",
     "unidades",
+    "u",
+    "ud",
+    "uds",
     "cada uno",
     "pieza",
     "piezas",
@@ -102,9 +106,27 @@ STOPWORDS = {
     "lata",
     "tetrabrik",
     "deshuesado",
+    "racion",
+    "raciones",
+    "suelto",
+    "suelta",
+    "sueltos",
+    "sueltas",
+    "talla",
+    "tallas",
+    "malla",
+    "bandeja",
+    "manojo",
+    "bote",
+    "frasco",
+    "tarro",
+    "tarrina",
+    "autoservicio",
+    "autoservici",
     "yo",
     "sabor",
     "variedad",
+    "var",
     "marca",
     "tipo",
     "anojo",
@@ -176,11 +198,9 @@ EXPANSIONS = {
     "pzas": "piezas",
     "paq": "paquete",
     "bot": "botella",
-    "lata": "lata",
     "org": "organico",
     "nat": "natural",
     "desc": "descremado",
-    "sin": "sin",
     "light": "ligero",
     "diet": "dietetico",
     "p": "peso",
@@ -232,6 +252,36 @@ EXPANSIONS = {
     # brands
     "eci": "el corte ingles",
     "ks": "kirkland signature",
+    # receipt abbreviations and POS truncations
+    "choco": "chocolate",
+    "chocola": "chocolate",
+    "carame": "caramelo",
+    "gall": "galleta",
+    "marga": "margarina",
+    "mante": "mantequilla",
+    "pist": "pistacho",
+    "trocea": "troceado",
+    "ecol": "ecologico",
+    "ita": "italiano",
+    "verd": "verde",
+    "pimien": "pimiento",
+    "ban": "bandeja",
+    "ba": "bandeja",
+    "bd": "bandeja",
+    "bo": "bolsa",
+    "fc": "frasco",
+    "cer": "cerdo",
+    "anoj": "anojo",
+    "cald": "caldo",
+    "servi": "servilletas",
+    "servil": "servilletas",
+    "ib": "iberico",
+    "ext": "extra",
+    "mant": "mantequilla",
+    "gour": "gourmet",
+    "ah": "ahumada",
+    "semil": "semilla",
+    "varie": "variedad",
 }
 
 # Global spaCy model - loaded at module import time
@@ -293,8 +343,14 @@ def post_process_tokens(
     # Strip numbers from tokens
     tokens = [re.sub(r"^\d+$", "", token) for token in tokens]
 
-    # Expand abbreviations
-    tokens = [expansions.get(token, token) for token in tokens]
+    # Expand abbreviations (splitting multi-word expansions into individual tokens)
+    expanded_tokens: list[str] = []
+    for token in tokens:
+        if token in expansions:
+            expanded_tokens.extend(expansions[token].split())
+        else:
+            expanded_tokens.append(token)
+    tokens = expanded_tokens
 
     # Remove stopwords
     tokens = [token for token in tokens if token not in stopwords]
@@ -353,9 +409,8 @@ class SpanishNormalizer(BaseNormalizer):
                     rf"(?i)(?<!\w){re.escape(pattern)}(?!\w)", replacement, text
                 )
 
-        # Expand "sin hueso" to "deshuesado" and dotted abbreviations like "b.grandes" -> "bolsas grandes"
+        # Expand "sin hueso" to "deshuesado" (which is a standard cut stopword)
         text = re.sub(r"(?i)\bsin\s+hueso\b", "deshuesado", text)
-        text = re.sub(r"(?i)\bb\.\s*(?=[a-z])", "bolsas ", text)
 
         # Step 2: SpaCy processing with proper case for better POS tagging
         normalized_case_text = text.title()

@@ -163,10 +163,6 @@ EXPANSIONS = {
     "pcs": "pieces",
     "pc": "piece",
     "btl": "bottle",
-    "can": "can",
-    "jar": "jar",
-    "box": "box",
-    "bag": "bag",
     "whl": "whole",
     "conc": "concentrated",
     "past": "pasteurized",
@@ -236,8 +232,14 @@ def post_process_tokens(
     # Strip pure numbers
     tokens = [re.sub(r"^\d+$", "", token) for token in tokens]
 
-    # Expand abbreviations
-    tokens = [expansions.get(token, token) for token in tokens]
+    # Expand abbreviations (splitting multi-word expansions into individual tokens)
+    expanded_tokens: list[str] = []
+    for token in tokens:
+        if token in expansions:
+            expanded_tokens.extend(expansions[token].split())
+        else:
+            expanded_tokens.append(token)
+    tokens = expanded_tokens
 
     # Remove stopwords
     tokens = [token for token in tokens if token not in stopwords]
@@ -283,6 +285,16 @@ class EnglishNormalizer(BaseNormalizer):
 
         # Clean leading/trailing punctuation
         text = re.sub(r"^[^\w\s]+|[^\w\s]+$", "", text).strip()
+
+        # Pre-expand abbreviations containing slashes that spaCy would split into punctuation
+        active_expansions = (
+            self.custom_expansions if self.custom_expansions is not None else EXPANSIONS
+        )
+        for pattern, replacement in active_expansions.items():
+            if "/" in pattern:
+                text = re.sub(
+                    rf"(?i)(?<!\w){re.escape(pattern)}(?!\w)", replacement, text
+                )
 
         # Title case helps POS tagging on capitalized/mixed receipt text
         normalized_case_text = text.title()
