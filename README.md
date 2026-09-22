@@ -68,7 +68,7 @@ Configure your inventory systems in `backend/app/config/user/backends.yaml`:
 
 ```yaml
 backends:
-  grocy:
+  grocy1:
     description: "Grocy home inventory system"
     language: "en"
     adapter:
@@ -101,7 +101,7 @@ curl -X POST "http://localhost:8000/api/v1/matching/match" \
   -H "Content-Type: application/json" \
   -d '{
     "text": "organic red apples",
-    "backend": "grocy",
+    "backend": "grocy1",
     "threshold": 0.8
   }'
 ```
