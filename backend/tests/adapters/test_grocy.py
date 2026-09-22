@@ -322,6 +322,41 @@ class TestGrocyAdapter:
         assert error is None
 
     @patch('httpx.Client')
+    def test_add_alias_with_barcode(self, mock_client_class):
+        """Test adding alias that is a barcode registers to product_barcodes."""
+        mock_client = Mock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        # Mock GET response for current product
+        get_response = Mock(json=lambda: {
+            "id": 123,
+            "name": "Milk",
+            "userfields": {"ProductAltNames": "Whole Milk"}
+        })
+        get_response.raise_for_status.return_value = None
+
+        # Mock PUT response
+        put_response = Mock()
+        put_response.status_code = 200
+        put_response.raise_for_status.return_value = None
+
+        mock_client.get.return_value = get_response
+        mock_client.put.return_value = put_response
+
+        adapter = GrocyAdapter("https://test.grocy.info", "test-key")
+        success, error = adapter.add_alias("123", "8410300347378")
+
+        assert success is True
+        assert error is None
+        # Verify product_barcodes POST was attempted
+        mock_client.post.assert_called_once_with(
+            "https://test.grocy.info/api/objects/product_barcodes",
+            headers=adapter.headers,
+            json={"product_id": 123, "barcode": "8410300347378"},
+        )
+
+
+    @patch('httpx.Client')
     def test_add_alias_already_exists(self, mock_client_class):
         """Test adding alias that already exists."""
         mock_client = Mock()
@@ -356,6 +391,46 @@ class TestGrocyAdapter:
 
         assert success is False
         assert "HTTP error" in error
+
+    @patch('httpx.Client')
+    def test_add_alias_inactive_product(self, mock_client_class):
+        """Test alias addition rejected for inactive product."""
+        mock_client = Mock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        get_response = Mock(json=lambda: {
+            "id": 123,
+            "name": "Milk",
+            "active": 0,
+        })
+        get_response.raise_for_status.return_value = None
+        mock_client.get.return_value = get_response
+
+        adapter = GrocyAdapter("https://test.grocy.info", "test-key")
+        success, error = adapter.add_alias("123", "New Alias")
+
+        assert success is False
+        assert "inactive" in error
+
+    @patch('httpx.Client')
+    def test_add_alias_ignored_prefix(self, mock_client_class):
+        """Test alias addition rejected for product with ignored prefix."""
+        mock_client = Mock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        get_response = Mock(json=lambda: {
+            "id": 123,
+            "name": "*Recipe Product",
+            "active": 1,
+        })
+        get_response.raise_for_status.return_value = None
+        mock_client.get.return_value = get_response
+
+        adapter = GrocyAdapter("https://test.grocy.info", "test-key", ignore_prefixes=["*"])
+        success, error = adapter.add_alias("123", "New Alias")
+
+        assert success is False
+        assert "ignored prefixes" in error
 
     def test_search_products(self):
         """Test product search functionality."""

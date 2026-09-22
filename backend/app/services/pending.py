@@ -43,6 +43,10 @@ class PendingQueueManager:
         """
         import json
 
+        # Ensure normalized_text and original_text are not empty and within bounds
+        original_text = original_text.strip()[:255]
+        normalized_text = (normalized_text or original_text).strip()[:255]
+
         # Convert candidates to JSON string
         candidates_json = None
         if candidates:
@@ -202,9 +206,14 @@ class PendingQueueManager:
                     adapter = get_backend(pending_query.backend)
                     logger.info(f"Got backend adapter: {pending_query.backend}")
 
-                    # Use custom_alias if provided, otherwise use normalized_text
+                    # Use custom_alias if provided, otherwise use normalized_text or original_text
                     alias_to_add = (
-                        custom_alias if custom_alias else pending_query.normalized_text
+                        custom_alias.strip()
+                        if custom_alias and custom_alias.strip()
+                        else (
+                            pending_query.normalized_text
+                            or pending_query.original_text.strip()
+                        )
                     )
                     logger.info(
                         f"Adding alias '{alias_to_add}' to product {product_id}"

@@ -326,6 +326,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
     def add_alias(self, product_id: str, alias: str) -> tuple[bool, str | None]:
         """
         Add a learned alias to Grocy ProductAltNames userfield.
+        If the alias is a barcode, also registers it in Grocy's product_barcodes table.
 
         Appends the alias to the existing userfield with newline separation.
 
@@ -336,9 +337,13 @@ class GrocyAdapter(ProductDatabaseAdapter):
         Returns:
             Tuple of (success, error_message)
         """
+        if not alias or not alias.strip():
+            return False, "Alias cannot be empty"
+        alias = alias.strip()
+
         try:
             with httpx.Client() as client:
-                # First, get current userfield value
+                # First, get current product and userfield value
                 response = client.get(
                     f"{self.base_url}/api/objects/products/{product_id}",
                     headers=self.headers,
@@ -346,6 +351,29 @@ class GrocyAdapter(ProductDatabaseAdapter):
                 response.raise_for_status()
 
                 grocy_product = response.json()
+                if str(grocy_product.get("active", "1")) in ("0", "false"):
+                    return False, f"Product {product_id} is inactive"
+
+                product_name = grocy_product.get("name", "").strip()
+                if self.ignore_prefixes and product_name.startswith(self.ignore_prefixes):
+                    return (
+                        False,
+                        f"Product '{product_name}' matches ignored prefixes and cannot be modified",
+                    )
+
+                # If alias is a barcode, register in Grocy's product_barcodes table
+                if alias.isdigit() and len(alias) >= 8:
+                    try:
+                        client.post(
+                            f"{self.base_url}/api/objects/product_barcodes",
+                            headers=self.headers,
+                            json={"product_id": int(product_id), "barcode": alias},
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to add barcode to Grocy product_barcodes for product {product_id}: {e}"
+                        )
+
                 userfields = grocy_product.get("userfields", {})
                 current_aliases = userfields.get("ProductAltNames", "")
 

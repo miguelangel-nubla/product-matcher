@@ -97,6 +97,11 @@ class MockProductAdapter(ProductDatabaseAdapter):
 
         # Mock: Add alias to the product and return success
         product.aliases.append(alias)
+        if alias.isdigit() and len(alias) >= 8:
+            if alias not in product.barcodes:
+                product.barcodes.append(alias)
+            if not product.barcode:
+                product.barcode = alias
         return True, None
 
     def get_product_url(self, product_id: str) -> str | None:

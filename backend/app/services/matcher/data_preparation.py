@@ -40,7 +40,7 @@ class DataPreparation:
 
         # Normalize input query using provided normalizer
         input_tokens = normalizer.normalize(input_query)
-        normalized_input = " ".join(input_tokens)
+        normalized_input = (" ".join(input_tokens) or input_query.strip())[:255]
 
         debug.add(
             f"Normalized input: '{input_query}' -> '{normalized_input}' -> tokens: {input_tokens}"
