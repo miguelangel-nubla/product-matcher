@@ -248,13 +248,22 @@ class GrocyAdapter(ProductDatabaseAdapter):
         aliases = [grocy_product["name"]]
 
         # Add aliases from ProductAltNames userfield if present
-        userfields = grocy_product.get("userfields", {})
-        userfield_value = userfields.get("ProductAltNames", "")
+        userfields = grocy_product.get("userfields") or {}
+        userfield_value = userfields.get("ProductAltNames") or ""
         if userfield_value:
             userfield_aliases = [
                 alias.strip() for alias in userfield_value.split("\n") if alias.strip()
             ]
             aliases.extend(userfield_aliases)
+
+        # Deduplicate while preserving order
+        seen: set[str] = set()
+        deduped_aliases: list[str] = []
+        for a in aliases:
+            cleaned = a.strip()
+            if cleaned and cleaned not in seen:
+                seen.add(cleaned)
+                deduped_aliases.append(cleaned)
 
         # Resolve category from product_group_id
         category = None
@@ -276,7 +285,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
 
         return ExternalProduct(
             id=product_id_str,
-            aliases=aliases,
+            aliases=deduped_aliases,
             description=grocy_product.get("description"),
             category=category,
             brand=None,  # Grocy doesn't have a standard brand field
@@ -374,14 +383,18 @@ class GrocyAdapter(ProductDatabaseAdapter):
                             f"Failed to add barcode to Grocy product_barcodes for product {product_id}: {e}"
                         )
 
-                userfields = grocy_product.get("userfields", {})
-                current_aliases = userfields.get("ProductAltNames", "")
+                userfields = grocy_product.get("userfields") or {}
+                current_aliases = userfields.get("ProductAltNames") or ""
 
-                # Check if alias already exists
+                # Check if alias already exists (case-insensitive check against existing aliases and product name)
                 existing_aliases = [
-                    a.strip() for a in (current_aliases or "").split("\n") if a.strip()
+                    a.strip() for a in current_aliases.split("\n") if a.strip()
                 ]
-                if alias in existing_aliases:
+                existing_lower = {a.lower() for a in existing_aliases}
+                if product_name:
+                    existing_lower.add(product_name.lower())
+
+                if alias.lower() in existing_lower:
                     logger.info(
                         f"Alias '{alias}' already exists for product {product_id}"
                     )
@@ -407,7 +420,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
                 )
 
                 logger.info(f"PUT response status: {response.status_code}")
-                if response.status_code != 200:
+                if response.status_code not in (200, 204):
                     logger.error(f"PUT response body: {response.text}")
                 response.raise_for_status()
 
