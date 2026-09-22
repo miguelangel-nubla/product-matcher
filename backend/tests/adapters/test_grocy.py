@@ -1,11 +1,12 @@
 """Test cases for the Grocy adapter."""
 
-import pytest
 from unittest.mock import Mock, patch
-import httpx
 
-from app.adapters.grocy import GrocyAdapter
+import httpx
+import pytest
+
 from app.adapters.base import ExternalProduct
+from app.adapters.grocy import GrocyAdapter
 
 
 class TestGrocyAdapter:
@@ -178,6 +179,7 @@ class TestGrocyAdapter:
             Mock(json=lambda: [{"id": 1, "name": "pieces"}]),
             Mock(json=lambda: [{"id": 1, "name": "Fruits"}]),
             Mock(json=lambda: [{"id": 1, "name": "Fridge"}]),
+            Mock(json=lambda: [{"id": 1, "product_id": 1, "barcode": "8412345678903"}]),
         ]
 
         # Mock products response
@@ -197,8 +199,40 @@ class TestGrocyAdapter:
         assert len(products) == 2
         assert products[0].id == "1"
         assert products[0].aliases == ["Apple"]
+        assert products[0].barcode == "8412345678903"
+        assert products[0].barcodes == ["8412345678903"]
         assert products[1].id == "2"
         assert products[1].aliases == ["Banana"]
+
+    @patch('httpx.Client')
+    def test_get_all_products_with_ignore_prefixes(self, mock_client_class):
+        """Test get_all_products filters out products starting with ignore_prefixes."""
+        mock_client = Mock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        reference_responses = [
+            Mock(json=lambda: []),
+            Mock(json=lambda: []),
+            Mock(json=lambda: []),
+            Mock(json=lambda: []),
+        ]
+        products_response = Mock(json=lambda: [
+            {"id": 1, "name": "Apple"},
+            {"id": 2, "name": "*Apple recipe"},
+        ])
+        for response in reference_responses + [products_response]:
+            response.raise_for_status.return_value = None
+
+        mock_client.get.side_effect = reference_responses + [products_response]
+
+        adapter = GrocyAdapter(
+            "https://test.grocy.info", "test-key", ignore_prefixes=["*"]
+        )
+        products = adapter.get_all_products()
+
+        assert len(products) == 1
+        assert products[0].id == "1"
+        assert products[0].name == "Apple"
 
     @patch('httpx.Client')
     def test_get_all_products_http_error(self, mock_client_class):
@@ -224,6 +258,7 @@ class TestGrocyAdapter:
             Mock(json=lambda: []),  # quantity_units
             Mock(json=lambda: []),  # product_groups
             Mock(json=lambda: []),  # locations
+            Mock(json=lambda: [{"id": 1, "product_id": 123, "barcode": "8412345678903"}]),  # product_barcodes
         ]
 
         product_response = Mock(json=lambda: {
@@ -243,6 +278,7 @@ class TestGrocyAdapter:
         assert product is not None
         assert product.id == "123"
         assert product.aliases == ["Milk"]
+        assert product.barcode == "8412345678903"
 
     @patch('httpx.Client')
     def test_get_product_details_not_found(self, mock_client_class):

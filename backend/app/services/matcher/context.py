@@ -19,8 +19,8 @@ class MatchingContext:
     ]  # (product_id, original_alias, tokens)
     backend: Backend
     debug: Any  # DebugStepTracker - will be properly typed after refactor
-    # product_id -> comparable barcode digits. Empty when the adapter has none.
-    barcodes: dict[str, str] = field(default_factory=dict)
+    # product_id -> comparable barcode digits (or list of barcodes). Empty when the adapter has none.
+    barcodes: dict[str, Any] = field(default_factory=dict)
     # Barcode keys found in the raw query, before number tokens are stripped.
     query_barcodes: list[str] = field(default_factory=list)
 

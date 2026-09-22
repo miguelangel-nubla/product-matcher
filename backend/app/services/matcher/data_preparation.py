@@ -1,5 +1,6 @@
 """Data preparation for matching with normalizer injection."""
 
+import re
 from typing import Any
 
 from app.adapters.base import ProductDatabaseAdapter
@@ -116,7 +117,7 @@ class DataPreparation:
 
     def _index_barcodes(
         self, backend_adapter: ProductDatabaseAdapter, debug: DebugStepTracker
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         """Index catalog barcodes for exact matching.
 
         A non-list return means products are not available from this adapter
@@ -127,15 +128,35 @@ class DataPreparation:
             debug.add("Barcode index skipped: product list unavailable")
             return {}
 
-        barcodes: dict[str, str] = {}
+        barcodes: dict[str, Any] = {}
+        total_barcodes = 0
         for product in products:
-            raw = getattr(product, "barcode", None)
-            if not raw:
-                continue
-            key = barcode_key(str(raw))
-            if len(key) >= 8:
-                barcodes[str(product.id)] = key
-        debug.add(f"Indexed {len(barcodes)} product barcodes")
+            product_id = str(product.id)
+            keys: list[str] = []
+
+            raw_barcodes = getattr(product, "barcodes", None)
+            if raw_barcodes and isinstance(raw_barcodes, list | tuple | set):
+                for raw in raw_barcodes:
+                    k = barcode_key(str(raw))
+                    if len(k) >= 8 and k not in keys:
+                        keys.append(k)
+
+            raw_single = getattr(product, "barcode", None)
+            if raw_single:
+                for piece in re.split(r"[,;\s]+", str(raw_single)):
+                    if not piece:
+                        continue
+                    k = barcode_key(piece)
+                    if len(k) >= 8 and k not in keys:
+                        keys.append(k)
+
+            if keys:
+                barcodes[product_id] = keys[0] if len(keys) == 1 else keys
+                total_barcodes += len(keys)
+
+        debug.add(
+            f"Indexed {total_barcodes} product barcode(s) across {len(barcodes)} product(s)"
+        )
         return barcodes
 
     def clear_cache(self, normalizer: Any) -> None:

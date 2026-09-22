@@ -4,7 +4,7 @@ Implements the database-agnostic pattern from the architecture.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -22,6 +22,7 @@ class ExternalProduct:
     brand: str | None = None
     unit: str | None = None
     barcode: str | None = None
+    barcodes: list[str] = field(default_factory=list)
 
     @property
     def name(self) -> str:

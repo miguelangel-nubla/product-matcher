@@ -89,9 +89,12 @@ class ExactMatchingStrategy(MatchingStrategy):
         if not wanted:
             return {}
         hits: dict[str, str] = {}
-        for product_id, code in context.barcodes.items():
-            if code in wanted:
-                hits[product_id] = self._label(context, product_id, code)
+        for product_id, raw_codes in context.barcodes.items():
+            codes = [raw_codes] if isinstance(raw_codes, str) else raw_codes
+            for code in codes:
+                if code in wanted:
+                    hits[product_id] = self._label(context, product_id, code)
+                    break
         return hits
 
     def _name_hits(self, context: MatchingContext) -> dict[str, str]:

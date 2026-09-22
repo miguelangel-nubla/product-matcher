@@ -18,6 +18,9 @@ backends:
         api_key: "${GROCY1_API_KEY:-demo_api_key_1}"
         verify_ssl: true
         external_url: "https://grocy1.example.com"
+        # Optional: Exclude products whose names start with specific prefixes (e.g. recipes)
+        ignore_prefixes:
+          - "*"
 
 # Global settings
 settings:

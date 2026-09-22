@@ -30,6 +30,10 @@ class GrocyAdapter(ProductDatabaseAdapter):
             - base_url: Grocy instance URL
             - api_key: Grocy API key
 
+        Optional config:
+            - external_url: External URL base for product links
+            - ignore_prefixes: List of string prefixes (or single string) to exclude products
+
         Args:
             **config_kwargs: Configuration parameters
 
@@ -48,9 +52,23 @@ class GrocyAdapter(ProductDatabaseAdapter):
             raise ValueError("Grocy adapter requires 'api_key' configuration")
 
         external_url = config_kwargs.get("external_url")
-        return cls(base_url=base_url, api_key=api_key, external_url=external_url)
+        ignore_prefixes = config_kwargs.get("ignore_prefixes") or config_kwargs.get(
+            "ignore_product_prefixes"
+        )
+        return cls(
+            base_url=base_url,
+            api_key=api_key,
+            external_url=external_url,
+            ignore_prefixes=ignore_prefixes,
+        )
 
-    def __init__(self, base_url: str, api_key: str, external_url: str | None = None):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        external_url: str | None = None,
+        ignore_prefixes: list[str] | str | None = None,
+    ):
         """
         Initialize Grocy adapter.
 
@@ -58,14 +76,22 @@ class GrocyAdapter(ProductDatabaseAdapter):
             base_url: Grocy instance URL (e.g., "https://demo.grocy.info")
             api_key: Grocy API key for authentication
             external_url: External URL base for generating product links (optional)
+            ignore_prefixes: Product name prefixes to exclude (e.g., ["*"])
         """
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.external_url = external_url.rstrip("/") if external_url else None
+        if isinstance(ignore_prefixes, str):
+            self.ignore_prefixes: tuple[str, ...] = (ignore_prefixes,)
+        elif ignore_prefixes:
+            self.ignore_prefixes = tuple(str(p) for p in ignore_prefixes if p)
+        else:
+            self.ignore_prefixes = ()
+
         self.headers = {"GROCY-API-KEY": api_key, "Content-Type": "application/json"}
         self._cached_products: list[ExternalProduct] | None = None
         self._cached_products_time: float = 0
-        self._cached_reference_data: dict[str, dict[str, str]] | None = None
+        self._cached_reference_data: dict[str, Any] | None = None
         self._cached_reference_time: float = 0
         self._cache_ttl_seconds: float = 300.0
 
@@ -76,12 +102,12 @@ class GrocyAdapter(ProductDatabaseAdapter):
         self._cached_reference_data = None
         self._cached_reference_time = 0
 
-    def _get_reference_data(self, client: httpx.Client) -> dict[str, dict[str, str]]:
+    def _get_reference_data(self, client: httpx.Client) -> dict[str, Any]:
         """
-        Get reference data from Grocy (quantity units, product groups, locations).
+        Get reference data from Grocy (quantity units, product groups, locations, barcodes).
 
         Returns:
-            Dictionary with reference data for resolving IDs to names
+            Dictionary with reference data for resolving IDs to names and barcodes
         """
         if (
             self._cached_reference_data is not None
@@ -89,10 +115,11 @@ class GrocyAdapter(ProductDatabaseAdapter):
         ):
             return self._cached_reference_data
 
-        reference_data: dict[str, dict[str, str]] = {
+        reference_data: dict[str, Any] = {
             "quantity_units": {},
             "product_groups": {},
             "locations": {},
+            "barcodes": {},
         }
 
         try:
@@ -120,6 +147,23 @@ class GrocyAdapter(ProductDatabaseAdapter):
             for location in response.json():
                 reference_data["locations"][str(location["id"])] = location["name"]
 
+            # Get product barcodes
+            try:
+                response = client.get(
+                    f"{self.base_url}/api/objects/product_barcodes",
+                    headers=self.headers,
+                )
+                response.raise_for_status()
+                for item in response.json():
+                    pid = str(item.get("product_id"))
+                    code = item.get("barcode")
+                    if code:
+                        reference_data["barcodes"].setdefault(pid, []).append(
+                            str(code)
+                        )
+            except Exception as e:
+                logger.warning(f"Failed to fetch product barcodes from Grocy: {e}")
+
         except httpx.HTTPError as e:
             logger.warning(f"Failed to fetch some reference data from Grocy: {e}")
             return reference_data
@@ -135,9 +179,10 @@ class GrocyAdapter(ProductDatabaseAdapter):
         """
         Get all products from Grocy including aliases from userfield.
         Fetches reference data once per call for efficient lookup.
+        Filters out products starting with any prefix in ignore_prefixes.
 
         Returns:
-            List of all products available in Grocy
+            List of all active, non-ignored products available in Grocy
         """
         if (
             self._cached_products is not None
@@ -147,7 +192,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
 
         try:
             with httpx.Client() as client:
-                # Get reference data once per call (3 API calls total)
+                # Get reference data once per call (quantity units, groups, locations, barcodes)
                 reference_data = self._get_reference_data(client)
 
                 # Get all products from Grocy (1 API call)
@@ -163,6 +208,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
 
                 # Process all products with the cached reference data
                 for grocy_product in grocy_products:
+                    name = grocy_product.get("name", "")
+                    if self.ignore_prefixes and name.startswith(self.ignore_prefixes):
+                        continue
                     external_products.append(
                         self._convert_grocy_product(grocy_product, reference_data)
                     )
@@ -182,17 +230,17 @@ class GrocyAdapter(ProductDatabaseAdapter):
             raise RuntimeError(f"Grocy adapter error: {e}")
 
     def _convert_grocy_product(
-        self, grocy_product: dict[str, Any], reference_data: dict[str, dict[str, str]]
+        self, grocy_product: dict[str, Any], reference_data: dict[str, Any]
     ) -> ExternalProduct:
         """
         Convert a Grocy product dict to ExternalProduct using reference data.
 
         Args:
             grocy_product: Raw product data from Grocy API
-            reference_data: Lookup tables for IDs to names
+            reference_data: Lookup tables for IDs to names and barcodes
 
         Returns:
-            ExternalProduct with resolved names
+            ExternalProduct with resolved names and barcodes
         """
         # Start with the product name as first alias
         aliases = [grocy_product["name"]]
@@ -218,14 +266,21 @@ class GrocyAdapter(ProductDatabaseAdapter):
         if qu_id_stock:
             unit = reference_data["quantity_units"].get(str(qu_id_stock))
 
+        product_id_str = str(grocy_product["id"])
+        product_barcodes = reference_data.get("barcodes", {}).get(product_id_str, [])
+        primary_barcode = (
+            product_barcodes[0] if product_barcodes else grocy_product.get("barcode")
+        )
+
         return ExternalProduct(
-            id=str(grocy_product["id"]),
+            id=product_id_str,
             aliases=aliases,
             description=grocy_product.get("description"),
             category=category,
             brand=None,  # Grocy doesn't have a standard brand field
             unit=unit,
-            barcode=grocy_product.get("barcode"),
+            barcode=primary_barcode,
+            barcodes=product_barcodes,
         )
 
     def get_product_details(self, product_id: str) -> ExternalProduct | None:
@@ -236,7 +291,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
             product_id: Grocy product ID
 
         Returns:
-            ExternalProduct with full details or None if not found
+            ExternalProduct with full details or None if not found or ignored
         """
         try:
             with httpx.Client() as client:
@@ -250,6 +305,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
                 response.raise_for_status()
 
                 grocy_product = response.json()
+                name = grocy_product.get("name", "")
+                if self.ignore_prefixes and name.startswith(self.ignore_prefixes):
+                    return None
                 return self._convert_grocy_product(grocy_product, reference_data)
 
         except httpx.HTTPError as e:
