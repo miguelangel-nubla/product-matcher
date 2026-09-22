@@ -170,7 +170,7 @@ class TestNormalization:
             assert "yogur" in result
             assert "él" not in result
             assert "se" not in result
-            assert "natural" not in result
+            assert "natural" in result
         except RuntimeError:
             pytest.skip("SpaCy model not available")
 
@@ -222,7 +222,7 @@ class TestNormalization:
             assert "iberico" in self.normalizer.normalize("paleta cebo ib")
             assert self.normalizer.normalize("cheddar ext") == ["cheddar"]
             assert "mantequilla" in self.normalizer.normalize("sobaos mant")
-            assert self.normalizer.normalize("regana gour") == ["regana"]
+            assert self.normalizer.normalize("regana gour") == ["regana", "gourmet"]
             assert self.normalizer.normalize("uva semil") == ["uva", "semilla"]
 
             # Liquid volume units in Spanish receipts
@@ -252,6 +252,15 @@ class TestNormalization:
             res_fresco = self.normalizer.normalize("Queso fresco")
             assert "queso" in res_fresco and "fresco" in res_fresco
 
+            res_natural = self.normalizer.normalize("Yogur natural")
+            assert "yogur" in res_natural and "natural" in res_natural
+
+            res_normal = self.normalizer.normalize("Salmón normal")
+            assert "salmon" in res_normal and "normal" in res_normal
+
+            res_gourmet = self.normalizer.normalize("Caldo gourmet")
+            assert "caldo" in res_gourmet and "gourmet" in res_gourmet
+
             # English taste varieties and culinary state
             from app.services.normalization.en import EnglishNormalizer
             en_norm = EnglishNormalizer(config={})
@@ -263,6 +272,12 @@ class TestNormalization:
 
             res_en_fresh = en_norm.normalize("Fresh Yeast")
             assert "fresh" in res_en_fresh and "yeast" in res_en_fresh
+
+            res_en_natural = en_norm.normalize("Natural Yogurt")
+            assert "natural" in res_en_natural and "yogurt" in res_en_natural
+
+            res_en_gourmet = en_norm.normalize("Gourmet Broth")
+            assert "gourmet" in res_en_gourmet and "broth" in res_en_gourmet
         except RuntimeError:
             pytest.skip("SpaCy model not available")
 

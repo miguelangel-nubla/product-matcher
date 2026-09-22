@@ -93,7 +93,6 @@ STOPWORDS = {
     "seleccion",
     "premium",
     "especial",
-    "natural",
     "grande",
     "mediano",
     "pequeno",
@@ -174,7 +173,6 @@ STOPWORDS = {
     "total",
     "perfecto",
     "selecto",
-    "gourmet",
     "chef",
     "profesional",
     "familiar",
@@ -183,7 +181,6 @@ STOPWORDS = {
     "ªb",
     "ª",
     "º",
-    "normal",
     "auto",
     "automatico",
     # brands
