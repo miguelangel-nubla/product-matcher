@@ -46,6 +46,23 @@ class TestNormalization:
         assert "coffee" in res_wo
         assert "milk" in res_wo
 
+        # Test metric and volume unit removals
+        res_kg = en_normalizer.normalize("Gala Apples 1kg")
+        assert "kg" not in res_kg and "kilogram" not in res_kg
+        assert "gala" in res_kg
+
+        res_g = en_normalizer.normalize("Ground Coffee 500g")
+        assert "g" not in res_g and "gram" not in res_g
+        assert "coffee" in res_g
+
+        res_l = en_normalizer.normalize("Whole Milk 2l")
+        assert "l" not in res_l and "liter" not in res_l
+        assert "milk" in res_l
+
+        res_lbs = en_normalizer.normalize("Fuji Apples 2lbs")
+        assert "lbs" not in res_lbs and "pound" not in res_lbs and "pounds" not in res_lbs
+        assert "fuji" in res_lbs
+
 
     def test_normalize_text_spanish_basic(self):
         """Test basic Spanish normalization."""
@@ -207,8 +224,17 @@ class TestNormalization:
             assert "mantequilla" in self.normalizer.normalize("sobaos mant")
             assert self.normalizer.normalize("regana gour") == ["regana"]
             assert self.normalizer.normalize("uva semil") == ["uva", "semilla"]
+
+            # Liquid volume units in Spanish receipts
+            assert self.normalizer.normalize("cerveza 33cl") == ["cerveza"]
+            assert "agua" in self.normalizer.normalize("agua mineral 50cl")
         except RuntimeError:
             pytest.skip("SpaCy model not available")
+
+    def test_normalizer_default_init(self):
+        """Test that normalizers can be instantiated with default config."""
+        es_norm = SpanishNormalizer()
+        assert es_norm.normalize("manzana") == ["manzana"]
 
 
 

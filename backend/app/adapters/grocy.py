@@ -400,11 +400,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
                     )
                     return True, None
 
-                # Add new alias
-                if current_aliases and current_aliases.strip():
-                    new_aliases_text = current_aliases.strip() + "\n" + alias
-                else:
-                    new_aliases_text = alias
+                # Add new alias cleanly without preserving any blank lines
+                new_aliases = existing_aliases + [alias]
+                new_aliases_text = "\n".join(new_aliases)
 
                 # Use the dedicated userfields endpoint as per Grocy OpenAPI spec
                 userfield_data = {"ProductAltNames": new_aliases_text}

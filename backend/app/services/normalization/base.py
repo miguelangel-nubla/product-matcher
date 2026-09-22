@@ -9,13 +9,13 @@ from typing import Any
 class BaseNormalizer(ABC):
     """Abstract base class for text normalizers with instance-level caching."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize normalizer with configuration and cache.
 
         Args:
             config: Optional configuration dict specific to the normalizer
         """
-        self.config = config
+        self.config = config or {}
         self._cache: dict[str, list[str]] = {}
 
     @abstractmethod

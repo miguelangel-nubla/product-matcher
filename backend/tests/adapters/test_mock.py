@@ -32,6 +32,16 @@ class TestMockAdapter:
         assert success is True
         assert error is None
 
+    def test_add_alias_duplicate_case_insensitive(self, adapter):
+        """Test adding duplicate alias with different casing returns success without duplicating."""
+        product = adapter.get_product_details("1")
+        existing_alias = product.aliases[0]
+        initial_count = len(product.aliases)
+        success, error = adapter.add_alias("1", existing_alias.upper())
+        assert success is True
+        assert error is None
+        assert len(product.aliases) == initial_count
+
     def test_add_alias_not_found(self, adapter):
         """Test adding alias to non-existent product."""
         success, error = adapter.add_alias("nonexistent", "New Alias")

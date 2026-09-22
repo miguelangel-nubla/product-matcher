@@ -1,13 +1,21 @@
 """Test cases for the adapter registry."""
 
-import pytest
-import app.adapters.registry as registry_module
-from unittest.mock import Mock, patch, mock_open
 import os
+from unittest.mock import Mock, patch
 
-from app.adapters.registry import AdapterRegistry, registry, get_backend, get_backend_language, get_available_backends, _discover_adapters
+import pytest
+
+import app.adapters.registry as registry_module
 from app.adapters.base import ProductDatabaseAdapter
-from app.models import BackendConfig, AdapterConfig
+from app.adapters.registry import (
+    AdapterRegistry,
+    _discover_adapters,
+    get_available_backends,
+    get_backend,
+    get_backend_language,
+    registry,
+)
+from app.models import AdapterConfig, BackendConfig
 
 
 class MockAdapter(ProductDatabaseAdapter):

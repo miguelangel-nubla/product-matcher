@@ -74,10 +74,21 @@ STOPWORDS = {
     "granel",
     "baul",
     "kilo",
+    "kilos",
     "kilogramo",
+    "kilogramos",
     "gramo",
+    "gramos",
     "litro",
+    "litros",
+    "centilitro",
+    "centilitros",
+    "decilitro",
+    "decilitros",
     "mililitro",
+    "mililitros",
+    "miligramo",
+    "miligramos",
     "calidad",
     "seleccion",
     "premium",
@@ -192,6 +203,9 @@ EXPANSIONS = {
     "kg": "kilogramo",
     "gr": "gramo",
     "ml": "mililitro",
+    "cl": "centilitro",
+    "dl": "decilitro",
+    "mg": "miligramo",
     "lt": "litro",
     "pz": "pieza",
     "pza": "pieza",
@@ -364,11 +378,11 @@ def post_process_tokens(
 class SpanishNormalizer(BaseNormalizer):
     """Spanish text normalizer with instance-level configuration and caching."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Spanish normalizer with configuration.
 
         Args:
-            config: Configuration dict with 'stopwords' and 'expansions' keys
+            config: Optional configuration dict with 'stopwords' and 'expansions' keys
         """
         super().__init__(config)
 

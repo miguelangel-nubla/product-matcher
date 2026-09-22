@@ -90,9 +90,9 @@ class MockProductAdapter(ProductDatabaseAdapter):
         if product_id not in self._products:
             return False, f"Product '{product_id}' not found in mock database"
 
-        # Check if alias already exists
+        # Check if alias already exists (case-insensitive)
         product = self._products[product_id]
-        if alias in product.aliases:
+        if alias.lower() in {a.lower() for a in product.aliases}:
             return True, None  # Already exists, consider it success
 
         # Mock: Add alias to the product and return success
