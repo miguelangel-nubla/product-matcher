@@ -7,6 +7,7 @@ from app.services.backend import Backend
 
 from ..debug import DebugStepTracker
 from .context import MatchingContext
+from .scoring import barcode_key, extract_barcodes
 
 
 class DataPreparation:
@@ -48,6 +49,8 @@ class DataPreparation:
         normalized_aliases = self._get_normalized_aliases(
             normalizer, debug, backend.adapter
         )
+        barcodes = self._index_barcodes(backend.adapter, debug)
+        query_barcodes = extract_barcodes(input_query)
 
         # Prepare debug data with input tokens and all aliases
         preparation_data = {
@@ -62,8 +65,11 @@ class DataPreparation:
             ],
         }
 
+        preparation_data["query_barcodes"] = query_barcodes
+        preparation_data["barcodes"] = barcodes
+
         debug.add(
-            f"Data preparation completed: {len(input_tokens)} input tokens, {len(normalized_aliases)} normalized aliases",
+            f"Data preparation completed: {len(input_tokens)} input tokens, {len(normalized_aliases)} normalized aliases, {len(barcodes)} barcodes",
             preparation_data,
         )
 
@@ -73,6 +79,8 @@ class DataPreparation:
             normalized_aliases=normalized_aliases,
             backend=backend,
             debug=debug,
+            barcodes=barcodes,
+            query_barcodes=query_barcodes,
         )
 
     def _get_normalized_aliases(
@@ -105,6 +113,30 @@ class DataPreparation:
             f"Alias normalization completed: processed {len(normalized_aliases)} aliases"
         )
         return normalized_aliases
+
+    def _index_barcodes(
+        self, backend_adapter: ProductDatabaseAdapter, debug: DebugStepTracker
+    ) -> dict[str, str]:
+        """Index catalog barcodes for exact matching.
+
+        A non-list return means products are not available from this adapter
+        call. Name matching still runs; barcode keys are simply absent.
+        """
+        products = backend_adapter.get_all_products()
+        if not isinstance(products, list):
+            debug.add("Barcode index skipped: product list unavailable")
+            return {}
+
+        barcodes: dict[str, str] = {}
+        for product in products:
+            raw = getattr(product, "barcode", None)
+            if not raw:
+                continue
+            key = barcode_key(str(raw))
+            if len(key) >= 8:
+                barcodes[str(product.id)] = key
+        debug.add(f"Indexed {len(barcodes)} product barcodes")
+        return barcodes
 
     def clear_cache(self, normalizer: Any) -> None:
         """Clear the normalization cache in the provided normalizer."""

@@ -1,179 +1,43 @@
-# Product Matching Strategies Documentation
+# Product Matching
 
-## Overview
+Receipt lines are linked to a closed catalog. A wrong automatic link moves stock and can be stored as an alias, so the pipeline accepts only high-precision evidence. Everything else is a suggestion for the review queue.
 
-The product matcher uses a **multi-strategy pipeline** that executes different matching algorithms in a specific order. Understanding this pipeline is crucial for interpreting matching results, especially when different thresholds produce seemingly counterintuitive results.
+## Decision order
 
-## Strategy Pipeline Architecture
+1. **Exact.** A barcode on the line matches a catalog barcode, or the normalized tokens equal a product name or learned alias. One product accepts at confidence 1. Several products sharing the key are ambiguous and later stages do not pick between them.
+2. **Lexical.** Each product is scored from its best alias:
+   - **Containment** is the fraction of the alias's distinctive weight found in the line. The request threshold is this fraction. The default 0.8 means most of the catalog name must actually appear.
+   - **Specificity** is the fraction of the line's distinctive weight found in the alias. Extra words on the receipt are allowed. Among products that clear the containment threshold, the one that explains more of the line wins.
+   - Token typos of one edit match. Short tokens and near-synonyms do not.
+   - A second product within 0.10 specificity, including a partial name that explains the line as well as the leader, is ambiguous.
+3. **Semantic suggestions.** SpaCy word vectors run only when nothing was accepted or deferred. They recall synonyms such as jitomate and tomate. Display scores are scaled below 0.5, and the pipeline ignores any success flag from this stage.
 
-### Execution Order
+Confirmed resolutions are written back as aliases. The next identical line is an exact match.
 
-The matching strategies execute in the following **sequential order**:
+## Weights
 
-1. **Semantic Matching Strategy** (High confidence)
-2. **Fuzzy Matching Strategy** (Medium confidence)
+Token weight is inverse document frequency across products, not aliases. A flavor word that appears on many products is light. A product name that appears once is heavy. Unknown receipt words, such as a brand the catalog does not list, are heavier still: they lower specificity and do not create a product.
 
-### Pipeline Behavior
+## Worked example
 
-- **Early Termination**: If any strategy finds one match above the threshold, the pipeline **stops** and returns that result
-- **Ambiguous ties**: If the best score is shared by more than one product, the pipeline **stops** with `success=false` and returns those candidates for manual resolution. Later strategies do not replace them
-- **Fallback Chain**: If a strategy finds nothing above the threshold, the pipeline **continues** to the next strategy
-- **Best Candidate Tracking**: Even when strategies fail, they track the best candidates found for debugging
+Catalog, after normalization: Gusanitos; Fresas; Yogur fresa; Helado fresa; Mermelada fresa.
 
-## Strategy Details
+Line `gusanitos sabor fresa 1 pz`. Normalization drops `sabor`, the quantity, and the unit, leaving `gusanitos` and `fresa`.
 
-### 1. Semantic Matching Strategy
+- Gusanitos containment is 1. The rare token `gusanitos` is in the line.
+- Fresas containment is also 1, but `fresa` is common in this catalog, so it explains less of the line.
+- The flavored products are not contained: their distinctive word (`yogur`, `helado`, `mermelada`) is absent.
 
-**Purpose**: Finds semantically related products using spaCy word embeddings
+The gap is large enough to accept Gusanitos. Raising the threshold from 0.8 to 0.95 does not switch the product, because acceptance is containment of the catalog name rather than a race between unrelated scores.
 
-**How it works**:
-- Uses the spaCy model for the backend language: English `en_core_web_lg` and Spanish `es_core_news_lg`, both with full word vectors
-- Compares normalized token embeddings between input and product aliases
-- Good at finding related concepts (e.g., "fresa" → "Fresas")
-- When several products share the top score (compared at 3 decimal places), the match is ambiguous and is not auto-accepted
+The line `fresa` accepts Fresas. The flavored names are mostly their own product word, so a line that never says `yogur` does not block the fruit.
 
-**Strengths**:
-- Understands semantic relationships
-- Handles synonyms and related terms
-- Language-aware matching
+The line `leche`, against Leche entera and Leche desnatada, contains neither name fully. Nothing is accepted. Both products are returned as candidates.
 
-**Limitations**:
-- Requires good word embeddings
-- May match on partial semantic overlap
-- Can be less precise for exact product names
+## What the threshold means
 
-**Caching**: Semantic similarity calculations are cached per token pair combination
+The threshold is containment: how completely the catalog name must appear in the line. It is not a semantic cosine and not a whole-string fuzzy ratio. Confidence on an accepted or partial lexical candidate is that containment. A value of 1 means the name's tokens were found, including extra words on the receipt.
 
-### 2. Fuzzy Matching Strategy
+## Debug
 
-**Purpose**: Finds products with similar string patterns using fuzzy string matching
-
-**How it works**:
-- Uses string similarity algorithms (e.g., Levenshtein distance, ratio matching)
-- Compares character-level similarity between normalized strings
-- Good at handling typos, abbreviations, and similar spellings
-
-**Strengths**:
-- Handles misspellings and typos
-- Good for exact product name matching
-- Robust against minor text variations
-
-**Limitations**:
-- Purely string-based (no semantic understanding)
-- May miss semantically related but textually different products
-- Sensitive to word order and formatting
-
-## Understanding Threshold Behavior
-
-### Example Case Study: "gusanitos sabor fresa 1 pz"
-
-This example demonstrates how different thresholds can produce seemingly counterintuitive results:
-
-#### Threshold 0.8 Result: "Fresas" (ID 128)
-```
-Input: "gusanitos sabor fresa 1 pz"
-Normalized: ["gusanitos", "sabor", "fresa"]
-
-Semantic Strategy (executes first):
-- Finds "Fresas" with semantic similarity ~0.85 (fresa → Fresas)
-- Score ≥ 0.8 threshold → SUCCESS
-- Pipeline stops, returns "Fresas"
-
-Fuzzy Strategy: NEVER EXECUTES (pipeline already terminated)
-```
-
-#### Threshold 0.9 Result: No match, best candidate "Gusanitos" (ID 166)
-```
-Input: "gusanitos sabor fresa 1 pz"
-Normalized: ["gusanitos", "sabor", "fresa"]
-
-Semantic Strategy (executes first):
-- Finds "Fresas" with semantic similarity ~0.85
-- Score < 0.9 threshold → FAILURE
-- Pipeline continues...
-
-Fuzzy Strategy (executes second):
-- Finds "Gusanitos" with fuzzy similarity ~0.87 (gusanitos → Gusanitos)
-- Score < 0.9 threshold → FAILURE
-- But tracks "Gusanitos" as best candidate
-
-Result: No match found, but "Gusanitos" shown as best candidate
-```
-
-### Key Insights
-
-1. **Strategy Order Matters**: The semantic strategy runs first, so semantic matches are prioritized over fuzzy matches
-2. **Early Termination**: Once a strategy succeeds, later strategies never execute
-3. **Hidden Matches**: A fuzzy strategy might find better matches, but you won't see them if semantic strategy succeeds first
-4. **Threshold Sensitivity**: Small threshold changes can dramatically alter results by changing which strategies succeed
-
-## Debugging Matching Results
-
-### Debug Information Structure
-
-Each matching request returns detailed debug information showing:
-
-```json
-{
-  "debug_info": [
-    {
-      "step": "Semantic Strategy",
-      "threshold": 0.8,
-      "candidates_checked": 156,
-      "matches_found": 1,
-      "processing_time_ms": 45.2,
-      "top_scores": [
-        {"product_id": "128", "alias": "Fresas", "score": 0.847},
-        {"product_id": "166", "alias": "Gusanitos", "score": 0.234}
-      ]
-    }
-  ]
-}
-```
-
-### Interpreting Debug Output
-
-1. **Check Strategy Execution**: See which strategies ran vs. which were skipped
-2. **Review Score Distributions**: Look at actual similarity scores vs. thresholds
-3. **Compare Candidates**: See what alternatives were considered
-
-## Best Practices
-
-### Threshold Selection
-
-- **0.6-0.7**: Loose matching, good for discovery but may include false positives
-- **0.8-0.85**: Balanced matching, good default for most use cases
-- **0.9-1.0**: Strict matching, reduces false positives but may miss valid matches
-
-### Strategy Optimization
-
-1. **Consider Strategy Order**: Higher confidence strategies should run first
-2. **Monitor Debug Output**: Use debug info to understand why specific matches were selected
-3. **Test Edge Cases**: Verify behavior with different product name patterns
-
-## API Usage Examples
-
-### Basic Matching Request
-```bash
-curl -X POST "http://localhost:8000/api/v1/matching/match" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "gusanitos sabor fresa 1 pz",
-    "backend": "grocy",
-    "threshold": 0.8,
-    "create_pending": false
-  }'
-```
-
-### Response with Debug Information
-```json
-{
-  "success": true,
-  "normalized_input": "gusanitos sabor fresa",
-  "candidates": [
-    {"product_id": "128", "confidence": 0.847}
-  ],
-  "debug_info": [...],
-  "pending_query_id": null
-}
-```
+Each stage logs why it accepted, deferred, or continued. Lexical debug rows include `containment`, `specificity`, `fuzzy`, and `qualifies` for every product. Semantic rows keep the raw vector score. The response `success` flag is false for ambiguous sets and for suggestion-only results, so those lines can be queued for review.

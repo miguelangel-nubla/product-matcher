@@ -10,7 +10,7 @@ A flexible, multilingual, backend-agnostic service for mapping free-text product
 
 ## Key Features
 
-- 🔍 **Intelligent Product Matching** Advanced fuzzy matching with configurable confidence thresholds
+- 🔍 **Intelligent Product Matching** Exact keys and distinctive-token coverage, with semantic suggestions when a line needs review
 - 🌍 **Multi-language Support** Built-in normalization for English, Spanish, and extensible language system
 - 🔌 **Backend Adapters** Plug-in architecture supporting Grocy, custom ERP systems, and more
 - 📝 **Interactive Resolution** Web-based interface for resolving ambiguous matches
@@ -19,9 +19,9 @@ A flexible, multilingual, backend-agnostic service for mapping free-text product
 
 1. **Input Processing**: Receive free-text product names from receipts, invoices, or manual entry
 2. **Normalization**: Apply language-specific normalization (lowercase, accent removal, lemmatization)
-3. **Fuzzy Matching**: Compare against known product names and aliases using advanced similarity algorithms
-4. **Confidence Scoring**: Return matches above threshold or flag for manual resolution
-5. **Interactive Resolution**: Present ambiguous matches to users through web interface
+3. **Exact match**: Accept a barcode, or a normalized line that equals a known name or learned alias
+4. **Lexical match**: Accept when the catalog name's distinctive tokens are covered and no close alternative explains the line as well
+5. **Review**: Ambiguous and unmatched lines go to the queue, with semantic suggestions alongside partial name matches
 6. **Learning**: Store confirmed matches as aliases to improve future accuracy
 
 ## Supported Backends

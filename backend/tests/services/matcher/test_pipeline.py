@@ -1,184 +1,117 @@
-"""Test cases for the MatchingPipeline."""
+"""Tests for the precision-first matching pipeline."""
 
-import pytest
 from unittest.mock import Mock, patch
 
-from app.services.matcher.pipeline import MatchingPipeline
 from app.services.matcher.context import MatchingContext, MatchingResult
+from app.services.matcher.pipeline import MatchingPipeline
+from app.services.matcher.scoring import SEMANTIC_DISPLAY_SCALE
+
+FLAVOR_CATALOG = [
+    ("gusanitos", "Gusanitos", ["gusanitos"]),
+    ("fresas", "Fresas", ["fresa"]),
+    ("yogur", "Yogur fresa", ["yogur", "fresa"]),
+    ("helado", "Helado fresa", ["helado", "fresa"]),
+    ("mermelada", "Mermelada fresa", ["mermelada", "fresa"]),
+]
+
+
+def _context(tokens, aliases, barcodes=None, query_barcodes=None):
+    backend = Mock()
+    backend.language = "es"
+    debug = Mock()
+    return MatchingContext(
+        input_tokens=tokens,
+        normalized_input=" ".join(tokens),
+        normalized_aliases=aliases,
+        backend=backend,
+        debug=debug,
+        barcodes=barcodes or {},
+        query_barcodes=query_barcodes or [],
+    )
 
 
 class TestMatchingPipeline:
-    """Test cases for MatchingPipeline."""
-
     def setup_method(self):
-        """Set up test fixtures."""
         self.pipeline = MatchingPipeline()
-        self.mock_context = Mock(spec=MatchingContext)
-        self.mock_context.debug = Mock()
-        self.mock_context.debug.add = Mock()
 
-    @patch('app.services.matcher.pipeline.SemanticMatchingStrategy')
-    @patch('app.services.matcher.pipeline.FuzzyMatchingStrategy')
-    def test_init(self, mock_fuzzy, mock_semantic):
-        """Test pipeline initialization."""
-        pipeline = MatchingPipeline()
-        assert len(pipeline.strategies) == 2
-        mock_semantic.assert_called()
-        mock_fuzzy.assert_called()
+    def test_init_order(self):
+        assert [strategy.get_name() for strategy in self.pipeline.strategies] == [
+            "Exact",
+            "Lexical",
+            "Semantic",
+        ]
 
-    def test_execute_first_strategy_success(self):
-        """Test pipeline stops after first successful strategy."""
-        # Mock strategies
-        strategy1 = Mock()
-        strategy1.get_name.return_value = "Strategy1"
-        result1 = MatchingResult(success=True, matches=[("p1", 1.0)], strategy_name="Strategy1")
-        strategy1.match.return_value = result1
+    def test_flavor_line_accepts_the_snack_and_does_not_ask_embeddings(self):
+        context = _context(["gusanitos", "fresa"], FLAVOR_CATALOG)
+        with patch.object(self.pipeline.semantic, "match") as semantic_match:
+            semantic_match.return_value = MatchingResult(
+                success=True,
+                matches=[("fresas", 0.95)],
+                strategy_name="Semantic",
+            )
+            success, result = self.pipeline.execute(context, threshold=0.8, max_candidates=5)
 
-        strategy2 = Mock()
-        strategy2.get_name.return_value = "Strategy2"
-
-        self.pipeline.strategies = [strategy1, strategy2]
-
-        # Execute
-        success, result = self.pipeline.execute(self.mock_context, semantic_threshold=0.8, fuzzy_threshold=0.6)
-
-        # Verify
         assert success is True
-        assert result == result1
-        assert result.success is True
-        strategy1.match.assert_called_once()
-        strategy2.match.assert_not_called()
+        assert result.matches[0][0] == "gusanitos"
+        assert result.strategy_name == "Lexical"
+        semantic_match.assert_not_called()
 
-        # Verify debug calls
-        assert self.mock_context.debug.add.call_count >= 1
-
-    def test_execute_fall_through_to_second_strategy(self):
-        """Test pipeline continues to second strategy if first fails."""
-        # Mock strategies
-        strategy1 = Mock()
-        strategy1.get_name.return_value = "Strategy1"
-        result1 = MatchingResult(success=False, matches=[], strategy_name="Strategy1")
-        strategy1.match.return_value = result1
-
-        strategy2 = Mock()
-        strategy2.get_name.return_value = "Fuzzy" # Use "Fuzzy" to test default threshold mapping
-        result2 = MatchingResult(success=True, matches=[("p2", 0.9)], strategy_name="Fuzzy")
-        strategy2.match.return_value = result2
-
-        self.pipeline.strategies = [strategy1, strategy2]
-
-        # Execute
-        success, result = self.pipeline.execute(self.mock_context, semantic_threshold=0.8, fuzzy_threshold=0.6)
-
-        # Verify
+    def test_stricter_threshold_keeps_the_same_product(self):
+        context = _context(["gusanitos", "fresa"], FLAVOR_CATALOG)
+        with patch.object(self.pipeline.semantic, "match") as semantic_match:
+            success, result = self.pipeline.execute(context, threshold=0.95, max_candidates=5)
         assert success is True
-        assert result == result2
-        strategy1.match.assert_called_once()
-        strategy2.match.assert_called_once()
+        assert result.matches[0][0] == "gusanitos"
+        semantic_match.assert_not_called()
 
-        # Check threshold passed to strategy 2 (Fuzzy)
-        # It should use fuzzy_threshold (0.6)
-        strategy2.match.assert_called_with(self.mock_context, 0.6, 10)
-
-    def test_execute_all_fail(self):
-        """Test pipeline when all strategies fail."""
-        # Mock strategies
-        strategy1 = Mock()
-        strategy1.get_name.return_value = "Strategy1"
-        result1 = MatchingResult(success=False, matches=[], strategy_name="Strategy1")
-        strategy1.match.return_value = result1
-
-        strategy2 = Mock()
-        strategy2.get_name.return_value = "Strategy2"
-        result2 = MatchingResult(success=False, matches=[], strategy_name="Strategy2")
-        strategy2.match.return_value = result2
-
-        self.pipeline.strategies = [strategy1, strategy2]
-
-        # Execute
-        success, result = self.pipeline.execute(self.mock_context)
-
-        # Verify
-        assert success is False
-        assert result == result2
-        assert len(result.matches) == 0
-        strategy1.match.assert_called_once()
-        strategy2.match.assert_called_once()
-
-    def test_execute_thresholds_mapping(self):
-        """Test that correct thresholds are passed to strategies."""
-        # Mock strategies
-        strategy1 = Mock()
-        strategy1.get_name.return_value = "Semantic"
-        result1 = MatchingResult(success=False, matches=[], strategy_name="Semantic")
-        strategy1.match.return_value = result1
-
-        strategy2 = Mock()
-        strategy2.get_name.return_value = "Fuzzy"
-        result2 = MatchingResult(success=False, matches=[], strategy_name="Fuzzy")
-        strategy2.match.return_value = result2
-
-        self.pipeline.strategies = [strategy1, strategy2]
-
-        # Execute
-        self.pipeline.execute(
-            self.mock_context,
-            semantic_threshold=0.85,
-            fuzzy_threshold=0.65,
-            max_candidates=5
+    def test_exact_alias_stops_before_lexical_and_semantic(self):
+        context = _context(
+            ["gusanitos"],
+            [("gusanitos", "Gusanitos", ["gusanitos"]), ("fresas", "Fresas", ["fresa"])],
         )
+        with (
+            patch.object(self.pipeline.lexical, "match") as lexical_match,
+            patch.object(self.pipeline.semantic, "match") as semantic_match,
+        ):
+            success, result = self.pipeline.execute(context, threshold=0.8, max_candidates=5)
+        assert success is True
+        assert result.strategy_name == "Exact"
+        assert result.matches == [("gusanitos", 1.0)]
+        lexical_match.assert_not_called()
+        semantic_match.assert_not_called()
 
-        # Verify Semantic strategy got semantic_threshold
-        strategy1.match.assert_called_with(self.mock_context, 0.85, 5)
-
-        # Verify Fuzzy strategy got fuzzy_threshold
-        strategy2.match.assert_called_with(self.mock_context, 0.65, 5)
-
-    def test_execute_stops_on_ambiguous_matches(self):
-        """Ambiguous earlier results are returned and later strategies do not run."""
-        strategy1 = Mock()
-        strategy1.get_name.return_value = "Semantic"
-        result1 = MatchingResult(
-            success=False,
-            matches=[("p1", 0.9), ("p2", 0.9)],
-            strategy_name="Semantic",
-            ambiguous=True,
+    def test_exact_ambiguity_is_not_overruled(self):
+        context = _context(
+            ["manzana"],
+            [("p1", "Manzana", ["manzana"]), ("p2", "Manzana", ["manzana"])],
         )
-        strategy1.match.return_value = result1
-
-        strategy2 = Mock()
-        strategy2.get_name.return_value = "Fuzzy"
-
-        self.pipeline.strategies = [strategy1, strategy2]
-
-        success, result = self.pipeline.execute(self.mock_context)
-
+        with patch.object(self.pipeline.lexical, "match") as lexical_match:
+            success, result = self.pipeline.execute(context, threshold=0.8, max_candidates=1)
         assert success is False
-        assert result == result1
         assert result.ambiguous is True
-        strategy2.match.assert_not_called()
+        assert len(result.matches) == 2
+        lexical_match.assert_not_called()
+
+    def test_synonym_falls_through_to_a_suggestion_and_is_not_accepted(self):
+        context = _context(["jitomate"], [("tomate", "Tomate", ["tomate"])])
+        suggestion = MatchingResult(
+            success=True,
+            matches=[("tomate", 0.95)],
+            strategy_name="Semantic",
+            aliases={"tomate": "Tomate"},
+        )
+        with patch.object(self.pipeline.semantic, "match", return_value=suggestion):
+            success, result = self.pipeline.execute(context, threshold=0.8, max_candidates=5)
+        assert success is False
+        assert result.ambiguous is False
+        assert result.matches[0][0] == "tomate"
+        assert result.matches[0][1] <= SEMANTIC_DISPLAY_SCALE
+        assert result.strategy_name == "Semantic"
 
     def test_execute_metrics_logging(self):
-        """Test that strategy execution metrics are logged to debug."""
-        # Mock strategies
-        strategy1 = Mock()
-        strategy1.get_name.return_value = "Strategy1"
-        result1 = MatchingResult(
-            success=True,
-            matches=[("p1", 1.0)],
-            strategy_name="Strategy1",
-            candidates_checked=10,
-            processing_time_ms=50.0
-        )
-        strategy1.match.return_value = result1
-        self.pipeline.strategies = [strategy1]
-
-        # Execute
-        self.pipeline.execute(self.mock_context)
-
-        # Verify debug logs contain metrics
-        debug_calls = [str(call) for call in self.mock_context.debug.add.call_args_list]
+        context = _context(["manzana"], [("p1", "Manzana", ["manzana"])])
+        self.pipeline.execute(context, threshold=0.8, max_candidates=5)
+        debug_calls = [str(call) for call in context.debug.add.call_args_list]
         metrics_log = next((log for log in debug_calls if "processing_time" in log), None)
         assert metrics_log is not None
-        assert "50.00ms" in metrics_log
-        assert "candidates_checked=10" in metrics_log
+        assert "candidates_checked=" in metrics_log

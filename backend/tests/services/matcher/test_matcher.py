@@ -1,11 +1,11 @@
 """Test cases for the ProductMatcher core service."""
 
-import pytest
 from unittest.mock import Mock, patch
 
-from app.services.matcher.matcher import ProductMatcher
-from app.models import AdapterConfig
+import pytest
+
 from app.services.debug import DebugStepTracker
+from app.services.matcher.matcher import ProductMatcher
 
 
 class TestProductMatcher:
@@ -63,8 +63,7 @@ class TestProductMatcher:
         self.matcher.data_preparation.prepare_context.assert_called_once()
         self.matcher.pipeline.execute.assert_called_once_with(
             context=mock_context,
-            semantic_threshold=0.8,
-            fuzzy_threshold=0.8,
+            threshold=0.8,
             max_candidates=5
         )
 
@@ -177,8 +176,7 @@ class TestProductMatcher:
         # Verify threshold passed to pipeline
         self.matcher.pipeline.execute.assert_called_once_with(
             context=mock_context,
-            semantic_threshold=0.9,
-            fuzzy_threshold=0.9,
+            threshold=0.9,
             max_candidates=3
         )
 

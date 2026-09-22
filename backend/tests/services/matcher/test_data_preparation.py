@@ -1,13 +1,13 @@
 """Test cases for the DataPreparation service."""
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from app.services.matcher.data_preparation import DataPreparation
-from app.services.matcher.context import MatchingContext
-from app.services.backend import Backend
-from app.services.debug import DebugStepTracker
+import pytest
+
 from app.adapters.base import ExternalProduct
+from app.services.debug import DebugStepTracker
+from app.services.matcher.context import MatchingContext
+from app.services.matcher.data_preparation import DataPreparation
 
 
 class TestDataPreparation:
@@ -177,7 +177,7 @@ class TestDataPreparation:
         ]
         self.data_prep._get_normalized_aliases = Mock(return_value=mock_aliases)
 
-        context = self.data_prep.prepare_context(
+        self.data_prep.prepare_context(
             mock_normalizer, "test input", self.mock_backend, self.debug
         )
 
@@ -196,3 +196,22 @@ class TestDataPreparation:
         assert aliases_data[0]["product_id"] == "product1"
         assert aliases_data[0]["original_alias"] == "Test Product"
         assert aliases_data[0]["normalized_tokens"] == ["test", "product"]
+
+    def test_prepare_context_indexes_barcodes(self):
+        """Barcode digits survive number-stripping and match a zero-prefixed catalog code."""
+        mock_normalizer = Mock()
+        mock_normalizer.normalize.return_value = []
+        self.data_prep._get_normalized_aliases = Mock(
+            return_value=[("p1", "Gusanitos", ["gusanitos"])]
+        )
+        self.mock_backend.adapter.get_all_products.return_value = [
+            ExternalProduct(id="p1", aliases=["Gusanitos"], barcode="08412345678903")
+        ]
+
+        context = self.data_prep.prepare_context(
+            mock_normalizer, "8412345678903", self.mock_backend, self.debug
+        )
+
+        assert context.input_tokens == []
+        assert context.barcodes["p1"] == context.query_barcodes[0]
+        assert context.query_barcodes == ["8412345678903"]

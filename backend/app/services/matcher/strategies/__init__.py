@@ -1,11 +1,13 @@
 """Matching strategies for product matching."""
 
 from .base import MatchingStrategy
-from .fuzzy import FuzzyMatchingStrategy
+from .exact import ExactMatchingStrategy
+from .lexical import LexicalMatchingStrategy
 from .semantic import SemanticMatchingStrategy
 
 __all__ = [
     "MatchingStrategy",
+    "ExactMatchingStrategy",
+    "LexicalMatchingStrategy",
     "SemanticMatchingStrategy",
-    "FuzzyMatchingStrategy",
 ]

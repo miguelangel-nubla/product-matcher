@@ -85,11 +85,12 @@ class ProductMatcher:
             backend.normalizer, input_query, backend, debug
         )
 
-        # Step 3: Execute matching pipeline using user-provided threshold for all strategies
+        # Exact keys and lexical coverage decide acceptance. The threshold is
+        # how much of a catalog name must appear in the line. Semantic
+        # suggestions are added only when nothing is safe to accept.
         success, result = self.pipeline.execute(
             context=context,
-            semantic_threshold=threshold,  # Use user-provided threshold
-            fuzzy_threshold=threshold,  # Use user-provided threshold
+            threshold=threshold,
             max_candidates=max_candidates,
         )
 

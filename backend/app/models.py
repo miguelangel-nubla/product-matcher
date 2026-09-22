@@ -106,9 +106,7 @@ class PendingQuery(SQLModel, table=True):
     original_text: str = Field(min_length=1, max_length=255)
     normalized_text: str = Field(min_length=1, max_length=255)
     candidates: str | None = Field(default=None)  # JSON string of candidates array
-    status: str = Field(
-        default="pending", max_length=20
-    )  # pending, resolved, ignored
+    status: str = Field(default="pending", max_length=20)  # pending, resolved, ignored
     backend: str = Field(min_length=1, max_length=50)  # Backend instance name
     threshold: float = Field(ge=0.0, le=1.0)  # Threshold that was used for matching
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -120,9 +118,7 @@ class PendingQuery(SQLModel, table=True):
 
 # Model for logging successful matches for analytics and learning
 class MatchLog(SQLModel, table=True):
-    __table_args__ = (
-        Index("ix_matchlog_owner_created", "owner_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_matchlog_owner_created", "owner_id", "created_at"),)
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     original_text: str = Field(min_length=1, max_length=255)
     normalized_text: str = Field(min_length=1, max_length=255)

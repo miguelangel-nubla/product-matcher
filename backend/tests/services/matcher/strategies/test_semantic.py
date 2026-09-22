@@ -1,10 +1,10 @@
 """Test cases for the Semantic matching strategy."""
 
-import pytest
 from unittest.mock import Mock, patch
 
-from app.services.matcher.strategies.semantic import SemanticMatchingStrategy
 from app.services.matcher.context import MatchingContext, MatchingResult
+from app.services.matcher.scoring import semantic_display_score
+from app.services.matcher.strategies.semantic import SemanticMatchingStrategy
 
 
 class TestSemanticMatchingStrategy:
@@ -51,15 +51,18 @@ class TestSemanticMatchingStrategy:
         result = self.strategy.match(context, threshold=0.6, max_candidates=5)
 
         assert isinstance(result, MatchingResult)
-        assert result.success is True
+        assert result.success is False
+        assert result.ambiguous is False
         assert result.strategy_name == "Semantic"
         assert result.candidates_checked == 3
         assert result.threshold_used == 0.6
 
-        # Should return 2 matches above threshold (0.9 and 0.7)
+        # 0.9 and 0.7 clear the suggestion floor. 0.3 does not. Scores are scaled
+        # so they cannot display as an accepted match.
         assert len(result.matches) == 2
-        assert result.matches[0] == ("product1", 0.9)  # Highest score first
-        assert result.matches[1] == ("product2", 0.7)
+        assert result.matches[0] == ("product1", semantic_display_score(0.9))
+        assert result.matches[1] == ("product2", semantic_display_score(0.7))
+        assert result.matches[0][1] < 0.5
 
         # Verify the matching utils was called correctly
         mock_get_utils.assert_called_once_with("en")
@@ -105,13 +108,13 @@ class TestSemanticMatchingStrategy:
         context = self.create_context(input_tokens, normalized_aliases)
         result = self.strategy.match(context, threshold=0.8, max_candidates=3)
 
-        assert result.success is True
+        assert result.success is False
         assert len(result.matches) == 3  # Limited by max_candidates
         assert result.candidates_checked == 10
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_ambiguous_tie_score(self, mock_get_utils):
-        """Test that semantic matching treats ties for top score as ambiguous (success=False)."""
+        """Tied semantic scores stay suggestions and do not mark an accept-time ambiguity."""
         mock_utils = Mock()
         # Two products tie for top score of 0.9
         mock_utils.calculate_semantic_similarity.side_effect = [0.9, 0.9, 0.7]
@@ -128,16 +131,21 @@ class TestSemanticMatchingStrategy:
         result = self.strategy.match(context, threshold=0.8, max_candidates=5)
 
         assert result.success is False
-        assert result.ambiguous is True
-        assert len(result.matches) == 2
-        assert result.matches[0][1] == 0.9
-        assert result.matches[1][1] == 0.9
+        assert result.ambiguous is False
+        assert [product_id for product_id, _score in result.matches] == [
+            "product1",
+            "product2",
+            "product3",
+        ]
+        assert result.matches[0][1] == semantic_display_score(0.9)
+        assert result.matches[1][1] == semantic_display_score(0.9)
+        assert result.matches[2][1] == semantic_display_score(0.7)
         assert result.aliases["product1"] == "Apple Red"
         assert result.aliases["product2"] == "Apple Green"
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_tie_detected_before_candidate_limit(self, mock_get_utils):
-        """A candidate limit of 1 must not hide a tie by accepting the first product."""
+        """Suggestion lists respect max_candidates. Accept-time ties are not decided here."""
         mock_utils = Mock()
         mock_utils.calculate_semantic_similarity.side_effect = [0.9, 0.9]
         mock_get_utils.return_value = mock_utils
@@ -152,8 +160,8 @@ class TestSemanticMatchingStrategy:
         result = self.strategy.match(context, threshold=0.8, max_candidates=1)
 
         assert result.success is False
-        assert result.ambiguous is True
-        assert len(result.matches) == 2
+        assert result.ambiguous is False
+        assert len(result.matches) == 1
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_best_score_per_product(self, mock_get_utils):
@@ -172,12 +180,12 @@ class TestSemanticMatchingStrategy:
         context = self.create_context(input_tokens, normalized_aliases)
         result = self.strategy.match(context, threshold=0.6, max_candidates=5)
 
-        assert result.success is True
+        assert result.success is False
         assert len(result.matches) == 2  # Only 2 unique products
 
-        # product1 should have the better score (0.9)
+        # product1 should have the better raw score (0.9), scaled for display
         product1_match = next(m for m in result.matches if m[0] == "product1")
-        assert product1_match[1] == 0.9
+        assert product1_match[1] == semantic_display_score(0.9)
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_empty_input(self, mock_get_utils):
@@ -231,7 +239,8 @@ class TestSemanticMatchingStrategy:
         context = self.create_context(input_tokens, normalized_aliases, language="es")
         result = self.strategy.match(context, threshold=0.7, max_candidates=5)
 
-        assert result.success is True
+        assert result.success is False
+        assert result.matches[0][1] == semantic_display_score(0.8)
         mock_get_utils.assert_called_once_with("es")
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
@@ -247,7 +256,7 @@ class TestSemanticMatchingStrategy:
         ]
 
         context = self.create_context(input_tokens, normalized_aliases)
-        result = self.strategy.match(context, threshold=0.7, max_candidates=5)
+        self.strategy.match(context, threshold=0.7, max_candidates=5)
 
         # Verify debug calls were made
         assert self.mock_debug.add.call_count >= 3
@@ -274,13 +283,13 @@ class TestSemanticMatchingStrategy:
         context = self.create_context(input_tokens, normalized_aliases)
         result = self.strategy.match(context, threshold=0.6, max_candidates=5)
 
-        assert result.success is True
+        assert result.success is False
         assert len(result.matches) == 3
 
-        # Should be sorted by score descending: 0.9, 0.8, 0.7
-        assert result.matches[0] == ("product2", 0.9)
-        assert result.matches[1] == ("product3", 0.8)
-        assert result.matches[2] == ("product1", 0.7)
+        # Should be sorted by raw score descending: 0.9, 0.8, 0.7
+        assert result.matches[0] == ("product2", semantic_display_score(0.9))
+        assert result.matches[1] == ("product3", semantic_display_score(0.8))
+        assert result.matches[2] == ("product1", semantic_display_score(0.7))
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_processing_time_tracked(self, mock_get_utils):
@@ -314,7 +323,7 @@ class TestSemanticMatchingStrategy:
         ]
 
         context = self.create_context(input_tokens, normalized_aliases)
-        result = self.strategy.match(context, threshold=0.8, max_candidates=5)
+        self.strategy.match(context, threshold=0.8, max_candidates=5)
 
         # Find the debug call that includes the detailed scores
         debug_calls_with_data = [

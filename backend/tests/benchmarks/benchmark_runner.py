@@ -24,7 +24,8 @@ import yaml
 
 from app.services.debug import DebugStepTracker
 from app.services.matcher.data_preparation import DataPreparation
-from app.services.matcher.strategies.fuzzy import FuzzyMatchingStrategy
+from app.services.matcher.strategies.exact import ExactMatchingStrategy
+from app.services.matcher.strategies.lexical import LexicalMatchingStrategy
 from app.services.matcher.strategies.semantic import SemanticMatchingStrategy
 
 
@@ -70,8 +71,9 @@ class BenchmarkRunner:
 
         # Strategy classes (lazy initialization)
         self.strategy_classes = {
+            "exact": ExactMatchingStrategy,
+            "lexical": LexicalMatchingStrategy,
             "semantic": SemanticMatchingStrategy,
-            "fuzzy": FuzzyMatchingStrategy,
         }
         self.strategies = {}
 
@@ -321,7 +323,7 @@ class BenchmarkRunner:
 
         # Category analysis
         category_analysis = {}
-        for category in set(result.category for result in test_results):
+        for category in {result.category for result in test_results}:
             category_results = [r for r in test_results if r.category == category]
             category_success_count = sum(
                 1 for r in category_results if r.overall_success

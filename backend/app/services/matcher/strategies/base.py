@@ -10,8 +10,9 @@ from ..context import MatchingContext, MatchingResult
 class MatchingStrategy(ABC):
     """Abstract base class for matching strategies.
 
-    Each strategy implements a specific matching algorithm (semantic, fuzzy).
-    Strategies are designed to run in order, with earlier strategies having higher confidence.
+    Each strategy implements one kind of evidence: an exact key, lexical
+    coverage of a catalog name, or a semantic suggestion. Only exact and
+    lexical evidence can accept a product.
     """
 
     @abstractmethod

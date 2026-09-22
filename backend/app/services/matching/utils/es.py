@@ -42,9 +42,7 @@ class SpanishMatchingUtils:
         """
         from ...normalization.es import _nlp_model
 
-        return _calculate(
-            self._semantic_cache, tokens1, tokens2, _nlp_model, doc1=doc1
-        )
+        return _calculate(self._semantic_cache, tokens1, tokens2, _nlp_model, doc1=doc1)
 
     def clear_cache(self) -> None:
         """Clear the semantic similarity cache."""

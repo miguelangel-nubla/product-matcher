@@ -1,15 +1,19 @@
-"""SpaCy semantic similarity matching strategy."""
+"""SpaCy suggestions for the review queue. Never accepts a product."""
 
 from ..context import MatchingContext, MatchingResult
-from ..scoring import leading_tie_count, visible_limit
+from ..scoring import (
+    SEMANTIC_SUGGESTION_FLOOR,
+    semantic_display_score,
+)
 from .base import MatchingStrategy
 
 
 class SemanticMatchingStrategy(MatchingStrategy):
-    """SpaCy semantic similarity matching strategy.
+    """Suggest products whose word vectors are near the query.
 
-    Medium confidence strategy - returns best semantic matches when available.
-    Good for finding semantically related products even with different terminology.
+    Averaged news vectors treat a flavor word as the product. These scores are
+    scaled below 0.5 and this strategy always returns success=False, so they
+    can fill a review queue without accepting stock movements.
     """
 
     def get_name(self) -> str:
@@ -18,11 +22,12 @@ class SemanticMatchingStrategy(MatchingStrategy):
     def match(
         self, context: MatchingContext, threshold: float, max_candidates: int
     ) -> MatchingResult:
-        """Execute SpaCy semantic similarity matching."""
+        """Collect semantic suggestions. ``threshold`` is not an accept gate."""
 
         def _execute() -> MatchingResult:
             context.debug.add(
-                f"Starting SpaCy semantic matching setup for {len(context.input_tokens)} input tokens"
+                f"Starting SpaCy semantic matching setup for {len(context.input_tokens)} input tokens "
+                f"(suggestion floor {SEMANTIC_SUGGESTION_FLOOR}; accept threshold {threshold} cannot accept a semantic match)"
             )
 
             # Get matching utilities for semantic similarity
@@ -34,9 +39,7 @@ class SemanticMatchingStrategy(MatchingStrategy):
                 f"Running semantic similarity calculation on {len(context.normalized_aliases)} pre-normalized aliases"
             )
 
-            product_scores: dict[
-                str, tuple[str, float]
-            ] = {}  # Track best score per product
+            best_raw: dict[str, tuple[float, str]] = {}
             candidates_checked = 0
             all_scores = []  # Track all scores for debug
 
@@ -59,70 +62,50 @@ class SemanticMatchingStrategy(MatchingStrategy):
                         "original_alias": original_alias,
                         "alias_tokens": alias_tokens,
                         "score": round(semantic_score, 3),
-                        "above_threshold": semantic_score >= threshold,
+                        "above_threshold": semantic_score >= SEMANTIC_SUGGESTION_FLOOR,
                     }
                 )
 
-                if semantic_score >= threshold:
-                    # Track best score for this product
-                    if (
-                        product_id not in product_scores
-                        or semantic_score > product_scores[product_id][1]
-                    ):
-                        product_scores[product_id] = (original_alias, semantic_score)
+                if semantic_score > best_raw.get(product_id, (0.0, ""))[0]:
+                    best_raw[product_id] = (semantic_score, original_alias)
 
+            suggestions = {
+                product_id: (alias, raw)
+                for product_id, (raw, alias) in best_raw.items()
+                if raw >= SEMANTIC_SUGGESTION_FLOOR
+            }
             context.debug.add(
-                f"Semantic similarity calculation completed: checked {candidates_checked} aliases, found {len(product_scores)} products with matches above threshold {threshold}",
+                f"Semantic similarity calculation completed: checked {candidates_checked} aliases, "
+                f"found {len(suggestions)} suggestion(s) at or above floor {SEMANTIC_SUGGESTION_FLOOR}",
                 all_scores,
             )
 
-            # If semantic matches found, return them (medium confidence)
-            if len(product_scores) >= 1:
-                # Sort by score. Detect ties on the full above-threshold list
-                # before applying the candidate limit.
-                sorted_matches = sorted(
-                    product_scores.items(), key=lambda x: x[1][1], reverse=True
+            if suggestions:
+                ranked = sorted(
+                    suggestions.items(), key=lambda item: item[1][1], reverse=True
                 )
-                ranked_scores = [score for _, (_, score) in sorted_matches]
-                tie_count = leading_tie_count(ranked_scores)
-                ambiguous = tie_count > 1
-                limit = visible_limit(
-                    total=len(sorted_matches),
-                    max_candidates=max_candidates,
-                    ambiguous=ambiguous,
-                    tie_count=tie_count,
+                selected = ranked[:max_candidates]
+                context.debug.add(
+                    f"Returning {len(selected)} semantic suggestion(s); none are accepted"
                 )
-                selected = sorted_matches[:limit]
-                top_matches = [
-                    (product_id, score) for product_id, (_, score) in selected
-                ]
-                aliases = {
-                    product_id: alias for product_id, (alias, _) in selected
-                }
-
-                if ambiguous:
-                    context.debug.add(
-                        f"Found {tie_count} products with tied top semantic score {ranked_scores[0]:.3f} above threshold - treating as ambiguous (success=False)"
-                    )
-                else:
-                    context.debug.add(
-                        f"Found {len(product_scores)} products via SpaCy semantic similarity (threshold: {threshold}) - returning semantic matches"
-                    )
-
                 return MatchingResult(
-                    success=not ambiguous,
-                    matches=top_matches,
+                    success=False,
+                    matches=[
+                        (product_id, semantic_display_score(raw))
+                        for product_id, (_alias, raw) in selected
+                    ],
                     strategy_name=self.get_name(),
                     candidates_checked=candidates_checked,
                     threshold_used=threshold,
-                    ambiguous=ambiguous,
-                    aliases=aliases,
-                )
-            else:
-                context.debug.add(
-                    f"No products matched via SpaCy semantic similarity (threshold: {threshold}), continuing to next strategy"
+                    ambiguous=False,
+                    aliases={
+                        product_id: alias for product_id, (alias, _raw) in selected
+                    },
                 )
 
+            context.debug.add(
+                f"No semantic suggestions at or above floor {SEMANTIC_SUGGESTION_FLOOR}"
+            )
             return MatchingResult(
                 success=False,
                 matches=[],
