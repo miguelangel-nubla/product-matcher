@@ -236,6 +236,31 @@ class TestNormalization:
         es_norm = SpanishNormalizer()
         assert es_norm.normalize("manzana") == ["manzana"]
 
+    def test_preserves_taste_and_product_descriptors(self):
+        """Test that product-defining descriptors (taste varieties, canned form) are preserved."""
+        try:
+            # Spanish taste varieties and core form
+            res_pimenton = self.normalizer.normalize("Pimentón picante")
+            assert "pimenton" in res_pimenton and "picante" in res_pimenton
+
+            res_dulce = self.normalizer.normalize("Pimentón dulce")
+            assert "pimenton" in res_dulce and "dulce" in res_dulce
+
+            res_lata = self.normalizer.normalize("Atún en lata")
+            assert "atun" in res_lata and "lata" in res_lata
+
+            # English taste varieties
+            from app.services.normalization.en import EnglishNormalizer
+            en_norm = EnglishNormalizer(config={})
+            res_en_spicy = en_norm.normalize("Spicy Paprika")
+            assert "spicy" in res_en_spicy and "paprika" in res_en_spicy
+
+            res_en_sweet = en_norm.normalize("Sweet Paprika")
+            assert "sweet" in res_en_sweet and "paprika" in res_en_sweet
+        except RuntimeError:
+            pytest.skip("SpaCy model not available")
+
+
 
 
 
