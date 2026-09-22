@@ -249,7 +249,10 @@ class TestNormalization:
             res_lata = self.normalizer.normalize("Atún en lata")
             assert "atun" in res_lata and "lata" in res_lata
 
-            # English taste varieties
+            res_fresco = self.normalizer.normalize("Queso fresco")
+            assert "queso" in res_fresco and "fresco" in res_fresco
+
+            # English taste varieties and culinary state
             from app.services.normalization.en import EnglishNormalizer
             en_norm = EnglishNormalizer(config={})
             res_en_spicy = en_norm.normalize("Spicy Paprika")
@@ -257,6 +260,9 @@ class TestNormalization:
 
             res_en_sweet = en_norm.normalize("Sweet Paprika")
             assert "sweet" in res_en_sweet and "paprika" in res_en_sweet
+
+            res_en_fresh = en_norm.normalize("Fresh Yeast")
+            assert "fresh" in res_en_fresh and "yeast" in res_en_fresh
         except RuntimeError:
             pytest.skip("SpaCy model not available")
 

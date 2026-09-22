@@ -93,7 +93,6 @@ STOPWORDS = {
     "seleccion",
     "premium",
     "especial",
-    "fresco",
     "natural",
     "grande",
     "mediano",
