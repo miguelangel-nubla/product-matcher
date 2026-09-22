@@ -128,11 +128,12 @@ class ProductMatcher:
             backend_adapter = get_backend(backend)
 
             if hasattr(backend_adapter, "add_alias"):
-                success = backend_adapter.add_alias(external_product_id, alias)
-                if success:
+                res = backend_adapter.add_alias(external_product_id, alias)
+                if isinstance(res, tuple):
+                    return res[0], res[1]
+                if res:
                     return True, None
-                else:
-                    return False, "Backend failed to add alias"
+                return False, "Backend failed to add alias"
             else:
                 return False, "Backend does not support adding aliases"
 

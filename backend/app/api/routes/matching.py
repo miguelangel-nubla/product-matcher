@@ -280,6 +280,30 @@ def get_external_products(_current_user: CurrentUser, backend: str) -> Any:
     }
 
 
+@router.get("/external-products/search")
+def search_external_products(
+    _current_user: CurrentUser, backend: str, q: str = "", limit: int = 20
+) -> Any:
+    """
+    Search external products using the specified backend adapter.
+    """
+    try:
+        adapter = get_backend(backend)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid backend: {str(e)}")
+
+    if not q.strip():
+        products = adapter.get_all_products()[:limit]
+    else:
+        products = adapter.search_products(query=q, limit=limit)
+
+    return {
+        "data": products,
+        "count": len(products),
+        "backend": backend,
+    }
+
+
 @router.get("/backends")
 def get_available_backends(_current_user: CurrentUser) -> list[BackendInfo]:
     """

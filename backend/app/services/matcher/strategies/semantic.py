@@ -86,11 +86,25 @@ class SemanticMatchingStrategy(MatchingStrategy):
                     for product_id, (_, score) in sorted_matches[:max_candidates]
                 ]
 
-                context.debug.add(
-                    f"Found {len(product_scores)} products via SpaCy semantic similarity (threshold: {threshold}) - returning semantic matches"
+                # Check for ambiguity if multiple candidates share the exact top score
+                top_score = top_matches[0][1]
+                top_score_count = sum(
+                    1 for _, score in top_matches if score == top_score
                 )
+
+                if len(top_matches) > 1 and top_score_count > 1:
+                    context.debug.add(
+                        f"Found {top_score_count} products with identical top semantic score {top_score:.3f} above threshold - treating as ambiguous (success=False)"
+                    )
+                    success = False
+                else:
+                    context.debug.add(
+                        f"Found {len(product_scores)} products via SpaCy semantic similarity (threshold: {threshold}) - returning semantic matches"
+                    )
+                    success = True
+
                 return MatchingResult(
-                    success=True,
+                    success=success,
                     matches=top_matches,
                     strategy_name=self.get_name(),
                     candidates_checked=candidates_checked,

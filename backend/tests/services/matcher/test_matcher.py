@@ -210,6 +210,22 @@ class TestProductMatcher:
         assert "Backend failed to add alias" in error
 
     @patch('app.adapters.registry.get_backend')
+    def test_add_learned_alias_tuple_returns(self, mock_get_backend):
+        """Test alias addition with tuple returns (True, None) and (False, msg)."""
+        mock_backend = Mock()
+        mock_backend.add_alias.return_value = (True, None)
+        mock_get_backend.return_value = mock_backend
+
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
+        assert success is True
+        assert error is None
+
+        mock_backend.add_alias.return_value = (False, "Adapter error message")
+        success, error = self.matcher.add_learned_alias("product123", "new alias", "grocy1")
+        assert success is False
+        assert error == "Adapter error message"
+
+    @patch('app.adapters.registry.get_backend')
     def test_add_learned_alias_no_add_alias_method(self, mock_get_backend):
         """Test alias addition when backend doesn't support add_alias."""
         mock_backend = Mock()

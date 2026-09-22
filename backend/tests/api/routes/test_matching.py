@@ -610,6 +610,57 @@ class TestMatchingRoutes:
         assert response.status_code == 400
         assert "Invalid backend" in response.json()["detail"]
 
+    @patch('app.api.routes.matching.get_backend')
+    def test_search_external_products_success(
+        self,
+        mock_get_backend,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test search external products endpoint with a search query."""
+        mock_adapter = Mock()
+        mock_adapter.search_products.return_value = [
+            {"id": "product1", "name": "Apple Juice"},
+        ]
+        mock_get_backend.return_value = mock_adapter
+
+        response = client.get(
+            "/api/v1/matching/external-products/search?backend=test-backend&q=apple&limit=10",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert data["backend"] == "test-backend"
+        assert data["data"][0]["id"] == "product1"
+        mock_adapter.search_products.assert_called_once_with(query="apple", limit=10)
+
+    @patch('app.api.routes.matching.get_backend')
+    def test_search_external_products_empty_query(
+        self,
+        mock_get_backend,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Test search external products with empty query falls back to truncated all products."""
+        mock_adapter = Mock()
+        mock_adapter.get_all_products.return_value = [
+            {"id": "product1", "name": "Apple Juice"},
+            {"id": "product2", "name": "Orange Juice"},
+        ]
+        mock_get_backend.return_value = mock_adapter
+
+        response = client.get(
+            "/api/v1/matching/external-products/search?backend=test-backend&q=&limit=1",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 1
+        assert len(data["data"]) == 1
+
     @patch('app.api.routes.matching.get_backend_config')
     @patch('app.adapters.registry.get_available_backends')
     def test_get_available_backends_success(

@@ -90,8 +90,10 @@ class TestSemanticMatchingStrategy:
     def test_match_with_max_candidates_limit(self, mock_get_utils):
         """Test that semantic matching respects max_candidates limit."""
         mock_utils = Mock()
-        # Return high scores for all products
-        mock_utils.calculate_semantic_similarity.return_value = 0.9
+        # Return high distinct scores for all products to avoid ambiguity tie
+        mock_utils.calculate_semantic_similarity.side_effect = [
+            0.95 - i * 0.01 for i in range(10)
+        ]
         mock_get_utils.return_value = mock_utils
 
         input_tokens = ["apple"]
@@ -106,6 +108,29 @@ class TestSemanticMatchingStrategy:
         assert result.success is True
         assert len(result.matches) == 3  # Limited by max_candidates
         assert result.candidates_checked == 10
+
+    @patch('app.services.matching.utils.registry.get_matching_utils')
+    def test_match_ambiguous_tie_score(self, mock_get_utils):
+        """Test that semantic matching treats ties for top score as ambiguous (success=False)."""
+        mock_utils = Mock()
+        # Two products tie for top score of 0.9
+        mock_utils.calculate_semantic_similarity.side_effect = [0.9, 0.9, 0.7]
+        mock_get_utils.return_value = mock_utils
+
+        input_tokens = ["apple"]
+        normalized_aliases = [
+            ("product1", "Apple Red", ["apple", "red"]),
+            ("product2", "Apple Green", ["apple", "green"]),
+            ("product3", "Apple Yellow", ["apple", "yellow"]),
+        ]
+
+        context = self.create_context(input_tokens, normalized_aliases)
+        result = self.strategy.match(context, threshold=0.8, max_candidates=5)
+
+        assert result.success is False
+        assert len(result.matches) == 2
+        assert result.matches[0][1] == 0.9
+        assert result.matches[1][1] == 0.9
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_best_score_per_product(self, mock_get_utils):

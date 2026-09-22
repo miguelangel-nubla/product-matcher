@@ -97,12 +97,16 @@ class PendingQuery(SQLModel, table=True):
     original_text: str = Field(min_length=1, max_length=255)
     normalized_text: str = Field(min_length=1, max_length=255)
     candidates: str | None = Field(default=None)  # JSON string of candidates array
-    status: str = Field(default="pending", max_length=20)  # pending, resolved, ignored
+    status: str = Field(
+        default="pending", max_length=20, index=True
+    )  # pending, resolved, ignored
     backend: str = Field(min_length=1, max_length=50)  # Backend instance name
     threshold: float = Field(ge=0.0, le=1.0)  # Threshold that was used for matching
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), index=True
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", index=True
     )
     owner: User | None = Relationship(back_populates="pending_queries")
 
@@ -114,14 +118,14 @@ class MatchLog(SQLModel, table=True):
     normalized_text: str = Field(min_length=1, max_length=255)
     backend: str = Field(min_length=1, max_length=50)  # Backend instance name
     matched_product_id: str = Field(min_length=1, max_length=255)  # External product ID
-    matched_text: str = Field(
-        min_length=1, max_length=255
-    )  # The alias that was matched
+    matched_text: str = Field(default="", max_length=255)  # The alias that was matched
     confidence_score: float = Field(ge=0.0, le=1.0)
     threshold_used: float = Field(ge=0.0, le=1.0)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), index=True
+    )
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+        foreign_key="user.id", nullable=False, ondelete="CASCADE", index=True
     )
     owner: User | None = Relationship(back_populates="match_logs")
 
@@ -237,7 +241,7 @@ class AccessToken(SQLModel, table=True):
     name: str = Field(min_length=1, max_length=100)  # Human-readable name
     token_hash: str = Field(min_length=1)  # Hashed version of the token
     prefix: str = Field(
-        min_length=1, max_length=10
+        min_length=1, max_length=10, index=True
     )  # First few chars for identification
     is_active: bool = Field(default=True)
     expires_at: datetime = Field()  # Required expiration date

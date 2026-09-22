@@ -169,16 +169,24 @@ function PendingItems() {
 
   // Get external products based on the selected item's backend
   const { data: products, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ["external-products", selectedQuery?.backend],
+    queryKey: ["external-products", selectedQuery?.backend, productSearch],
     queryFn: async () => {
       if (!selectedQuery?.backend) return { data: [], count: 0, backend: "" }
+
+      if (productSearch.trim()) {
+        return await MatchingService.searchExternalProducts({
+          backend: selectedQuery.backend,
+          q: productSearch.trim(),
+          limit: 50,
+        })
+      }
 
       const result = await MatchingService.getExternalProducts({
         backend: selectedQuery.backend,
       })
       return result
     },
-    enabled: !!selectedQuery?.backend,
+    enabled: !!selectedQuery?.backend && isOpen,
   })
 
   const resolveMutation = useMutation({

@@ -90,6 +90,8 @@ const useAuth = () => {
 
   const logout = () => {
     localStorage.removeItem("access_token")
+    sessionStorage.removeItem("proxy_auth")
+    queryClient.clear()
     navigate({ to: "/login" })
   }
 
