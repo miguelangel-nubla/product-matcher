@@ -31,7 +31,7 @@ class ExternalProduct:
 
 
 def _product_matches_query(product: ExternalProduct, needle: str) -> bool:
-    """Return whether a lowercase query matches id, aliases, description, or category."""
+    """Return whether a lowercase query matches id, aliases, description, category, or barcodes."""
     if needle in product.id.lower():
         return True
     if any(needle in alias.lower() for alias in product.aliases):
@@ -39,6 +39,10 @@ def _product_matches_query(product: ExternalProduct, needle: str) -> bool:
     if product.description and needle in product.description.lower():
         return True
     if product.category and needle in product.category.lower():
+        return True
+    if product.barcode and needle in product.barcode.lower():
+        return True
+    if any(needle in bc.lower() for bc in product.barcodes):
         return True
     return False
 

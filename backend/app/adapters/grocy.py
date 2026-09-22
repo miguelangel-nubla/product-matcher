@@ -208,7 +208,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
 
                 # Process all products with the cached reference data
                 for grocy_product in grocy_products:
-                    name = grocy_product.get("name", "")
+                    if str(grocy_product.get("active", "1")) in ("0", "false"):
+                        continue
+                    name = grocy_product.get("name", "").strip()
                     if self.ignore_prefixes and name.startswith(self.ignore_prefixes):
                         continue
                     external_products.append(
@@ -305,7 +307,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
                 response.raise_for_status()
 
                 grocy_product = response.json()
-                name = grocy_product.get("name", "")
+                if str(grocy_product.get("active", "1")) in ("0", "false"):
+                    return None
+                name = grocy_product.get("name", "").strip()
                 if self.ignore_prefixes and name.startswith(self.ignore_prefixes):
                     return None
                 return self._convert_grocy_product(grocy_product, reference_data)
