@@ -91,6 +91,8 @@ STOPWORDS = {
     "maxi",
     "envase",
     "paquete",
+    "caja",
+    "box",
     "unidad",
     "unidades",
     "cada uno",
@@ -99,6 +101,8 @@ STOPWORDS = {
     "botella",
     "lata",
     "tetrabrik",
+    "deshuesado",
+    "yo",
     "sabor",
     "variedad",
     "marca",
@@ -199,6 +203,10 @@ EXPANSIONS = {
     "s/g": "sin gluten",
     "s/a": "sin azucar",
     "s/s": "sin sal",
+    "s/h": "deshuesado",
+    "c/h": "con hueso",
+    "s/p": "sin piel",
+    "c/p": "con piel",
     "c/gas": "con gas",
     "s/gas": "sin gas",
     "desr": "desnatado",
@@ -334,6 +342,20 @@ class SpanishNormalizer(BaseNormalizer):
 
         # Clean leading/trailing punctuation that interferes with spaCy tokenization
         text = re.sub(r"^[^\w\s]+|[^\w\s]+$", "", text).strip()
+
+        # Pre-expand abbreviations containing slashes or dots that spaCy would split into punctuation
+        active_expansions = (
+            self.custom_expansions if self.custom_expansions is not None else EXPANSIONS
+        )
+        for pattern, replacement in active_expansions.items():
+            if "/" in pattern:
+                text = re.sub(
+                    rf"(?i)(?<!\w){re.escape(pattern)}(?!\w)", replacement, text
+                )
+
+        # Expand "sin hueso" to "deshuesado" and dotted abbreviations like "b.grandes" -> "bolsas grandes"
+        text = re.sub(r"(?i)\bsin\s+hueso\b", "deshuesado", text)
+        text = re.sub(r"(?i)\bb\.\s*(?=[a-z])", "bolsas ", text)
 
         # Step 2: SpaCy processing with proper case for better POS tagging
         normalized_case_text = text.title()

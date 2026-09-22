@@ -3,10 +3,9 @@ Tests for text normalization.
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
-from app.services.normalization.registry import get_normalizer, registry
 from app.services.normalization.es import SpanishNormalizer, post_process_tokens
+from app.services.normalization.registry import get_normalizer, registry
 
 
 class TestNormalization:
@@ -55,11 +54,8 @@ class TestNormalization:
 
     def test_normalize_text_unknown_language(self):
         """Test normalization with unknown language."""
-        try:
+        with pytest.raises(ValueError, match="No normalizer registered"):
             get_normalizer("xx")
-            assert False, "Should raise ValueError"
-        except ValueError as e:
-            assert "No normalizer registered" in str(e)
 
     def test_normalize_stopwords_with_accents(self):
         """Test normalization removes stopwords even if input has accents."""
@@ -143,3 +139,31 @@ class TestNormalization:
             assert "natural" not in result
         except RuntimeError:
             pytest.skip("SpaCy model not available")
+
+    def test_normalize_slash_and_dotted_expansions(self):
+        """Test that slash abbreviations (s/h, s/l) and dotted abbreviations (b.grandes) expand correctly."""
+        try:
+            # "s/h" and "sin hueso" expand to "deshuesado" which is a stopword and stripped
+            res_sh = self.normalizer.normalize("jamon s/h")
+            assert res_sh == ["jamon"]
+
+            res_sin_hueso = self.normalizer.normalize("jamon sin hueso")
+            assert res_sin_hueso == ["jamon"]
+
+            res_sl = self.normalizer.normalize("leche s/l")
+            assert "leche" in res_sl
+            assert "sin" in res_sl
+            assert "lactosa" in res_sl
+
+            res_b = self.normalizer.normalize("b.grandes")
+            assert "bolsas" in res_b
+            assert "grandes" in res_b
+
+            # Test packaging/noise stopwords
+            assert self.normalizer.normalize("patatas box") == ["patatas"]
+            assert self.normalizer.normalize("manzana caja") == ["manzana"]
+            assert self.normalizer.normalize("tomate helios yo") == ["tomate", "helios"]
+        except RuntimeError:
+            pytest.skip("SpaCy model not available")
+
+

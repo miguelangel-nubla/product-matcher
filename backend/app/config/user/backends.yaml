@@ -22,6 +22,19 @@ backends:
         ignore_prefixes:
           - "*"
 
+  grocy:
+    description: "Grocy home inventory system"
+    language: es
+    adapter:
+      type: grocy
+      config:
+        base_url: "${GROCY_BASE_URL:-https://grocy.example.com}"
+        api_key: "${GROCY_API_KEY:-demo_api_key_1}"
+        verify_ssl: true
+        external_url: "${GROCY_EXTERNAL_URL:-https://grocy.example.com}"
+        ignore_prefixes:
+          - "*"
+
 # Global settings
 settings:
   default_threshold: 0.8
