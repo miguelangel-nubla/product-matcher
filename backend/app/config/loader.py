@@ -48,17 +48,38 @@ def _substitute_env_vars(value: Any) -> Any:
         return value
 
 
-def load_backends_config() -> dict[str, Any]:
+_cached_config: dict[str, Any] | None = None
+_cached_mtime: float | None = None
+
+
+def clear_config_cache() -> None:
+    """Clear the cached backend configuration."""
+    global _cached_config, _cached_mtime
+    _cached_config = None
+    _cached_mtime = None
+
+
+def load_backends_config(force_reload: bool = False) -> dict[str, Any]:
     """
     Load backends configuration from YAML file with environment variable substitution.
+    Uses mtime-based in-memory caching to avoid redundant disk reads.
 
     Returns:
         Dictionary containing the parsed and processed configuration
     """
+    global _cached_config, _cached_mtime
     config_path = Path(__file__).parent / "user" / "backends.yaml"
 
     if not config_path.exists():
         raise FileNotFoundError(f"Backend configuration file not found: {config_path}")
+
+    current_mtime = config_path.stat().st_mtime
+    if (
+        not force_reload
+        and _cached_config is not None
+        and _cached_mtime == current_mtime
+    ):
+        return _cached_config
 
     try:
         with open(config_path) as file:
@@ -66,8 +87,10 @@ def load_backends_config() -> dict[str, Any]:
 
         # Substitute environment variables
         config = _substitute_env_vars(config)
-
-        return config if isinstance(config, dict) else {}
+        result = config if isinstance(config, dict) else {}
+        _cached_config = result
+        _cached_mtime = current_mtime
+        return result
 
     except yaml.YAMLError as e:
         raise ValueError(f"Invalid YAML in backends configuration: {e}")

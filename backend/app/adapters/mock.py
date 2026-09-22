@@ -28,11 +28,25 @@ class MockProductAdapter(ProductDatabaseAdapter):
 
     def _load_test_data(self) -> None:
         """Load test data from YAML file."""
-        test_data_path = Path("tests/benchmarks/test_products_messy.yaml")
+        bundled_path = Path(__file__).parent / "data" / "test_products_messy.yaml"
+        test_data_path = (
+            bundled_path
+            if bundled_path.exists()
+            else Path("tests/benchmarks/test_products_messy.yaml")
+        )
+        if not test_data_path.exists():
+            repo_test_path = (
+                Path(__file__).parents[2]
+                / "tests"
+                / "benchmarks"
+                / "test_products_messy.yaml"
+            )
+            if repo_test_path.exists():
+                test_data_path = repo_test_path
 
         if not test_data_path.exists():
             raise RuntimeError(
-                f"Mock adapter requires test data file: {test_data_path}. "
+                f"Mock adapter requires test data file. Looked at: {bundled_path} and {test_data_path}. "
                 "Please ensure the comprehensive test dataset exists."
             )
 

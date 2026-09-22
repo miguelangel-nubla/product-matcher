@@ -200,3 +200,16 @@ def test_revoke_other_users_token(db: Session) -> None:
     # Token should still be active
     db.refresh(db_token)
     assert db_token.is_active is True
+
+
+def test_authenticate_with_short_or_invalid_token(db: Session) -> None:
+    # Short token (<8 chars) should immediately return None without querying DB
+    assert crud.authenticate_with_access_token(session=db, token="short") is None
+    assert crud.authenticate_with_access_token(session=db, token="") is None
+    # Token with non-matching prefix should return None
+    assert (
+        crud.authenticate_with_access_token(
+            session=db, token="nonexistent_prefix_12345"
+        )
+        is None
+    )

@@ -429,6 +429,32 @@ class TestPendingQueueManager:
         assert success is False
         assert "Database error" in error
 
+    def test_get_pending_count(self):
+        """Test getting count of pending queries."""
+        mock_exec_result = Mock()
+        mock_exec_result.one.return_value = 5
+        self.mock_session.exec.return_value = mock_exec_result
+
+        count = self.manager.get_pending_count(self.test_owner_id, "pending")
+        assert count == 5
+        self.mock_session.exec.assert_called_once()
+
+    def test_resolve_pending_query_access_denied(self):
+        """Test resolving pending query when owner_id does not match."""
+        mock_pending_query = Mock()
+        mock_pending_query.owner_id = uuid.uuid4()
+        self.mock_session.get.return_value = mock_pending_query
+
+        success, error = self.manager.resolve_pending_query(
+            pending_query_id=self.test_pending_id,
+            action="assign",
+            product_id="product123",
+            owner_id=self.test_owner_id,
+        )
+
+        assert success is False
+        assert "Access denied" in error
+
     def test_delete_pending_query_success(self):
         """Test successful deletion of a pending query."""
         mock_pending_query = Mock()

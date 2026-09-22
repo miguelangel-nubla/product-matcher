@@ -4,20 +4,24 @@ Backend API routes for accessing backend-specific resources.
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.adapters.registry import get_backend
+from app.api.deps import CurrentUser
 
 router = APIRouter()
 
 
 @router.get("/{backend}/product/{product_id}/url")
-def get_product_url(backend: str, product_id: str) -> Any:
+def get_product_url(backend: str, product_id: str, _current_user: CurrentUser) -> Any:
     """
     Get external URL for a product in the specified backend.
     """
     # Get specified backend from registry
-    adapter = get_backend(backend)
+    try:
+        adapter = get_backend(backend)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=f"Backend not found: {str(e)}")
 
     # Get product URL from adapter
     product_url = adapter.get_product_url(product_id)

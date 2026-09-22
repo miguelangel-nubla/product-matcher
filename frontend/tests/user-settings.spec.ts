@@ -48,7 +48,9 @@ test.describe("Edit user full name and email successfully", () => {
     await page.getByRole("button", { name: "Edit" }).click()
     await page.getByLabel("Full name").fill(updatedName)
     await page.getByRole("button", { name: "Save" }).click()
-    await expect(page.getByText("User updated successfully").first()).toBeVisible()
+    await expect(
+      page.getByText("User updated successfully").first(),
+    ).toBeVisible()
     // Check if the new name is displayed on the page
     await expect(
       page.getByLabel("My profile").getByText(updatedName, { exact: true }),
@@ -70,7 +72,9 @@ test.describe("Edit user full name and email successfully", () => {
     await page.getByRole("button", { name: "Edit" }).click()
     await page.getByLabel("Email").fill(updatedEmail)
     await page.getByRole("button", { name: "Save" }).click()
-    await expect(page.getByText("User updated successfully").first()).toBeVisible()
+    await expect(
+      page.getByText("User updated successfully").first(),
+    ).toBeVisible()
     await expect(
       page.getByLabel("My profile").getByText(updatedEmail, { exact: true }),
     ).toBeVisible()
@@ -162,7 +166,9 @@ test.describe("Change password successfully", () => {
     await page.getByPlaceholder("New Password").fill(NewPassword)
     await page.getByPlaceholder("Confirm Password").fill(NewPassword)
     await page.getByRole("button", { name: "Save" }).click()
-    await expect(page.getByText("Password updated successfully.").first()).toBeVisible()
+    await expect(
+      page.getByText("Password updated successfully.").first(),
+    ).toBeVisible()
 
     await logOutUser(page)
 
@@ -232,7 +238,9 @@ test.describe("Change password with invalid data", () => {
     await page.getByPlaceholder("Confirm Password").fill(password)
     await page.getByRole("button", { name: "Save" }).click()
     await expect(
-      page.getByText("New password cannot be the same as the current one").first(),
+      page
+        .getByText("New password cannot be the same as the current one")
+        .first(),
     ).toBeVisible()
   })
 })

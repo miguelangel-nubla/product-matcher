@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from .en import EnglishMatchingUtils
 from .es import SpanishMatchingUtils
 
 
@@ -18,9 +19,14 @@ class MatchingUtilsRegistry:
     def get(self, language: str) -> Any:
         """Get matching utilities for a language."""
         if language not in self._utils:
-            raise ValueError(
-                f"No matching utilities registered for language: {language}"
-            )
+            if language == "en":
+                self.register("en", EnglishMatchingUtils())
+            elif language == "es":
+                self.register("es", SpanishMatchingUtils())
+            else:
+                raise ValueError(
+                    f"No matching utilities registered for language: {language}"
+                )
         return self._utils[language]
 
     def list_languages(self) -> list[str]:
@@ -40,9 +46,15 @@ def initialize_matching_utils(language_configs: dict[str, dict[str, Any]]) -> No
     """
     for language, config in language_configs.items():
         if language == "es":
-            utils = SpanishMatchingUtils(config=config)
-            registry.register(language, utils)
-        # Add other languages here as needed
+            registry.register(language, SpanishMatchingUtils(config=config))
+        elif language == "en":
+            registry.register(language, EnglishMatchingUtils(config=config))
+
+    # Ensure defaults exist for supported core languages if not in config
+    if "es" not in registry.list_languages():
+        registry.register("es", SpanishMatchingUtils())
+    if "en" not in registry.list_languages():
+        registry.register("en", EnglishMatchingUtils())
 
 
 def get_matching_utils(language: str) -> Any:
@@ -53,8 +65,5 @@ def get_matching_utils(language: str) -> Any:
 
     Returns:
         Matching utilities instance for the language
-
-    Raises:
-        ValueError: If language is not supported
     """
     return registry.get(language)

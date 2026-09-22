@@ -33,7 +33,16 @@ class NormalizerRegistry:
             ValueError: If language not supported
         """
         if language not in self._normalizers:
-            raise ValueError(f"No normalizer registered for language: {language}")
+            if language == "en":
+                from .en import EnglishNormalizer
+
+                self.register("en", EnglishNormalizer())
+            elif language == "es":
+                from .es import SpanishNormalizer
+
+                self.register("es", SpanishNormalizer(config={}))
+            else:
+                raise ValueError(f"No normalizer registered for language: {language}")
 
         return self._normalizers[language]
 
@@ -46,7 +55,7 @@ class NormalizerRegistry:
         Returns:
             True if language is supported
         """
-        return language in self._normalizers
+        return language in self._normalizers or language in ("es", "en")
 
     def get_supported_languages(self) -> list[str]:
         """Get list of supported languages.
@@ -85,11 +94,23 @@ def initialize_normalizers(language_configs: dict[str, Any]) -> None:
         if language == "es":
             from .es import SpanishNormalizer
 
-            normalizer = SpanishNormalizer(config=config)
-            registry.register(language, normalizer)
+            registry.register(language, SpanishNormalizer(config=config))
+        elif language == "en":
+            from .en import EnglishNormalizer
+
+            registry.register(language, EnglishNormalizer(config=config))
         else:
             # Hard error for unsupported languages
             raise ValueError(f"No normalizer implementation for language '{language}'")
+
+    if "es" not in registry.get_supported_languages():
+        from .es import SpanishNormalizer
+
+        registry.register("es", SpanishNormalizer(config={}))
+    if "en" not in registry.get_supported_languages():
+        from .en import EnglishNormalizer
+
+        registry.register("en", EnglishNormalizer(config={}))
 
 
 def get_normalizer(language: str) -> BaseNormalizer:

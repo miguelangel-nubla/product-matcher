@@ -19,8 +19,17 @@ class TestNormalization:
         registry.register("es", self.normalizer)
 
     def test_normalize_text_english(self):
-        """Test basic English normalization - skip for now as only Spanish is implemented."""
-        pass
+        """Test basic English normalization."""
+        from app.services.normalization.en import EnglishNormalizer
+
+        en_normalizer = EnglishNormalizer(config={})
+        result = en_normalizer.normalize("Organic Gala Apples 2pkg")
+        assert isinstance(result, list)
+        # "2" number stripped, "pkg" expanded to "package" which is in STOPWORDS so removed
+        # "organic" is in STOPWORDS so removed
+        # "apple" lemma should be present
+        assert "apple" in result or "apples" in result
+        assert "gala" in result
 
     def test_normalize_text_spanish_basic(self):
         """Test basic Spanish normalization."""

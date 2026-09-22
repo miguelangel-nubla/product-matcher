@@ -47,7 +47,9 @@ function UserSettings() {
         <Alert.Root status="info" mb={8}>
           <Alert.Indicator />
           <Alert.Description>
-            You are currently logged in via a Reverse Proxy / API Key. Sensitive account settings (like updating your password or managing API keys) are disabled and require a standard login.
+            You are currently logged in via a Reverse Proxy / API Key. Sensitive
+            account settings (like updating your password or managing API keys)
+            are disabled and require a standard login.
           </Alert.Description>
         </Alert.Root>
       )}

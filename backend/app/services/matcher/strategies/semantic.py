@@ -39,10 +39,16 @@ class SemanticMatchingStrategy(MatchingStrategy):
             candidates_checked = 0
             all_scores = []  # Track all scores for debug
 
+            input_doc = (
+                matching_utils.get_doc(context.input_tokens)
+                if hasattr(matching_utils, "get_doc")
+                else None
+            )
+
             for product_id, original_alias, alias_tokens in context.normalized_aliases:
                 candidates_checked += 1
                 semantic_score = matching_utils.calculate_semantic_similarity(
-                    context.input_tokens, alias_tokens
+                    context.input_tokens, alias_tokens, doc1=input_doc
                 )
 
                 # Record all scores for debug

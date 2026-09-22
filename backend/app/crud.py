@@ -96,13 +96,19 @@ def get_access_token_by_id(
 
 def authenticate_with_access_token(*, session: Session, token: str) -> User | None:
     """Authenticate a user using an access token."""
-    # Get all active tokens (we'll need to check each one as we can't query by hash directly)
-    statement = select(AccessToken).where(
-        AccessToken.is_active, AccessToken.expires_at > datetime.now(timezone.utc)
-    )
-    active_tokens = session.exec(statement).all()
+    if len(token) < 8:
+        return None
 
-    for db_token in active_tokens:
+    prefix = token[:8]
+    # Filter by prefix to avoid O(N) bcrypt checks
+    statement = select(AccessToken).where(
+        AccessToken.prefix == prefix,
+        AccessToken.is_active,
+        AccessToken.expires_at > datetime.now(timezone.utc),
+    )
+    candidate_tokens = session.exec(statement).all()
+
+    for db_token in candidate_tokens:
         if verify_access_token(token, db_token.token_hash):
             # Update last used timestamp
             db_token.last_used_at = datetime.now(timezone.utc)

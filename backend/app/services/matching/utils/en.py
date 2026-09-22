@@ -1,13 +1,14 @@
-"""Spanish-specific matching utilities with semantic similarity."""
+"""English-specific matching utilities with semantic similarity."""
 
+import warnings
 from typing import Any
 
 
-class SpanishMatchingUtils:
-    """Spanish language matching utilities with caching."""
+class EnglishMatchingUtils:
+    """English language matching utilities with caching."""
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """Initialize Spanish matching utilities.
+        """Initialize English matching utilities.
 
         Args:
             config: Optional configuration dict
@@ -20,9 +21,11 @@ class SpanishMatchingUtils:
         text = " ".join(tokens)
         if not text.strip():
             return None
-        from ...normalization.es import _nlp_model
+        from ...normalization.en import _nlp_model
 
-        return _nlp_model(text)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=r"\[W007\]")
+            return _nlp_model(text)
 
     def calculate_semantic_similarity(
         self, tokens1: list[str], tokens2: list[str], doc1: Any | None = None
@@ -83,14 +86,15 @@ class SpanishMatchingUtils:
             return 0.0
 
         # Import spaCy model from normalization module
-        from ...normalization.es import _nlp_model
+        from ...normalization.en import _nlp_model
 
-        if doc1 is None:
-            doc1 = _nlp_model(text1)
-        doc2 = _nlp_model(text2)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=r"\[W007\]")
+            if doc1 is None:
+                doc1 = _nlp_model(text1)
+            doc2 = _nlp_model(text2)
 
-        # SpaCy's similarity method handles empty vectors gracefully
-        return float(doc1.similarity(doc2))
+            return float(doc1.similarity(doc2))
 
     def clear_cache(self) -> None:
         """Clear the semantic similarity cache."""

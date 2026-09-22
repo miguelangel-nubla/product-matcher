@@ -213,6 +213,7 @@ def resolve_pending_query(
             action=resolve_data.action,
             product_id=resolve_data.product_id,
             custom_alias=resolve_data.custom_alias,
+            owner_id=current_user.id,
         )
         logger.info(
             f"resolve_pending_query returned: success={success}, error={error_message}"

@@ -4,6 +4,7 @@ Implements live integration with Grocy inventory management system.
 """
 
 import logging
+import time
 from typing import Any
 
 import httpx
@@ -62,6 +63,18 @@ class GrocyAdapter(ProductDatabaseAdapter):
         self.api_key = api_key
         self.external_url = external_url.rstrip("/") if external_url else None
         self.headers = {"GROCY-API-KEY": api_key, "Content-Type": "application/json"}
+        self._cached_products: list[ExternalProduct] | None = None
+        self._cached_products_time: float = 0
+        self._cached_reference_data: dict[str, dict[str, str]] | None = None
+        self._cached_reference_time: float = 0
+        self._cache_ttl_seconds: float = 300.0
+
+    def invalidate_cache(self) -> None:
+        """Invalidate cached products and reference data."""
+        self._cached_products = None
+        self._cached_products_time = 0
+        self._cached_reference_data = None
+        self._cached_reference_time = 0
 
     def _get_reference_data(self, client: httpx.Client) -> dict[str, dict[str, str]]:
         """
@@ -70,6 +83,12 @@ class GrocyAdapter(ProductDatabaseAdapter):
         Returns:
             Dictionary with reference data for resolving IDs to names
         """
+        if (
+            self._cached_reference_data is not None
+            and time.time() - self._cached_reference_time < self._cache_ttl_seconds
+        ):
+            return self._cached_reference_data
+
         reference_data: dict[str, dict[str, str]] = {
             "quantity_units": {},
             "product_groups": {},
@@ -106,6 +125,8 @@ class GrocyAdapter(ProductDatabaseAdapter):
         except Exception as e:
             logger.warning(f"Unexpected error fetching reference data: {e}")
 
+        self._cached_reference_data = reference_data
+        self._cached_reference_time = time.time()
         return reference_data
 
     def get_all_products(self) -> list[ExternalProduct]:
@@ -116,6 +137,12 @@ class GrocyAdapter(ProductDatabaseAdapter):
         Returns:
             List of all products available in Grocy
         """
+        if (
+            self._cached_products is not None
+            and time.time() - self._cached_products_time < self._cache_ttl_seconds
+        ):
+            return self._cached_products
+
         try:
             with httpx.Client() as client:
                 # Get reference data once per call (3 API calls total)
@@ -141,6 +168,8 @@ class GrocyAdapter(ProductDatabaseAdapter):
                 logger.info(
                     f"Retrieved {len(external_products)} products from Grocy with reference data"
                 )
+                self._cached_products = external_products
+                self._cached_products_time = time.time()
                 return external_products
 
         except httpx.HTTPError as e:
@@ -290,6 +319,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
                     logger.error(f"PUT response body: {response.text}")
                 response.raise_for_status()
 
+                self.invalidate_cache()
                 logger.info(f"Added alias '{alias}' to product {product_id} in Grocy")
                 return True, None
 

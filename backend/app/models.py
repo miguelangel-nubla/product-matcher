@@ -70,8 +70,15 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
-    match_logs: list["MatchLog"] = Relationship(cascade_delete=True)
-    access_tokens: list["AccessToken"] = Relationship(cascade_delete=True)
+    match_logs: list["MatchLog"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
+    access_tokens: list["AccessToken"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
+    pending_queries: list["PendingQuery"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
 
 
 # Properties to return via API, id is always required
@@ -97,7 +104,7 @@ class PendingQuery(SQLModel, table=True):
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: User | None = Relationship()
+    owner: User | None = Relationship(back_populates="pending_queries")
 
 
 # Model for logging successful matches for analytics and learning
@@ -116,7 +123,7 @@ class MatchLog(SQLModel, table=True):
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: User | None = Relationship()
+    owner: User | None = Relationship(back_populates="match_logs")
 
 
 class PendingQueryPublic(SQLModel):
@@ -239,7 +246,7 @@ class AccessToken(SQLModel, table=True):
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: User = Relationship()
+    owner: User = Relationship(back_populates="access_tokens")
 
 
 # API models for access tokens

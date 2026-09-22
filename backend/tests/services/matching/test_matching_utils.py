@@ -130,3 +130,32 @@ class TestMatchingUtilsRegistry:
         langs = self.registry.list_languages()
         assert "en" in langs
         assert "es" in langs
+
+
+class TestEnglishMatchingUtils:
+    """Test cases for EnglishMatchingUtils."""
+
+    def setup_method(self):
+        from app.services.matching.utils.en import EnglishMatchingUtils
+
+        self.utils = EnglishMatchingUtils()
+
+    def test_init(self):
+        assert self.utils._semantic_cache == {}
+
+    def test_empty_tokens(self):
+        assert self.utils.calculate_semantic_similarity([], []) == 0.0
+
+    def test_identical_tokens(self):
+        assert self.utils.calculate_semantic_similarity(["apple"], ["apple"]) == 1.0
+
+    def test_real_similarity(self):
+        # Using real spaCy en_core_web_sm model
+        score = self.utils.calculate_semantic_similarity(["apple"], ["pear"])
+        assert 0.0 <= score <= 1.0
+
+    def test_caching(self):
+        score1 = self.utils.calculate_semantic_similarity(["apple"], ["banana"])
+        score2 = self.utils.calculate_semantic_similarity(["banana"], ["apple"])
+        assert score1 == score2
+        assert len(self.utils._semantic_cache) == 1

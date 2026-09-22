@@ -5,7 +5,7 @@ Pending queries queue management service.
 import uuid
 from datetime import datetime, timezone
 
-from sqlmodel import Session, desc, select
+from sqlmodel import Session, desc, func, select
 
 from app.models import PendingQuery
 
@@ -147,6 +147,7 @@ class PendingQueueManager:
         action: str,
         product_id: str | None = None,
         custom_alias: str | None = None,
+        owner_id: uuid.UUID | None = None,
     ) -> tuple[bool, str | None]:
         """
         Resolve a pending query by assigning it to an external product or ignoring it.
@@ -156,6 +157,7 @@ class PendingQueueManager:
             action: Action to take ('assign', 'ignore')
             product_id: External product ID (for 'assign' action)
             custom_alias: Custom alias text to use instead of normalized text
+            owner_id: Optional ID of the owner to verify ownership
 
         Returns:
             Tuple of (success, error_message)
@@ -172,6 +174,11 @@ class PendingQueueManager:
         pending_query = self.session.get(PendingQuery, pending_query_id)
         if not pending_query:
             error_msg = f"Pending query {pending_query_id} not found"
+            logger.error(error_msg)
+            return False, error_msg
+
+        if owner_id is not None and pending_query.owner_id != owner_id:
+            error_msg = f"Access denied for pending query: {pending_query_id}"
             logger.error(error_msg)
             return False, error_msg
 
@@ -259,10 +266,12 @@ class PendingQueueManager:
         Returns:
             Count of pending queries
         """
-        statement = select(PendingQuery).where(
-            PendingQuery.owner_id == owner_id, PendingQuery.status == status
+        statement = (
+            select(func.count())
+            .select_from(PendingQuery)
+            .where(PendingQuery.owner_id == owner_id, PendingQuery.status == status)
         )
-        return len(self.session.exec(statement).all())
+        return int(self.session.exec(statement).one())
 
     def delete_pending_query(
         self, pending_query_id: uuid.UUID, owner_id: uuid.UUID

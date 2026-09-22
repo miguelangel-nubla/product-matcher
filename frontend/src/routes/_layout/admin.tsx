@@ -5,8 +5,8 @@ import { z } from "zod"
 
 import { type UserPublic, UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
+import PendingUsers from "@/components/Admin/PendingUsers"
 import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
-import PendingUsers from "@/components/Pending/PendingUsers"
 import {
   PaginationItems,
   PaginationNextTrigger,
@@ -129,7 +129,10 @@ function Admin() {
           <Alert.Indicator />
           <Alert.Title>Admin Actions Disabled</Alert.Title>
           <Alert.Description>
-            You are currently authenticated via a long-lived API Key proxy. To protect the integrity of the system, superuser administrative actions (like creating, editing, or deleting users) are disabled in this mode. Please log in normally to access the admin panel.
+            You are currently authenticated via a long-lived API Key proxy. To
+            protect the integrity of the system, superuser administrative
+            actions (like creating, editing, or deleting users) are disabled in
+            this mode. Please log in normally to access the admin panel.
           </Alert.Description>
         </Alert.Root>
       ) : (
