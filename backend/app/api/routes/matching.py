@@ -2,11 +2,12 @@
 Product matching API routes.
 """
 
+import logging
 import time
 import uuid
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.adapters.registry import get_backend
 from app.api.deps import CurrentUser, SessionDep
@@ -30,6 +31,8 @@ from app.services.matcher.matcher import ProductMatcher
 from app.services.pending import PendingQueueManager
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+MAX_SEARCH_RESULTS = 50
 
 
 @router.post("/match", response_model=MatchResult)
@@ -48,14 +51,19 @@ def match_product(
     threshold = query.threshold or global_settings.default_threshold
 
     try:
-        success, normalized_input, candidates, debug_info = matcher.match_product(
-            input_query=query.text,
-            backend_name=query.backend,
-            threshold=threshold,
-            max_candidates=global_settings.max_candidates,
+        success, normalized_input, candidates, debug_info, match_aliases = (
+            matcher.match_product(
+                input_query=query.text,
+                backend_name=query.backend,
+                threshold=threshold,
+                max_candidates=global_settings.max_candidates,
+            )
         )
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        logger.exception("Product matching failed")
+        raise HTTPException(status_code=500, detail="Matching failed")
 
     pending_item_id = None
     pending_manager = PendingQueueManager(session)
@@ -95,7 +103,7 @@ def match_product(
             normalized_text=normalized_input,
             backend=query.backend,
             matched_product_id=best_match[0],  # product_id
-            matched_text="",  # We don't track this anymore
+            matched_text=match_aliases.get(best_match[0], "")[:255],
             confidence_score=best_match[1],  # confidence
             threshold_used=threshold,
             owner_id=current_user.id,
@@ -170,10 +178,11 @@ def resolve_pending_query(
     """
     Resolve a pending query by assigning it to a product or creating a new one.
     """
-    import logging
-
-    logger = logging.getLogger(__name__)
-    logger.info(f"Resolve request received: {resolve_data}")
+    logger.info(
+        "Resolve request received for pending query %s action %s",
+        resolve_data.pending_query_id,
+        resolve_data.action,
+    )
 
     try:
         pending_manager = PendingQueueManager(session)
@@ -220,11 +229,18 @@ def resolve_pending_query(
         )
 
         if not success:
-            logger.error(f"resolve_pending_query failed: {error_message}")
+            logger.error("resolve_pending_query failed: %s", error_message)
+            if error_message and (
+                "not found" in error_message.lower()
+                or "access denied" in error_message.lower()
+            ):
+                raise HTTPException(
+                    status_code=404,
+                    detail="Pending query not found or access denied",
+                )
             raise HTTPException(
                 status_code=400,
-                detail=error_message
-                or "Failed to resolve pending query. Check that it exists and belongs to you.",
+                detail=error_message or "Failed to resolve pending query.",
             )
 
         logger.info("Resolve operation completed successfully")
@@ -233,9 +249,9 @@ def resolve_pending_query(
     except HTTPException:
         # Re-raise HTTP exceptions
         raise
-    except Exception as e:
-        logger.error(f"Unexpected error in resolve endpoint: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    except Exception:
+        logger.exception("Unexpected error in resolve endpoint")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.delete("/pending/{pending_query_id}")
@@ -270,8 +286,13 @@ def get_external_products(_current_user: CurrentUser, backend: str) -> Any:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid backend: {str(e)}")
 
-    # Get all external products
-    external_products = adapter.get_all_products()
+    try:
+        external_products = adapter.get_all_products()
+    except Exception:
+        logger.exception("External product list failed")
+        raise HTTPException(
+            status_code=502, detail="Unable to reach the product backend"
+        )
 
     return {
         "data": external_products,
@@ -282,26 +303,61 @@ def get_external_products(_current_user: CurrentUser, backend: str) -> Any:
 
 @router.get("/external-products/search")
 def search_external_products(
-    _current_user: CurrentUser, backend: str, q: str = "", limit: int = 20
+    _current_user: CurrentUser,
+    backend: str,
+    q: str = "",
+    limit: Annotated[int, Query(ge=1, le=MAX_SEARCH_RESULTS)] = 20,
 ) -> Any:
     """
     Search external products using the specified backend adapter.
+
+    Matches product id, name, aliases, description, and category.
+    ``limit`` is capped so a browse request cannot download the full catalog.
     """
     try:
         adapter = get_backend(backend)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid backend: {str(e)}")
 
-    if not q.strip():
-        products = adapter.get_all_products()[:limit]
-    else:
+    try:
         products = adapter.search_products(query=q, limit=limit)
+    except Exception:
+        logger.exception("External product search failed")
+        raise HTTPException(
+            status_code=502, detail="Unable to reach the product backend"
+        )
 
     return {
         "data": products,
         "count": len(products),
         "backend": backend,
     }
+
+
+@router.get("/external-products/{product_id}")
+def get_external_product(
+    _current_user: CurrentUser, backend: str, product_id: str
+) -> Any:
+    """
+    Get one external product from the specified backend adapter.
+    """
+    try:
+        adapter = get_backend(backend)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid backend: {str(e)}")
+
+    try:
+        product = adapter.get_product_details(product_id)
+    except Exception:
+        logger.exception("External product lookup failed")
+        raise HTTPException(
+            status_code=502, detail="Unable to reach the product backend"
+        )
+
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return product
 
 
 @router.get("/backends")
@@ -358,9 +414,13 @@ def get_matching_stats(
         .where(MatchLog.owner_id == current_user.id)
     ).one()
 
-    # Get stats from external system
-    external_products = adapter.get_all_products()
-    total_products = len(external_products)
+    try:
+        total_products = len(adapter.get_all_products())
+    except Exception:
+        logger.exception("External product stats failed")
+        raise HTTPException(
+            status_code=502, detail="Unable to reach the product backend"
+        )
 
     return {
         "total_products": total_products,

@@ -14,6 +14,9 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
+# Released version. Keep this aligned with the latest entry in CHANGELOG.md.
+APP_VERSION = "1.27.0"
+
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):

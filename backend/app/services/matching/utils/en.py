@@ -1,7 +1,9 @@
 """English-specific matching utilities with semantic similarity."""
 
-import warnings
+from collections import OrderedDict
 from typing import Any
+
+from .similarity import calculate_semantic_similarity as _calculate
 
 
 class EnglishMatchingUtils:
@@ -14,7 +16,7 @@ class EnglishMatchingUtils:
             config: Optional configuration dict
         """
         self.config = config or {}
-        self._semantic_cache: dict[str, float] = {}
+        self._semantic_cache: OrderedDict[str, float] = OrderedDict()
 
     def get_doc(self, tokens: list[str]) -> Any:
         """Get spaCy Doc for tokens."""
@@ -23,9 +25,7 @@ class EnglishMatchingUtils:
             return None
         from ...normalization.en import _nlp_model
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message=r"\[W007\]")
-            return _nlp_model(text)
+        return _nlp_model(text)
 
     def calculate_semantic_similarity(
         self, tokens1: list[str], tokens2: list[str], doc1: Any | None = None
@@ -40,61 +40,11 @@ class EnglishMatchingUtils:
         Returns:
             Semantic similarity score (0.0 to 1.0)
         """
-        if not tokens1 or not tokens2:
-            return 0.0
-
-        # Create cache key from sorted token lists for consistency
-        key1 = "|".join(sorted(tokens1))
-        key2 = "|".join(sorted(tokens2))
-
-        if key1 == key2:
-            return 1.0
-
-        # Symmetric cache key
-        cache_key = f"{key1}#{key2}" if key1 <= key2 else f"{key2}#{key1}"
-
-        # Check cache first
-        if cache_key in self._semantic_cache:
-            return self._semantic_cache[cache_key]
-
-        # Calculate semantic similarity
-        score = self._calculate_semantic_similarity_uncached(
-            tokens1, tokens2, doc1=doc1
-        )
-
-        # Cache the result
-        self._semantic_cache[cache_key] = score
-        return score
-
-    def _calculate_semantic_similarity_uncached(
-        self, tokens1: list[str], tokens2: list[str], doc1: Any | None = None
-    ) -> float:
-        """Calculate semantic similarity without caching.
-
-        Args:
-            tokens1: First set of tokens
-            tokens2: Second set of tokens
-            doc1: Optional precomputed spaCy Doc for tokens1
-
-        Returns:
-            Semantic similarity score (0.0 to 1.0)
-        """
-        text1 = " ".join(tokens1)
-        text2 = " ".join(tokens2)
-
-        if not text1.strip() or not text2.strip():
-            return 0.0
-
-        # Import spaCy model from normalization module
         from ...normalization.en import _nlp_model
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message=r"\[W007\]")
-            if doc1 is None:
-                doc1 = _nlp_model(text1)
-            doc2 = _nlp_model(text2)
-
-            return float(doc1.similarity(doc2))
+        return _calculate(
+            self._semantic_cache, tokens1, tokens2, _nlp_model, doc1=doc1
+        )
 
     def clear_cache(self) -> None:
         """Clear the semantic similarity cache."""

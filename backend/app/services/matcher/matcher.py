@@ -51,7 +51,7 @@ class ProductMatcher:
         threshold: float = 0.8,
         max_candidates: int = 10,
         debug: DebugStepTracker | None = None,
-    ) -> tuple[bool, str, list[tuple[str, float]], list[DebugStep]]:
+    ) -> tuple[bool, str, list[tuple[str, float]], list[DebugStep], dict[str, str]]:
         """
         Match a product using the modular strategy-based pipeline.
 
@@ -63,11 +63,12 @@ class ProductMatcher:
             debug: Debug tracker (created if not provided)
 
         Returns:
-            Tuple of (success, normalized_input, matches, debug_info)
+            Tuple of (success, normalized_input, matches, debug_info, aliases)
             - success: Whether a confident match was found
             - normalized_input: The normalized input query
             - matches: List of (product_id, score) tuples
             - debug_info: Debug information as list of DebugStep objects
+            - aliases: product_id to the alias text that produced the score
         """
         if debug is None:
             debug = DebugStepTracker()
@@ -102,6 +103,7 @@ class ProductMatcher:
             context.normalized_input,
             result.matches,
             debug.get_debug_info(),
+            result.aliases,
         )
 
     def add_learned_alias(

@@ -99,24 +99,6 @@ class MockProductAdapter(ProductDatabaseAdapter):
         product.aliases.append(alias)
         return True, None
 
-    def search_products(self, query: str, limit: int = 10) -> list[ExternalProduct]:
-        """Mock implementation with simple text search."""
-        query = query.lower()
-        results = []
-
-        for product in self._products.values():
-            if (
-                query in product.name.lower()
-                or (product.description and query in product.description.lower())
-                or (product.category and query in product.category.lower())
-            ):
-                results.append(product)
-
-            if len(results) >= limit:
-                break
-
-        return results
-
     def get_product_url(self, product_id: str) -> str | None:
         """
         Generate a mock external URL for demonstration.

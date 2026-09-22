@@ -128,9 +128,32 @@ class TestSemanticMatchingStrategy:
         result = self.strategy.match(context, threshold=0.8, max_candidates=5)
 
         assert result.success is False
+        assert result.ambiguous is True
         assert len(result.matches) == 2
         assert result.matches[0][1] == 0.9
         assert result.matches[1][1] == 0.9
+        assert result.aliases["product1"] == "Apple Red"
+        assert result.aliases["product2"] == "Apple Green"
+
+    @patch('app.services.matching.utils.registry.get_matching_utils')
+    def test_match_tie_detected_before_candidate_limit(self, mock_get_utils):
+        """A candidate limit of 1 must not hide a tie by accepting the first product."""
+        mock_utils = Mock()
+        mock_utils.calculate_semantic_similarity.side_effect = [0.9, 0.9]
+        mock_get_utils.return_value = mock_utils
+
+        context = self.create_context(
+            ["apple"],
+            [
+                ("product1", "Apple Red", ["apple", "red"]),
+                ("product2", "Apple Green", ["apple", "green"]),
+            ],
+        )
+        result = self.strategy.match(context, threshold=0.8, max_candidates=1)
+
+        assert result.success is False
+        assert result.ambiguous is True
+        assert len(result.matches) == 2
 
     @patch('app.services.matching.utils.registry.get_matching_utils')
     def test_match_best_score_per_product(self, mock_get_utils):

@@ -1,6 +1,6 @@
 """Data classes for matching context and results."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.services.backend import Backend
@@ -33,3 +33,7 @@ class MatchingResult:
     candidates_checked: int = 0
     processing_time_ms: float = 0.0
     threshold_used: float = 0.0
+    # True when several products share the top score, so the match must be resolved manually
+    ambiguous: bool = False
+    # product_id -> alias text that produced the score
+    aliases: dict[str, str] = field(default_factory=dict)

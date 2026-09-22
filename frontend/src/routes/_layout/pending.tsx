@@ -38,17 +38,10 @@ import type { PendingQueryPublic, ResolveRequest } from "../../client"
 import { MatchingService } from "../../client"
 import { Checkbox } from "../../components/ui/checkbox"
 import { getErrorMessage } from "../../utils/error"
-
-// Type for external products from adapters
-interface ExternalProduct {
-  id: string
-  aliases: string[]
-  description?: string
-  category?: string
-  barcode?: string
-}
-
-import { ProductCard } from "../../components/ProductCard"
+import {
+  ProductCard,
+  type ExternalProduct,
+} from "../../components/ProductCard"
 import { ProductIdBadge } from "../../components/ProductIdBadge"
 import { QueryCard } from "../../components/QueryCard"
 import { Field } from "../../components/ui/field"
@@ -120,11 +113,6 @@ function PendingItems() {
       }),
   })
 
-  const { data: settings } = useQuery({
-    queryKey: ["matching-settings"],
-    queryFn: () => MatchingService.getMatchingSettings(),
-  })
-
   const handleResolveClick = useCallback(
     (item: PendingQueryPublic) => {
       setSelectedQuery(item)
@@ -173,20 +161,13 @@ function PendingItems() {
     queryFn: async () => {
       if (!selectedQuery?.backend) return { data: [], count: 0, backend: "" }
 
-      if (productSearch.trim()) {
-        return await MatchingService.searchExternalProducts({
-          backend: selectedQuery.backend,
-          q: productSearch.trim(),
-          limit: 50,
-        })
-      }
-
-      const result = await MatchingService.getExternalProducts({
+      return await MatchingService.searchExternalProducts({
         backend: selectedQuery.backend,
+        q: productSearch.trim(),
+        limit: 50,
       })
-      return result
     },
-    enabled: !!selectedQuery?.backend && isOpen,
+    enabled: !!selectedQuery?.backend && isOpen && productSearch.trim().length > 0,
   })
 
   const resolveMutation = useMutation({
@@ -262,17 +243,8 @@ function PendingItems() {
       ? "indeterminate"
       : false
 
-  const filteredProducts =
-    (products as any)?.data?.filter(
-      (product: ExternalProduct) =>
-        product.aliases?.[0]
-          ?.toLowerCase()
-          .includes(productSearch.toLowerCase()) ||
-        product.id.toLowerCase().includes(productSearch.toLowerCase()) ||
-        product.aliases?.some((alias: string) =>
-          alias.toLowerCase().includes(productSearch.toLowerCase()),
-        ),
-    ) || []
+  const filteredProducts: ExternalProduct[] =
+    (products as { data?: ExternalProduct[] } | undefined)?.data ?? []
 
   const onSubmit = useCallback(
     (data: ResolveForm) => {
@@ -741,48 +713,21 @@ function PendingItems() {
                                 <Text fontSize="sm" color="gray.600">
                                   Click on a candidate to select it:
                                 </Text>
-                                {candidates
-                                  .slice(0, settings?.max_candidates || 5)
-                                  .map((candidate, idx) => {
-                                    const candidateProduct = (
-                                      products as any
-                                    )?.data?.find(
-                                      (p: ExternalProduct) =>
-                                        p.id === candidate.product_id,
-                                    )
-                                    return candidateProduct ? (
-                                      <ProductCard
-                                        key={idx}
-                                        product={candidateProduct}
-                                        backend={selectedQuery.backend}
-                                        confidence={candidate.confidence}
-                                        isSelected={
-                                          selectedProduct?.id ===
-                                          candidate.product_id
-                                        }
-                                        onClick={() => {
-                                          setSelectedProduct(candidateProduct)
-                                        }}
-                                      />
-                                    ) : (
-                                      <Box
-                                        key={idx}
-                                        p={4}
-                                        borderWidth="1px"
-                                        borderRadius="md"
-                                        bg="bg.subtle"
-                                      >
-                                        <Text fontSize="sm" color="fg.muted">
-                                          Product {candidate.product_id} not
-                                          found (confidence:{" "}
-                                          {(candidate.confidence * 100).toFixed(
-                                            1,
-                                          )}
-                                          %)
-                                        </Text>
-                                      </Box>
-                                    )
-                                  })}
+                                {candidates.map((candidate) => (
+                                    <ProductCard
+                                      key={candidate.product_id}
+                                      id={candidate.product_id}
+                                      backend={selectedQuery.backend}
+                                      confidence={candidate.confidence}
+                                      isSelected={
+                                        selectedProduct?.id ===
+                                        candidate.product_id
+                                      }
+                                      onClick={(candidateProduct) => {
+                                        setSelectedProduct(candidateProduct)
+                                      }}
+                                    />
+                                  ))}
                               </VStack>
                             </Field>
                           )

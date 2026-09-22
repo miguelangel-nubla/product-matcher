@@ -39,17 +39,20 @@ Deploy using pre-built Docker images - no building required!
    curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.yml
    ```
 
-2. **Start the application:**
+2. **Set secrets before the first start.** The Compose file runs the backend in production mode, which refuses the default `changethis` values for `SECRET_KEY`, `POSTGRES_PASSWORD`, and `FIRST_SUPERUSER_PASSWORD`. Put real values in `.env` (see [DEPLOY.md](DEPLOY.md)).
+
+3. **Start the application:**
    ```bash
    docker compose up -d
    ```
 
-3. **Access the application:**
+4. **Access the application:**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000/docs
-   - Adminer (Database UI): http://localhost:8080
 
 ## Default Credentials
+
+These values are for local development with `ENVIRONMENT=local` (including `docker-compose.test.yml`). The published Compose file sets `ENVIRONMENT=production` and will not start while any of them is still `changethis`.
 
 - **Admin User:** admin@example.com
 - **Admin Password:** changethis
@@ -99,7 +102,7 @@ curl -X POST "http://localhost:8000/api/v1/matching/match" \
   -d '{
     "text": "organic red apples",
     "backend": "grocy",
-    "threshold": 0.8,
+    "threshold": 0.8
   }'
 ```
 

@@ -9,17 +9,20 @@ This guide shows how to deploy the Product Matcher application using pre-built D
    curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.yml
    ```
 
-2. **Start the application:**
+2. **Create a `.env` file and replace every `changethis` secret** (`SECRET_KEY`, `POSTGRES_PASSWORD`, `FIRST_SUPERUSER_PASSWORD`). The Compose file sets `ENVIRONMENT=production`, and the backend will not start until those values change.
+
+3. **Start the application:**
    ```bash
    docker compose up -d
    ```
 
-3. **Access the application:**
+4. **Access the application:**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000/docs
-   - Adminer (Database UI): http://localhost:8080
 
 ## Default Credentials
+
+Replace these before starting the published Compose file. Production mode refuses `changethis`.
 
 - **Admin User:** admin@example.com
 - **Admin Password:** changethis
@@ -60,7 +63,8 @@ docker compose down -v
 
 - **3000:** Frontend (React)
 - **8000:** Backend API (FastAPI)
-- **5432:** PostgreSQL (exposed for external access)
+
+PostgreSQL stays on the Compose network. The test overlay publishes port 5432 when you need it from the host.
 
 ## Troubleshooting
 
@@ -81,9 +85,11 @@ docker compose down -v
 
 ## Production Considerations
 
+The published Compose file sets `ENVIRONMENT=production`. The backend refuses to start while `SECRET_KEY`, `POSTGRES_PASSWORD`, or `FIRST_SUPERUSER_PASSWORD` is still `changethis`.
+
 For production deployment:
 
-1. Change all default passwords
+1. Change all default passwords before the first start
 2. Use environment variables for secrets
 3. Set up reverse proxy (nginx/traefik) for SSL
 4. Configure proper CORS origins

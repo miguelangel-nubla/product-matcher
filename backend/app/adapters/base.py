@@ -29,6 +29,19 @@ class ExternalProduct:
         return self.aliases[0] if self.aliases else ""
 
 
+def _product_matches_query(product: ExternalProduct, needle: str) -> bool:
+    """Return whether a lowercase query matches id, aliases, description, or category."""
+    if needle in product.id.lower():
+        return True
+    if any(needle in alias.lower() for alias in product.aliases):
+        return True
+    if product.description and needle in product.description.lower():
+        return True
+    if product.category and needle in product.category.lower():
+        return True
+    return False
+
+
 class ProductDatabaseAdapter(ABC):
     """
     Abstract adapter interface for external product databases.
@@ -102,11 +115,13 @@ class ProductDatabaseAdapter(ABC):
         """
         pass
 
-    @abstractmethod
     def search_products(self, query: str, limit: int = 10) -> list[ExternalProduct]:
         """
         Search products in the external system.
         Used for manual resolution and product discovery.
+
+        Matches product id, aliases (including the primary name), description,
+        and category. An empty query returns the first ``limit`` products.
 
         Args:
             query: Search query
@@ -115,7 +130,20 @@ class ProductDatabaseAdapter(ABC):
         Returns:
             List of matching products
         """
-        pass
+        if limit < 1:
+            limit = 1
+        products = self.get_all_products()
+        needle = query.strip().lower()
+        if not needle:
+            return products[:limit]
+
+        matches: list[ExternalProduct] = []
+        for product in products:
+            if _product_matches_query(product, needle):
+                matches.append(product)
+                if len(matches) >= limit:
+                    break
+        return matches
 
     def get_product_url(self, product_id: str) -> str | None:
         """

@@ -124,17 +124,21 @@ class TestFuzzyMatchingStrategy:
             assert result.success is True
 
     def test_match_max_candidates_limit(self):
-        """Test that match respects max_candidates limit."""
-        input_tokens = ["juice"]
+        """A unique winner still respects max_candidates."""
+        input_tokens = ["aaaa"]
         normalized_aliases = [
-            (f"product{i}", f"Product {i} Juice", ["product", str(i), "juice"])
-            for i in range(10)
+            (f"product{i}", label, [label])
+            for i, label in enumerate(
+                ["aaaa", "bbbb", "cccc", "dddd", "eeee", "ffff", "gggg", "hhhh", "iiii", "jjjj"]
+            )
         ]
 
         context = self.create_context(input_tokens, normalized_aliases)
-        result = self.strategy.match(context, threshold=0.1, max_candidates=3)
+        result = self.strategy.match(context, threshold=0.9, max_candidates=3)
 
-        assert len(result.matches) <= 3
+        assert result.success is True
+        assert result.ambiguous is False
+        assert len(result.matches) == 3
         assert result.candidates_checked == 10
 
     def test_match_empty_input(self):

@@ -181,10 +181,10 @@ EXPANSIONS = {
 }
 
 try:
-    _nlp_model = spacy.load("en_core_web_sm")
+    _nlp_model = spacy.load("en_core_web_lg")
 except OSError:
     raise RuntimeError(
-        "spaCy English model 'en_core_web_sm' not found. "
+        "spaCy English model 'en_core_web_lg' not found. "
         "Please ensure the model is installed."
     )
 

@@ -3,6 +3,7 @@
 from rapidfuzz import fuzz
 
 from ..context import MatchingContext, MatchingResult
+from ..scoring import leading_tie_count, visible_limit
 from .base import MatchingStrategy
 
 
@@ -84,42 +85,40 @@ class FuzzyMatchingStrategy(MatchingStrategy):
                 for product_id, (_, best_score, _) in product_best_scores.items()
             ]
 
-            # Sort by score (descending) and take top candidates
+            # Sort by score (descending). Ties are detected on every
+            # above-threshold product, before the candidate window is applied.
             all_scored_matches.sort(key=lambda x: x[1], reverse=True)
-            top_candidates = all_scored_matches[:max_candidates]
-
-            # Count how many are above threshold for logging
-            above_threshold_count = sum(
-                1 for _, score in top_candidates if score >= threshold
+            above_threshold_matches = [
+                match for match in all_scored_matches if match[1] >= threshold
+            ]
+            tie_count = leading_tie_count(
+                [score for _, score in above_threshold_matches]
             )
+            ambiguous = tie_count > 1
+            limit = visible_limit(
+                total=len(all_scored_matches),
+                max_candidates=max_candidates,
+                ambiguous=ambiguous,
+                tie_count=tie_count,
+            )
+            top_candidates = all_scored_matches[:limit]
+            aliases = {
+                product_id: product_best_scores[product_id][0]
+                for product_id, _ in top_candidates
+            }
 
             context.debug.add(
-                f"Found {above_threshold_count} products above threshold {threshold} from {len(context.normalized_aliases)} pre-normalized aliases, returning top {len(top_candidates)} candidates"
+                f"Found {len(above_threshold_matches)} products above threshold {threshold} from {len(context.normalized_aliases)} pre-normalized aliases, returning top {len(top_candidates)} candidates"
             )
 
-            # Check for success based on matches above threshold
-            above_threshold_matches = [
-                match for match in top_candidates if match[1] >= threshold
-            ]
-
-            if len(above_threshold_matches) > 1:
-                top_score = above_threshold_matches[0][1]
-                top_score_count = sum(
-                    1 for _, score in above_threshold_matches if score == top_score
-                )
-                if top_score_count > 1:
-                    context.debug.add(
-                        f"Found {top_score_count} products with identical top score {top_score:.3f} above threshold - treating as no match due to ambiguity"
-                    )
-                    success = False
-                else:
-                    context.debug.add(
-                        f"Single best match found above threshold with score {top_score:.3f}"
-                    )
-                    success = True
-            elif len(above_threshold_matches) == 1:
+            if ambiguous:
                 context.debug.add(
-                    f"Single match found above threshold with score {above_threshold_matches[0][1]:.3f}"
+                    f"Found {tie_count} products with tied top score {above_threshold_matches[0][1]:.3f} above threshold - treating as no match due to ambiguity"
+                )
+                success = False
+            elif len(above_threshold_matches) >= 1:
+                context.debug.add(
+                    f"Single best match found above threshold with score {above_threshold_matches[0][1]:.3f}"
                 )
                 success = True
             else:
@@ -136,6 +135,8 @@ class FuzzyMatchingStrategy(MatchingStrategy):
                 strategy_name=self.get_name(),
                 candidates_checked=candidates_checked,
                 threshold_used=threshold,
+                ambiguous=ambiguous,
+                aliases=aliases,
             )
 
         return self._track_execution_time(_execute)

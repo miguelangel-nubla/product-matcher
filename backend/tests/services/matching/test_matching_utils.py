@@ -75,20 +75,24 @@ class TestSpanishMatchingUtils:
         # Verify call count: only 2 calls (for the first calculation)
         assert mock_nlp.call_count == 2
 
-    def test_cache_key_generation(self):
-        """Test that cache keys are consistent regardless of token order."""
-        # Manually inject into cache to verify key structure
-        tokens1 = ["b", "a"]
-        tokens2 = ["d", "c"]
-        key1 = "|".join(sorted(tokens1)) # "a|b"
-        key2 = "|".join(sorted(tokens2)) # "c|d"
-        expected_key = f"{key1}#{key2}"
+    def test_cache_key_preserves_token_order(self):
+        """Different token orders are different inputs; swapping the two sides hits the cache."""
+        from app.services.matching.utils.similarity import cache_key
 
-        self.utils._semantic_cache[expected_key] = 0.99
+        ordered = cache_key(["red", "apple"], ["green", "pear"])
+        reordered = cache_key(["apple", "red"], ["pear", "green"])
+        swapped = cache_key(["green", "pear"], ["red", "apple"])
 
-        # Call with different order
-        result = self.utils.calculate_semantic_similarity(["a", "b"], ["d", "c"])
-        assert result == 0.99
+        assert ordered != reordered
+        assert ordered == swapped
+
+        self.utils._semantic_cache[ordered] = 0.42
+        assert (
+            self.utils.calculate_semantic_similarity(
+                ["green", "pear"], ["red", "apple"]
+            )
+            == 0.42
+        )
 
     def test_clear_cache(self):
         """Test clearing the cache."""
@@ -150,7 +154,7 @@ class TestEnglishMatchingUtils:
         assert self.utils.calculate_semantic_similarity(["apple"], ["apple"]) == 1.0
 
     def test_real_similarity(self):
-        # Using real spaCy en_core_web_sm model
+        # Using the installed English spaCy model, which includes word vectors
         score = self.utils.calculate_semantic_similarity(["apple"], ["pear"])
         assert 0.0 <= score <= 1.0
 

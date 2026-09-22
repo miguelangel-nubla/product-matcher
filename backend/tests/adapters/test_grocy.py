@@ -338,14 +338,38 @@ class TestGrocyAdapter:
             assert len(results) == 1
             assert results[0].id == "1"
 
+    def test_search_products_matches_alias_and_id(self):
+        """Search matches learned aliases and product ids, not only the primary name."""
+        adapter = GrocyAdapter("https://test.grocy.info", "test-key")
+        mock_products = [
+            ExternalProduct(id="9", aliases=["Milk", "leche entera"], description="dairy"),
+        ]
+
+        with patch.object(adapter, "get_all_products", return_value=mock_products):
+            by_alias = adapter.search_products("leche", limit=10)
+            by_id = adapter.search_products("9", limit=10)
+
+        assert [product.id for product in by_alias] == ["9"]
+        assert [product.id for product in by_id] == ["9"]
+
+    def test_reference_data_not_cached_on_failure(self):
+        """A failed reference-data fetch must not be cached for the TTL."""
+        adapter = GrocyAdapter("https://test.grocy.info", "test-key")
+        client = Mock()
+        client.get.side_effect = httpx.HTTPError("Connection failed")
+
+        data = adapter._get_reference_data(client)
+
+        assert data["quantity_units"] == {}
+        assert adapter._cached_reference_data is None
+
     def test_search_products_error(self):
-        """Test product search with error."""
+        """Product search surfaces backend failures instead of pretending there are no matches."""
         adapter = GrocyAdapter("https://test.grocy.info", "test-key")
 
         with patch.object(adapter, 'get_all_products', side_effect=Exception("Test error")):
-            results = adapter.search_products("apple")
-
-            assert results == []
+            with pytest.raises(Exception, match="Test error"):
+                adapter.search_products("apple")
 
     def test_get_product_url_with_external_url(self):
         """Test product URL generation with external URL configured."""

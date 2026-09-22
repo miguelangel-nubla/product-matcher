@@ -8,7 +8,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
-from app.core.config import settings
+from app.core.config import APP_VERSION, settings
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="A flexible, multilingual, backend-agnostic service for mapping free-text product names to canonical inventory items. Features intelligent fuzzy matching, multi-language normalization, and interactive resolution workflow.",
-    version="0.1.0",
+    version=APP_VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
     lifespan=lifespan,

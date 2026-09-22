@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from pydantic import BaseModel, EmailStr
+from sqlalchemy import Index
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -93,26 +94,35 @@ class UsersPublic(SQLModel):
 
 # Model for pending queries that need manual resolution
 class PendingQuery(SQLModel, table=True):
+    __table_args__ = (
+        Index(
+            "ix_pendingquery_owner_status_created",
+            "owner_id",
+            "status",
+            "created_at",
+        ),
+    )
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     original_text: str = Field(min_length=1, max_length=255)
     normalized_text: str = Field(min_length=1, max_length=255)
     candidates: str | None = Field(default=None)  # JSON string of candidates array
     status: str = Field(
-        default="pending", max_length=20, index=True
+        default="pending", max_length=20
     )  # pending, resolved, ignored
     backend: str = Field(min_length=1, max_length=50)  # Backend instance name
     threshold: float = Field(ge=0.0, le=1.0)  # Threshold that was used for matching
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), index=True
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE", index=True
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     owner: User | None = Relationship(back_populates="pending_queries")
 
 
 # Model for logging successful matches for analytics and learning
 class MatchLog(SQLModel, table=True):
+    __table_args__ = (
+        Index("ix_matchlog_owner_created", "owner_id", "created_at"),
+    )
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     original_text: str = Field(min_length=1, max_length=255)
     normalized_text: str = Field(min_length=1, max_length=255)
@@ -121,11 +131,9 @@ class MatchLog(SQLModel, table=True):
     matched_text: str = Field(default="", max_length=255)  # The alias that was matched
     confidence_score: float = Field(ge=0.0, le=1.0)
     threshold_used: float = Field(ge=0.0, le=1.0)
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), index=True
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE", index=True
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     owner: User | None = Relationship(back_populates="match_logs")
 

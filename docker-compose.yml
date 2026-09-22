@@ -29,6 +29,9 @@ services:
       - .env
     environment:
       - POSTGRES_SERVER=db
+      # Published deploys refuse the default "changethis" secrets.
+      # Local stacks that still use those secrets should add docker-compose.test.yml.
+      - ENVIRONMENT=production
     ports:
       - "8000:80"
     healthcheck:

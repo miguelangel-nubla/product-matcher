@@ -122,8 +122,10 @@ class GrocyAdapter(ProductDatabaseAdapter):
 
         except httpx.HTTPError as e:
             logger.warning(f"Failed to fetch some reference data from Grocy: {e}")
+            return reference_data
         except Exception as e:
             logger.warning(f"Unexpected error fetching reference data: {e}")
+            return reference_data
 
         self._cached_reference_data = reference_data
         self._cached_reference_time = time.time()
@@ -331,43 +333,6 @@ class GrocyAdapter(ProductDatabaseAdapter):
             error_msg = f"Unexpected error adding alias to product {product_id}: {e}"
             logger.error(error_msg)
             return False, error_msg
-
-    def search_products(self, query: str, limit: int = 10) -> list[ExternalProduct]:
-        """
-        Search products in Grocy.
-
-        Uses Grocy's search functionality if available, otherwise falls back
-        to client-side filtering.
-
-        Args:
-            query: Search query
-            limit: Maximum number of results
-
-        Returns:
-            List of matching products
-        """
-        try:
-            # Get all products and filter client-side
-            # Note: Grocy API may have search endpoints - check documentation
-            all_products = self.get_all_products()
-
-            query_lower = query.lower()
-            matching_products = []
-
-            for product in all_products:
-                if query_lower in product.name.lower() or (
-                    product.description and query_lower in product.description.lower()
-                ):
-                    matching_products.append(product)
-
-                    if len(matching_products) >= limit:
-                        break
-
-            return matching_products
-
-        except Exception as e:
-            logger.error(f"Error searching products in Grocy: {e}")
-            return []
 
     def get_product_url(self, product_id: str) -> str | None:
         """

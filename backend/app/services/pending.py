@@ -145,9 +145,9 @@ class PendingQueueManager:
         self,
         pending_query_id: uuid.UUID,
         action: str,
+        owner_id: uuid.UUID,
         product_id: str | None = None,
         custom_alias: str | None = None,
-        owner_id: uuid.UUID | None = None,
     ) -> tuple[bool, str | None]:
         """
         Resolve a pending query by assigning it to an external product or ignoring it.
@@ -155,9 +155,9 @@ class PendingQueueManager:
         Args:
             pending_query_id: ID of the pending query
             action: Action to take ('assign', 'ignore')
+            owner_id: ID of the owner. Required so a caller cannot skip the check.
             product_id: External product ID (for 'assign' action)
             custom_alias: Custom alias text to use instead of normalized text
-            owner_id: Optional ID of the owner to verify ownership
 
         Returns:
             Tuple of (success, error_message)
@@ -177,7 +177,7 @@ class PendingQueueManager:
             logger.error(error_msg)
             return False, error_msg
 
-        if owner_id is not None and pending_query.owner_id != owner_id:
+        if pending_query.owner_id != owner_id:
             error_msg = f"Access denied for pending query: {pending_query_id}"
             logger.error(error_msg)
             return False, error_msg
@@ -219,17 +219,25 @@ class PendingQueueManager:
                     )
 
                     if not alias_added:
-                        error_msg = (
-                            alias_error
-                            or f"Failed to add alias to external product {product_id}"
+                        logger.error(
+                            "Failed to add alias to product %s: %s",
+                            product_id,
+                            alias_error,
                         )
-                        logger.error(error_msg)
-                        return False, error_msg
+                        return (
+                            False,
+                            "Failed to update the product in the inventory backend.",
+                        )
 
-                except Exception as e:
-                    error_msg = f"Error adding alias to external system: {str(e)}"
-                    logger.error(error_msg, exc_info=True)
-                    return False, error_msg
+                except Exception:
+                    logger.exception(
+                        "Error adding alias to external system for product %s",
+                        product_id,
+                    )
+                    return (
+                        False,
+                        "Failed to update the product in the inventory backend.",
+                    )
 
                 # Mark as resolved only after successfully adding the alias
                 pending_query.status = "resolved"
@@ -249,11 +257,10 @@ class PendingQueueManager:
             logger.info("Transaction committed successfully")
             return True, None
 
-        except Exception as e:
-            error_msg = f"Database error: {str(e)}"
-            logger.error(f"Exception in resolve_pending_query: {e}", exc_info=True)
+        except Exception:
+            logger.exception("Exception in resolve_pending_query")
             self.session.rollback()
-            return False, error_msg
+            raise
 
     def get_pending_count(self, owner_id: uuid.UUID, status: str = "pending") -> int:
         """

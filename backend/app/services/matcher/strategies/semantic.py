@@ -1,6 +1,7 @@
 """SpaCy semantic similarity matching strategy."""
 
 from ..context import MatchingContext, MatchingResult
+from ..scoring import leading_tie_count, visible_limit
 from .base import MatchingStrategy
 
 
@@ -77,38 +78,45 @@ class SemanticMatchingStrategy(MatchingStrategy):
 
             # If semantic matches found, return them (medium confidence)
             if len(product_scores) >= 1:
-                # Sort by score and take top candidates
+                # Sort by score. Detect ties on the full above-threshold list
+                # before applying the candidate limit.
                 sorted_matches = sorted(
                     product_scores.items(), key=lambda x: x[1][1], reverse=True
                 )
-                top_matches = [
-                    (product_id, score)
-                    for product_id, (_, score) in sorted_matches[:max_candidates]
-                ]
-
-                # Check for ambiguity if multiple candidates share the exact top score
-                top_score = top_matches[0][1]
-                top_score_count = sum(
-                    1 for _, score in top_matches if score == top_score
+                ranked_scores = [score for _, (_, score) in sorted_matches]
+                tie_count = leading_tie_count(ranked_scores)
+                ambiguous = tie_count > 1
+                limit = visible_limit(
+                    total=len(sorted_matches),
+                    max_candidates=max_candidates,
+                    ambiguous=ambiguous,
+                    tie_count=tie_count,
                 )
+                selected = sorted_matches[:limit]
+                top_matches = [
+                    (product_id, score) for product_id, (_, score) in selected
+                ]
+                aliases = {
+                    product_id: alias for product_id, (alias, _) in selected
+                }
 
-                if len(top_matches) > 1 and top_score_count > 1:
+                if ambiguous:
                     context.debug.add(
-                        f"Found {top_score_count} products with identical top semantic score {top_score:.3f} above threshold - treating as ambiguous (success=False)"
+                        f"Found {tie_count} products with tied top semantic score {ranked_scores[0]:.3f} above threshold - treating as ambiguous (success=False)"
                     )
-                    success = False
                 else:
                     context.debug.add(
                         f"Found {len(product_scores)} products via SpaCy semantic similarity (threshold: {threshold}) - returning semantic matches"
                     )
-                    success = True
 
                 return MatchingResult(
-                    success=success,
+                    success=not ambiguous,
                     matches=top_matches,
                     strategy_name=self.get_name(),
                     candidates_checked=candidates_checked,
                     threshold_used=threshold,
+                    ambiguous=ambiguous,
+                    aliases=aliases,
                 )
             else:
                 context.debug.add(

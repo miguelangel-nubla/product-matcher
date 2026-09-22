@@ -63,8 +63,14 @@ class MatchingPipeline:
                 )
                 return True, result
 
+            if result.ambiguous and result.matches:
+                context.debug.add(
+                    f"{strategy.get_name()} strategy found ambiguous matches, returning them for manual resolution"
+                )
+                return False, result
+
             context.debug.add(
-                f"{strategy.get_name()} strategy found no matches, continuing to next strategy"
+                f"{strategy.get_name()} strategy found no confident match, continuing to next strategy"
             )
 
         # No strategy succeeded

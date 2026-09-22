@@ -37,7 +37,8 @@ class TestMatchingRoutes:
             True,  # success
             "normalized apple juice",  # normalized_input
             [("product123", 0.95), ("product456", 0.85)],  # candidates
-            []  # debug_info (list of DebugStep objects)
+            [],  # debug_info (list of DebugStep objects)
+            {"product123": "Apple Juice"},
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -103,6 +104,7 @@ class TestMatchingRoutes:
             "normalized apple juice",
             [],
             [],
+            {},
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -151,6 +153,7 @@ class TestMatchingRoutes:
             "normalized apple juice",
             [],
             [],
+            {},
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -200,6 +203,7 @@ class TestMatchingRoutes:
             "normalized apple juice",
             [],
             [],
+            {},
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -248,7 +252,7 @@ class TestMatchingRoutes:
 
         mock_matcher_instance = Mock()
         mock_matcher_instance.match_product.return_value = (
-            True, "normalized text", [("product1", 0.8)], []
+            True, "normalized text", [("product1", 0.8)], [], {"product1": "Apple"}
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -300,7 +304,8 @@ class TestMatchingRoutes:
             False,  # no success
             "normalized text",
             [("product1", 0.5)],  # low confidence candidates
-            []
+            [],
+            {"product1": "Apple"},
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -361,8 +366,9 @@ class TestMatchingRoutes:
             json=request_data,
         )
 
-        assert response.status_code == 400
-        assert "Backend connection failed" in response.json()["detail"]
+        assert response.status_code == 500
+        assert response.json()["detail"] == "Matching failed"
+        assert "Backend connection failed" not in response.json()["detail"]
 
     def test_match_product_unauthorized(self, client: TestClient):
         """Test product matching without authentication."""
@@ -529,7 +535,8 @@ class TestMatchingRoutes:
             True,  # success
             "normalized text",
             [("product123", 0.95)],
-            []
+            [],
+            {"product123": "Apple Juice"},
         )
         mock_product_matcher.return_value = mock_matcher_instance
 
@@ -636,6 +643,19 @@ class TestMatchingRoutes:
         assert data["data"][0]["id"] == "product1"
         mock_adapter.search_products.assert_called_once_with(query="apple", limit=10)
 
+    def test_search_external_products_limit_is_bounded(
+        self,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Search refuses a limit large enough to dump the catalog."""
+        response = client.get(
+            "/api/v1/matching/external-products/search?backend=test-backend&q=apple&limit=1000",
+            headers=normal_user_token_headers,
+        )
+
+        assert response.status_code == 422
+
     @patch('app.api.routes.matching.get_backend')
     def test_search_external_products_empty_query(
         self,
@@ -643,11 +663,10 @@ class TestMatchingRoutes:
         client: TestClient,
         normal_user_token_headers: dict[str, str],
     ):
-        """Test search external products with empty query falls back to truncated all products."""
+        """Test search external products with an empty query stays bounded."""
         mock_adapter = Mock()
-        mock_adapter.get_all_products.return_value = [
+        mock_adapter.search_products.return_value = [
             {"id": "product1", "name": "Apple Juice"},
-            {"id": "product2", "name": "Orange Juice"},
         ]
         mock_get_backend.return_value = mock_adapter
 
@@ -660,6 +679,8 @@ class TestMatchingRoutes:
         data = response.json()
         assert data["count"] == 1
         assert len(data["data"]) == 1
+        mock_adapter.search_products.assert_called_once_with(query="", limit=1)
+        mock_adapter.get_all_products.assert_not_called()
 
     @patch('app.api.routes.matching.get_backend_config')
     @patch('app.adapters.registry.get_available_backends')

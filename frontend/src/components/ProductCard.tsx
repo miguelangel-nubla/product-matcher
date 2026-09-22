@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { MatchingService } from "../client"
 import { ProductIdBadge } from "./ProductIdBadge"
 
-interface ExternalProduct {
+export interface ExternalProduct {
   id: string
   aliases: string[]
   description?: string
@@ -22,7 +22,7 @@ interface ProductCardProps {
   // Common props
   confidence?: number
   isSelected?: boolean
-  onClick?: () => void
+  onClick?: (product: ExternalProduct) => void
 }
 
 export function ProductCard({
@@ -33,17 +33,19 @@ export function ProductCard({
   isSelected,
   onClick,
 }: ProductCardProps) {
-  // Auto-fetch product data if ID and backend provided
-  const { data: fetchedProducts, isLoading } = useQuery({
-    queryKey: ["external-products", backend],
-    queryFn: () => MatchingService.getExternalProducts({ backend: backend! }),
+  // Fetch this product only. Do not download the whole catalog to find one id.
+  const { data: fetchedProduct, isLoading } = useQuery({
+    queryKey: ["external-product", backend, id],
+    queryFn: () =>
+      MatchingService.getExternalProduct({
+        backend: backend!,
+        productId: id!,
+      }),
     enabled: !!(id && backend && !product),
   })
 
-  // Find the specific product from fetched data
   const productData =
-    product ||
-    (fetchedProducts as any)?.data?.find((p: ExternalProduct) => p.id === id)
+    product || (fetchedProduct as ExternalProduct | undefined)
 
   if (!product && isLoading) {
     return (
@@ -73,7 +75,9 @@ export function ProductCard({
       border="1px solid"
       borderColor={isSelected ? "blue.solid" : "border.muted"}
       cursor={onClick ? "pointer" : "default"}
-      onClick={onClick}
+      onClick={
+        onClick && productData ? () => onClick(productData) : undefined
+      }
       _hover={onClick ? { borderColor: "blue.solid", bg: "blue.subtle" } : {}}
       width="full"
     >

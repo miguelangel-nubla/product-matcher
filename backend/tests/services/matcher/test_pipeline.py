@@ -134,6 +134,30 @@ class TestMatchingPipeline:
         # Verify Fuzzy strategy got fuzzy_threshold
         strategy2.match.assert_called_with(self.mock_context, 0.65, 5)
 
+    def test_execute_stops_on_ambiguous_matches(self):
+        """Ambiguous earlier results are returned and later strategies do not run."""
+        strategy1 = Mock()
+        strategy1.get_name.return_value = "Semantic"
+        result1 = MatchingResult(
+            success=False,
+            matches=[("p1", 0.9), ("p2", 0.9)],
+            strategy_name="Semantic",
+            ambiguous=True,
+        )
+        strategy1.match.return_value = result1
+
+        strategy2 = Mock()
+        strategy2.get_name.return_value = "Fuzzy"
+
+        self.pipeline.strategies = [strategy1, strategy2]
+
+        success, result = self.pipeline.execute(self.mock_context)
+
+        assert success is False
+        assert result == result1
+        assert result.ambiguous is True
+        strategy2.match.assert_not_called()
+
     def test_execute_metrics_logging(self):
         """Test that strategy execution metrics are logged to debug."""
         # Mock strategies

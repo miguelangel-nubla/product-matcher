@@ -40,10 +40,11 @@ class TestProductMatcher:
         mock_result = Mock()
         mock_result.strategy_name = "Fuzzy"
         mock_result.matches = [("product1", 0.9), ("product2", 0.8)]
+        mock_result.aliases = {"product1": "Apple Juice", "product2": "Fruit Drink"}
         self.matcher.pipeline.execute = Mock(return_value=(True, mock_result))
 
         # Execute
-        success, normalized_input, matches, debug_info = self.matcher.match_product(
+        success, normalized_input, matches, debug_info, aliases = self.matcher.match_product(
             input_query="apple juice",
             backend_name=self.backend_name,
             threshold=0.8,
@@ -54,6 +55,7 @@ class TestProductMatcher:
         assert success is True
         assert normalized_input == "normalized apple juice"
         assert matches == [("product1", 0.9), ("product2", 0.8)]
+        assert aliases["product1"] == "Apple Juice"
         assert isinstance(debug_info, list)
 
         # Verify method calls
@@ -80,13 +82,14 @@ class TestProductMatcher:
         mock_result = Mock()
         mock_result.strategy_name = "Semantic"
         mock_result.matches = []
+        mock_result.aliases = {}
         self.matcher.pipeline.execute = Mock(return_value=(False, mock_result))
 
         # Provide debug tracker
         debug_tracker = DebugStepTracker()
 
         # Execute
-        success, normalized_input, matches, debug_info = self.matcher.match_product(
+        success, normalized_input, matches, debug_info, _aliases = self.matcher.match_product(
             input_query="test query",
             backend_name=self.backend_name,
             debug=debug_tracker

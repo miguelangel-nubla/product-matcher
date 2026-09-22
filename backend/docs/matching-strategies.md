@@ -15,8 +15,9 @@ The matching strategies execute in the following **sequential order**:
 
 ### Pipeline Behavior
 
-- **Early Termination**: If any strategy finds matches above the threshold, the pipeline **stops** and returns those results
-- **Fallback Chain**: If a strategy fails to find matches above threshold, the pipeline **continues** to the next strategy
+- **Early Termination**: If any strategy finds one match above the threshold, the pipeline **stops** and returns that result
+- **Ambiguous ties**: If the best score is shared by more than one product, the pipeline **stops** with `success=false` and returns those candidates for manual resolution. Later strategies do not replace them
+- **Fallback Chain**: If a strategy finds nothing above the threshold, the pipeline **continues** to the next strategy
 - **Best Candidate Tracking**: Even when strategies fail, they track the best candidates found for debugging
 
 ## Strategy Details
@@ -26,9 +27,10 @@ The matching strategies execute in the following **sequential order**:
 **Purpose**: Finds semantically related products using spaCy word embeddings
 
 **How it works**:
-- Uses Spanish spaCy model (`es_core_news_lg`) to calculate semantic similarity
+- Uses the spaCy model for the backend language: English `en_core_web_lg` and Spanish `es_core_news_lg`, both with full word vectors
 - Compares normalized token embeddings between input and product aliases
 - Good at finding related concepts (e.g., "fresa" → "Fresas")
+- When several products share the top score (compared at 3 decimal places), the match is ambiguous and is not auto-accepted
 
 **Strengths**:
 - Understands semantic relationships

@@ -261,6 +261,7 @@ class TestPendingQueueManager:
         """Test successfully resolving a pending query with assign action."""
         # Mock pending query
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         mock_pending_query.backend = "test-backend"
         mock_pending_query.normalized_text = "apple juice"
         mock_pending_query.original_text = "apple juice"
@@ -278,6 +279,7 @@ class TestPendingQueueManager:
             pending_query_id=self.test_pending_id,
             action="assign",
             product_id="product123",
+            owner_id=self.test_owner_id,
         )
 
         # Verify
@@ -293,6 +295,7 @@ class TestPendingQueueManager:
     def test_resolve_pending_query_assign_with_custom_alias(self, mock_get_backend):
         """Test resolving pending query with custom alias."""
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         mock_pending_query.backend = "test-backend"
         mock_pending_query.normalized_text = "apple juice"
         mock_pending_query.status = "pending"
@@ -309,6 +312,7 @@ class TestPendingQueueManager:
             action="assign",
             product_id="product123",
             custom_alias="custom apple juice",
+            owner_id=self.test_owner_id,
         )
 
         # Verify custom alias was used
@@ -317,6 +321,7 @@ class TestPendingQueueManager:
     def test_resolve_pending_query_ignore(self):
         """Test resolving a pending query with ignore action."""
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         mock_pending_query.status = "pending"
 
         self.mock_session.get.return_value = mock_pending_query
@@ -325,6 +330,7 @@ class TestPendingQueueManager:
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="ignore",
+            owner_id=self.test_owner_id,
         )
 
         # Verify
@@ -342,21 +348,25 @@ class TestPendingQueueManager:
             pending_query_id=self.test_pending_id,
             action="assign",
             product_id="product123",
+            owner_id=self.test_owner_id,
         )
 
         # Verify
         assert success is False
+        assert error is not None
         assert "not found" in error
 
     def test_resolve_pending_query_assign_without_product_id(self):
         """Test resolving with assign action but no product ID."""
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         self.mock_session.get.return_value = mock_pending_query
 
         # Execute
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="assign",
+            owner_id=self.test_owner_id,
         )
 
         # Verify
@@ -367,6 +377,7 @@ class TestPendingQueueManager:
     def test_resolve_pending_query_assign_alias_failure(self, mock_get_backend):
         """Test resolving pending query when alias addition fails."""
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         mock_pending_query.backend = "test-backend"
         mock_pending_query.normalized_text = "apple juice"
         mock_pending_query.status = "pending"
@@ -383,21 +394,26 @@ class TestPendingQueueManager:
             pending_query_id=self.test_pending_id,
             action="assign",
             product_id="product123",
+            owner_id=self.test_owner_id,
         )
 
-        # Verify
+        # Verify the client-facing message does not include the backend error
         assert success is False
-        assert "External system error" in error
+        assert error == "Failed to update the product in the inventory backend."
+        assert error is not None
+        assert "External system error" not in error
 
     def test_resolve_pending_query_invalid_action(self):
         """Test resolving pending query with invalid action."""
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         self.mock_session.get.return_value = mock_pending_query
 
         # Execute
         success, error = self.manager.resolve_pending_query(
             pending_query_id=self.test_pending_id,
             action="invalid_action",
+            owner_id=self.test_owner_id,
         )
 
         # Verify
@@ -408,6 +424,7 @@ class TestPendingQueueManager:
     def test_resolve_pending_query_database_exception(self, mock_get_backend):
         """Test resolving pending query with database exception."""
         mock_pending_query = Mock()
+        mock_pending_query.owner_id = self.test_owner_id
         mock_pending_query.backend = "test-backend"
         mock_pending_query.normalized_text = "apple juice"
         mock_pending_query.status = "pending"
@@ -418,16 +435,15 @@ class TestPendingQueueManager:
         mock_adapter.add_alias.return_value = (True, None)
         mock_get_backend.return_value = mock_adapter
 
-        # Execute
-        success, error = self.manager.resolve_pending_query(
-            pending_query_id=self.test_pending_id,
-            action="assign",
-            product_id="product123",
-        )
+        with pytest.raises(Exception, match="Database error"):
+            self.manager.resolve_pending_query(
+                pending_query_id=self.test_pending_id,
+                action="assign",
+                product_id="product123",
+                owner_id=self.test_owner_id,
+            )
 
-        # Verify
-        assert success is False
-        assert "Database error" in error
+        self.mock_session.rollback.assert_called_once()
 
     def test_get_pending_count(self):
         """Test getting count of pending queries."""
