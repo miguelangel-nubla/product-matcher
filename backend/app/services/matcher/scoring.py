@@ -211,7 +211,6 @@ def disambiguate_candidates_by_measurements(
     return None
 
 
-
 @dataclass(frozen=True)
 class ProductScore:
     """Best alias score for one catalog product."""

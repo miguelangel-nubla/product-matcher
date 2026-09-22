@@ -183,4 +183,3 @@ class MatchingPipeline:
                 aliases={winner_id: winner_alias},
             )
         return result
-

@@ -162,9 +162,7 @@ class GrocyAdapter(ProductDatabaseAdapter):
                     pid = str(item.get("product_id"))
                     code = item.get("barcode")
                     if code:
-                        reference_data["barcodes"].setdefault(pid, []).append(
-                            str(code)
-                        )
+                        reference_data["barcodes"].setdefault(pid, []).append(str(code))
             except Exception as e:
                 logger.warning(f"Failed to fetch product barcodes from Grocy: {e}")
 
@@ -369,7 +367,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
                     return False, f"Product {product_id} is inactive"
 
                 product_name = grocy_product.get("name", "").strip()
-                if self.ignore_prefixes and product_name.startswith(self.ignore_prefixes):
+                if self.ignore_prefixes and product_name.startswith(
+                    self.ignore_prefixes
+                ):
                     return (
                         False,
                         f"Product '{product_name}' matches ignored prefixes and cannot be modified",
