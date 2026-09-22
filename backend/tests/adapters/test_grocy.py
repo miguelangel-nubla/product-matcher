@@ -499,3 +499,22 @@ class TestGrocyAdapter:
 
         url = adapter.get_product_url("123")
         assert url is None
+
+    def test_convert_grocy_product_slash_and_parentheses_expansion(self):
+        """Test that slashes and parentheses in product names generate candidate aliases."""
+        adapter = GrocyAdapter("https://test.grocy.info", "test-key")
+        reference_data = {"product_groups": {}, "quantity_units": {}, "barcodes": {}}
+
+        # Slash product
+        slash_prod = {"id": 1, "name": "Barquillos/rollitos", "userfields": {}}
+        ext1 = adapter._convert_grocy_product(slash_prod, reference_data)
+        assert "Barquillos/rollitos" in ext1.aliases
+        assert "Barquillos" in ext1.aliases
+        assert "rollitos" in ext1.aliases
+
+        # Parenthetical product: extracts clean product name, but avoids treating notes as aliases
+        paren_prod = {"id": 2, "name": "Hamburguesas (carne fresca)", "userfields": {}}
+        ext2 = adapter._convert_grocy_product(paren_prod, reference_data)
+        assert "Hamburguesas (carne fresca)" in ext2.aliases
+        assert "Hamburguesas" in ext2.aliases
+        assert "carne fresca" not in ext2.aliases

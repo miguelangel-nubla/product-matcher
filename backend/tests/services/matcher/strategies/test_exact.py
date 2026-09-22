@@ -81,3 +81,22 @@ class TestExactMatchingStrategy:
         assert result.success is False
         assert result.ambiguous is False
         assert result.matches == []
+
+    def test_plural_token_exact_match(self):
+        # Singular query matches plural catalog product
+        context = _context(
+            ["uva"],
+            [("p1", "Uvas", ["uvas"]), ("p2", "Pera", ["pera"])],
+        )
+        result = self.strategy.match(context, threshold=0.8, max_candidates=5)
+        assert result.success is True
+        assert result.matches == [("p1", 1.0)]
+
+        # Plural query matches singular catalog product
+        context_pl = _context(
+            ["manzanas"],
+            [("p1", "Manzana", ["manzana"])],
+        )
+        res_pl = self.strategy.match(context_pl, threshold=0.8, max_candidates=5)
+        assert res_pl.success is True
+        assert res_pl.matches == [("p1", 1.0)]

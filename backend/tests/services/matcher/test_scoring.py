@@ -150,3 +150,22 @@ def test_generic_is_ambiguous_when_a_longer_name_covers_the_same_tokens():
     selection = select_products(scores, 0.8)
     assert selection.outcome == "ambiguous"
     assert selection.chosen[0].product_id == "manzana"
+
+
+def test_are_plural_forms_and_token_similarity():
+    from app.services.matcher.scoring import are_plural_forms
+
+    assert are_plural_forms("uva", "uvas") is True
+    assert are_plural_forms("uvas", "uva") is True
+    assert are_plural_forms("manzana", "manzanas") is True
+    assert are_plural_forms("limon", "limones") is True
+    assert are_plural_forms("nuez", "nueces") is True
+    assert are_plural_forms("apple", "apples") is True
+    assert are_plural_forms("box", "boxes") is True
+    assert are_plural_forms("carne", "pescado") is False
+
+    # token_similarity treats plurals as 100.0 exact matches
+    assert token_similarity("uva", "uvas") == 100.0
+    assert token_similarity("uvas", "uva") == 100.0
+    assert token_similarity("manzana", "manzanas") == 100.0
+    assert token_similarity("limones", "limon") == 100.0

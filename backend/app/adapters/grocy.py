@@ -9,7 +9,11 @@ from typing import Any
 
 import httpx
 
-from app.adapters.base import ExternalProduct, ProductDatabaseAdapter
+from app.adapters.base import (
+    ExternalProduct,
+    ProductDatabaseAdapter,
+    extract_name_aliases,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -244,8 +248,9 @@ class GrocyAdapter(ProductDatabaseAdapter):
         Returns:
             ExternalProduct with resolved names and barcodes
         """
-        # Start with the product name as first alias
-        aliases = [grocy_product["name"].strip()]
+        # Start with candidate aliases extracted from the product name
+        # (expands slashes like 'Barquillos/rollitos' and parentheses like 'Maizena (fécula de maiz)')
+        aliases = extract_name_aliases(grocy_product.get("name", ""))
 
         # Add aliases from ProductAltNames userfield if present
         userfields = grocy_product.get("userfields") or {}

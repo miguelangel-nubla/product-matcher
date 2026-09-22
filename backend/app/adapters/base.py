@@ -3,9 +3,63 @@ Database adapter interface for external inventory systems.
 Implements the database-agnostic pattern from the architecture.
 """
 
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
+
+
+def extract_name_aliases(raw_name: str) -> list[str]:
+    """Extract candidate aliases from product names with slashes, parentheses, or prefixes.
+
+    Examples:
+        - "Barquillos/rollitos" -> ["Barquillos/rollitos", "Barquillos", "rollitos"]
+        - "Gulas/Anguriñas" -> ["Gulas/Anguriñas", "Gulas", "Anguriñas"]
+        - "Citronela (lemongrass)" -> ["Citronela (lemongrass)", "Citronela", "lemongrass"]
+        - "Zumo de coco (agua de coco)" -> ["Zumo de coco (agua de coco)", "Zumo de coco", "agua de coco"]
+        - "- Hamburguesas (carne fresca)" -> ["- Hamburguesas (carne fresca)", "Hamburguesas"]
+    """
+    if not raw_name or not raw_name.strip():
+        return []
+    clean_name = re.sub(r"^[-*]\s*", "", raw_name).strip()
+    candidates = [raw_name.strip()]
+    if clean_name and clean_name != raw_name.strip():
+        candidates.append(clean_name)
+
+    # Strip parenthetical annotations to uncover the primary product name
+    # e.g. "- Hamburguesas (carne fresca)" -> "Hamburguesas"
+    # e.g. "- Maizena (fécula de maiz)" -> "Maizena"
+    # Parenthetical content often represents notes, descriptors, or categories
+    # (like 'carne fresca') rather than the product itself.
+    paren_stripped = re.sub(r"\s*\([^)]*\)", "", clean_name).strip()
+    if paren_stripped and paren_stripped != clean_name:
+        candidates.append(paren_stripped)
+
+    # Handle slashes: "A/B" or "Prefix A/B Suffix"
+    slash_expanded: list[str] = []
+    for cand in list(candidates):
+        if "/" in cand:
+            parts = [p.strip() for p in cand.split("/") if p.strip()]
+            if len(parts) > 1:
+                for p in parts:
+                    if len(p) >= 3:
+                        slash_expanded.append(p)
+                match = re.match(r"^(.*?)\s+([^/\s]+)/([^/\s]+)(.*)$", cand)
+                if match:
+                    pre, w1, w2, post = match.groups()
+                    slash_expanded.append(f"{pre} {w1}{post}".strip())
+                    slash_expanded.append(f"{pre} {w2}{post}".strip())
+    candidates.extend(slash_expanded)
+
+    # Deduplicate preserving order (case-insensitive)
+    seen: set[str] = set()
+    result: list[str] = []
+    for c in candidates:
+        c_stripped = c.strip()
+        if c_stripped and c_stripped.lower() not in seen:
+            seen.add(c_stripped.lower())
+            result.append(c_stripped)
+    return result
 
 
 @dataclass

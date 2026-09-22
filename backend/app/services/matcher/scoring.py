@@ -70,13 +70,34 @@ def extract_barcodes(text: str) -> list[str]:
     return found
 
 
+def are_plural_forms(a: str, b: str) -> bool:
+    """Return True if one string is a standard grammatical plural of the other.
+
+    Handles:
+    - Standard -s addition (e.g., uva/uvas, manzana/manzanas, apple/apples)
+    - Standard -es addition (e.g., limon/limones, yogur/yogures, box/boxes)
+    - Spanish -ces vs -z (e.g., nuez/nueces, pez/peces, raiz/raices)
+    """
+    if not a or not b or a == b:
+        return False
+    shorter, longer = (a, b) if len(a) < len(b) else (b, a)
+    if longer == shorter + "s":
+        return True
+    if longer == shorter + "es":
+        return True
+    if longer.endswith("ces") and shorter.endswith("z") and longer[:-3] == shorter[:-1]:
+        return True
+    return False
+
+
 def token_similarity(left: str, right: str) -> float:
-    """Return 100 for an equal token, else a typo score, else 0.
+    """Return 100 for an equal or plural token, else a typo score, else 0.
 
     Tokens shorter than ``MIN_FUZZY_TOKEN_LENGTH`` do not fuzzy-match. One
     edit on a short token collides with unrelated words.
+    Plural forms are considered exact matches (score 100.0).
     """
-    if left == right:
+    if left == right or are_plural_forms(left, right):
         return 100.0
     if len(left) < MIN_FUZZY_TOKEN_LENGTH or len(right) < MIN_FUZZY_TOKEN_LENGTH:
         return 0.0

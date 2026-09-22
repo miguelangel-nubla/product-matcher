@@ -7,7 +7,11 @@ from typing import Any
 
 import yaml
 
-from app.adapters.base import ExternalProduct, ProductDatabaseAdapter
+from app.adapters.base import (
+    ExternalProduct,
+    ProductDatabaseAdapter,
+    extract_name_aliases,
+)
 
 
 class MockProductAdapter(ProductDatabaseAdapter):
@@ -59,7 +63,7 @@ class MockProductAdapter(ProductDatabaseAdapter):
                 aliases = product_info.get("aliases", [])
 
                 # Create ExternalProduct with all aliases
-                all_aliases = [name] if name else []
+                all_aliases = extract_name_aliases(name) if name else []
                 all_aliases.extend([alias for alias in aliases if alias])
 
                 # Skip completely empty products

@@ -3,7 +3,7 @@
 from collections import Counter
 
 from ..context import MatchingContext, MatchingResult
-from ..scoring import visible_limit
+from ..scoring import are_plural_forms, visible_limit
 from .base import MatchingStrategy
 
 
@@ -12,6 +12,23 @@ def _token_key(tokens: list[str]) -> tuple[tuple[str, int], ...]:
     if not tokens:
         return ()
     return tuple(sorted(Counter(tokens).items()))
+
+
+def _tokens_match_plurals(query_tokens: list[str], alias_tokens: list[str]) -> bool:
+    """Check if query tokens match alias tokens with plural tolerance."""
+    if len(query_tokens) != len(alias_tokens):
+        return False
+    unmatched = list(alias_tokens)
+    for q in query_tokens:
+        matched_idx = None
+        for i, a in enumerate(unmatched):
+            if q == a or are_plural_forms(q, a):
+                matched_idx = i
+                break
+        if matched_idx is None:
+            return False
+        unmatched.pop(matched_idx)
+    return len(unmatched) == 0
 
 
 class ExactMatchingStrategy(MatchingStrategy):
@@ -102,8 +119,16 @@ class ExactMatchingStrategy(MatchingStrategy):
         if not query_key:
             return {}
         hits: dict[str, str] = {}
+        # First pass: strict exact match
         for product_id, alias, tokens in context.normalized_aliases:
             if _token_key(tokens) == query_key:
+                hits.setdefault(product_id, alias)
+        if hits:
+            return hits
+
+        # Second pass: exact match allowing plural forms
+        for product_id, alias, tokens in context.normalized_aliases:
+            if _tokens_match_plurals(context.input_tokens, tokens):
                 hits.setdefault(product_id, alias)
         return hits
 
