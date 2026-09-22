@@ -1,7 +1,10 @@
 """Matching pipeline orchestrator."""
 
 from .context import MatchingContext, MatchingResult
-from .scoring import SEMANTIC_DISPLAY_SCALE
+from .scoring import (
+    SEMANTIC_DISPLAY_SCALE,
+    disambiguate_candidates_by_measurements,
+)
 from .strategies import (
     ExactMatchingStrategy,
     LexicalMatchingStrategy,
@@ -41,14 +44,22 @@ class MatchingPipeline:
             exact key or a lexical accept. Semantic similarity never accepts.
         """
         exact_result = self._run(context, self.exact, threshold, max_candidates)
-        if exact_result.success or (exact_result.ambiguous and exact_result.matches):
-            return exact_result.success, exact_result
+        if exact_result.success:
+            return True, exact_result
+        if exact_result.ambiguous and exact_result.matches:
+            disambiguated = self._disambiguate_by_measurements(context, exact_result)
+            if disambiguated.success:
+                return True, disambiguated
+            return False, disambiguated
 
         lexical_result = self._run(context, self.lexical, threshold, max_candidates)
-        if lexical_result.success or (
-            lexical_result.ambiguous and lexical_result.matches
-        ):
-            return lexical_result.success, lexical_result
+        if lexical_result.success:
+            return True, lexical_result
+        if lexical_result.ambiguous and lexical_result.matches:
+            disambiguated = self._disambiguate_by_measurements(context, lexical_result)
+            if disambiguated.success:
+                return True, disambiguated
+            return False, disambiguated
 
         semantic_result = self._run(context, self.semantic, threshold, max_candidates)
         merged = self._merge_suggestions(
@@ -131,3 +142,45 @@ class MatchingPipeline:
             ambiguous=False,
             aliases=aliases,
         )
+
+    def _disambiguate_by_measurements(
+        self, context: MatchingContext, result: MatchingResult
+    ) -> MatchingResult:
+        """Disambiguate ambiguous ties using measurement, volume, or dimension attributes."""
+        if not result.ambiguous or len(result.matches) <= 1:
+            return result
+
+        raw_query = context.raw_input or context.normalized_input
+        # Build candidate aliases by aggregating original alias texts per product_id
+        alias_map: dict[str, list[str]] = {}
+        for pid, orig, _ in context.normalized_aliases:
+            alias_map.setdefault(pid, []).append(orig)
+
+        candidates: list[tuple[str, str]] = []
+        for pid, _ in result.matches:
+            orig_texts = alias_map.get(pid, [])
+            combined_alias = (
+                " ".join(orig_texts) if orig_texts else result.aliases.get(pid, "")
+            )
+            candidates.append((pid, combined_alias))
+
+        winner_id = disambiguate_candidates_by_measurements(raw_query, candidates)
+        if winner_id is not None:
+            winner_match = next((m for m in result.matches if m[0] == winner_id), None)
+            winner_score = winner_match[1] if winner_match else 1.0
+            winner_alias = result.aliases.get(winner_id, "")
+            context.debug.add(
+                f"Disambiguated ambiguous tie among {len(result.matches)} products to product {winner_id} ('{winner_alias}') via measurement attributes"
+            )
+            return MatchingResult(
+                success=True,
+                matches=[(winner_id, winner_score)],
+                strategy_name=result.strategy_name,
+                candidates_checked=result.candidates_checked,
+                processing_time_ms=result.processing_time_ms,
+                threshold_used=result.threshold_used,
+                ambiguous=False,
+                aliases={winner_id: winner_alias},
+            )
+        return result
+

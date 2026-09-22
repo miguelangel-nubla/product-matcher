@@ -82,6 +82,7 @@ class DataPreparation:
             debug=debug,
             barcodes=barcodes,
             query_barcodes=query_barcodes,
+            raw_input=input_query,
         )
 
     def _get_normalized_aliases(

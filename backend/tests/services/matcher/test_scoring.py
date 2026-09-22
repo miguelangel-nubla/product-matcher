@@ -169,3 +169,35 @@ def test_are_plural_forms_and_token_similarity():
     assert token_similarity("uvas", "uva") == 100.0
     assert token_similarity("manzana", "manzanas") == 100.0
     assert token_similarity("limones", "limon") == 100.0
+
+
+def test_extract_measurement_tokens_and_disambiguate():
+    from app.services.matcher.scoring import (
+        disambiguate_candidates_by_measurements,
+        extract_measurement_tokens,
+    )
+
+    # Extraction tests
+    tokens_50l = extract_measurement_tokens("Bolsas de basura 50L - 70x75")
+    assert "50l" in tokens_50l
+    assert "70x75" in tokens_50l
+
+    tokens_10l = extract_measurement_tokens("Bolsas de basura 10L - 45x47")
+    assert "10l" in tokens_10l
+    assert "45x47" in tokens_10l
+
+    # Disambiguation tests
+    candidates = [
+        ("210", "Bolsas de basura 50L - 70x75"),
+        ("211", "Bolsas de basura 10L - 45x47"),
+        ("663", "Bolsas de basura 5L - 30x35"),
+    ]
+
+    assert disambiguate_candidates_by_measurements("bolsas 50l", candidates) == "210"
+    assert disambiguate_candidates_by_measurements("bolsas 50 l", candidates) == "210"
+    assert disambiguate_candidates_by_measurements("bolsas 10l", candidates) == "211"
+    assert disambiguate_candidates_by_measurements("bolsas 5l", candidates) == "663"
+    assert disambiguate_candidates_by_measurements("bolsas 70x75", candidates) == "210"
+    # Generic query without measurement stays ambiguous
+    assert disambiguate_candidates_by_measurements("bolsas de basura", candidates) is None
+

@@ -109,6 +109,109 @@ def semantic_display_score(raw: float) -> float:
     return round(raw * SEMANTIC_DISPLAY_SCALE, 3)
 
 
+_MEASUREMENT_UNIT_MAP: dict[str, str] = {
+    "l": "l",
+    "lt": "l",
+    "litro": "l",
+    "litros": "l",
+    "liter": "l",
+    "liters": "l",
+    "ml": "ml",
+    "cl": "cl",
+    "dl": "dl",
+    "g": "g",
+    "gr": "g",
+    "gramo": "g",
+    "gramos": "g",
+    "gram": "g",
+    "grams": "g",
+    "kg": "kg",
+    "kilo": "kg",
+    "kilos": "kg",
+    "kilogramo": "kg",
+    "kilogramos": "kg",
+    "kilogram": "kg",
+    "kilograms": "kg",
+    "mg": "mg",
+    "oz": "oz",
+    "lb": "lb",
+    "lbs": "lb",
+    "ud": "ud",
+    "uds": "ud",
+    "unidades": "ud",
+    "unit": "ud",
+    "units": "ud",
+    "mm": "mm",
+    "cm": "cm",
+    "m": "m",
+}
+
+_UNIT_REGEX = (
+    r"\b(\d+(?:\.\d+)?)\s*(l|lt|litro|litros|liter|liters|ml|cl|dl|g|gr|gramo|gramos|gram|grams|"
+    r"kg|kilo|kilos|kilogramo|kilogramos|kilogram|kilograms|mg|oz|lb|lbs|ud|uds|unidades|unit|units|mm|cm|m)\b"
+)
+
+
+def extract_measurement_tokens(text: str) -> dict[str, float]:
+    """Extract dimensions, compound quantities, and numbers with weights."""
+    if not text:
+        return {}
+    normalized = text.lower().replace(",", ".")
+    tokens: dict[str, float] = {}
+
+    # 1. Dimensions like 70x75, 45x47
+    for m in re.finditer(r"\b\d+\s*x\s*\d+\b", normalized):
+        dim = m.group(0).replace(" ", "")
+        tokens[dim] = 2.0
+
+    # 2. Number + unit
+    for m in re.finditer(_UNIT_REGEX, normalized):
+        num = m.group(1)
+        raw_unit = m.group(2)
+        norm_unit = _MEASUREMENT_UNIT_MAP.get(raw_unit, raw_unit)
+        compound = f"{num}{norm_unit}"
+        tokens[compound] = 2.0
+        if num not in tokens:
+            tokens[num] = 1.0
+
+    # 3. Standalone numbers
+    for m in re.finditer(r"\b\d+(?:\.\d+)?\b", normalized):
+        num = m.group(0)
+        if num not in tokens:
+            tokens[num] = 0.5
+
+    return tokens
+
+
+def disambiguate_candidates_by_measurements(
+    raw_query: str,
+    candidates: list[tuple[str, str]],
+) -> str | None:
+    """Disambiguate among tied candidates using numbers, dimensions, or units.
+
+    Returns the winning product_id if exactly one candidate matches the query's
+    measurement tokens better than all others, otherwise None.
+    """
+    query_tokens = extract_measurement_tokens(raw_query)
+    if not query_tokens:
+        return None
+
+    scores: list[tuple[float, str]] = []
+    for pid, alias in candidates:
+        cand_tokens = extract_measurement_tokens(alias)
+        overlap_score = sum(
+            weight for tok, weight in query_tokens.items() if tok in cand_tokens
+        )
+        scores.append((overlap_score, pid))
+
+    scores.sort(key=lambda item: -item[0])
+    if scores and scores[0][0] > 0.0:
+        if len(scores) == 1 or scores[0][0] > scores[1][0]:
+            return scores[0][1]
+    return None
+
+
+
 @dataclass(frozen=True)
 class ProductScore:
     """Best alias score for one catalog product."""

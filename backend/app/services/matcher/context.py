@@ -23,6 +23,7 @@ class MatchingContext:
     barcodes: dict[str, Any] = field(default_factory=dict)
     # Barcode keys found in the raw query, before number tokens are stripped.
     query_barcodes: list[str] = field(default_factory=list)
+    raw_input: str = ""
 
 
 @dataclass
