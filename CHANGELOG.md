@@ -1,3 +1,27 @@
+# [1.29.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.28.0...v1.29.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* **normalization:** preserve fresh and fresco as culinary state descriptors ([82ea10e](https://github.com/miguelangel-nubla/product-matcher/commit/82ea10e9f7ebb4de3ca74bfbdb86983e5cdbf0f4))
+* **normalization:** preserve natural, normal, and gourmet in normalization ([e8fb7df](https://github.com/miguelangel-nubla/product-matcher/commit/e8fb7df99a562bac30ab26949d2c98634e333a5c))
+* **normalization:** preserve taste varieties and canned form as product discriminators ([494f106](https://github.com/miguelangel-nubla/product-matcher/commit/494f106901ba2a1dd61440ff8f91ec8a476a4ce7))
+
+
+### Features
+
+* **adapters,pending:** sync barcode aliases to grocy and harden empty normalized text handling ([8ca950d](https://github.com/miguelangel-nubla/product-matcher/commit/8ca950d853ce9e9e8eef7c0c9ab96d72ccc7572f))
+* add English text normalization and matching support with pending query ownership verification ([2198e98](https://github.com/miguelangel-nubla/product-matcher/commit/2198e985ceeab30626e8af33369f7f33c4d5a5a0))
+* add environment variable configuration and improve alias handling in Grocy adapter ([d5c502e](https://github.com/miguelangel-nubla/product-matcher/commit/d5c502ef9474d48dca833887660a69c3443fad44))
+* add external product search endpoint, database performance indexes, and semantic match tie-score handling ([9a597d2](https://github.com/miguelangel-nubla/product-matcher/commit/9a597d21f30b6152d835f77ad5c45283cf4cd331))
+* add grocy backend configuration and expand Spanish text normalization rules ([94ebe38](https://github.com/miguelangel-nubla/product-matcher/commit/94ebe38c8133664e4ba46b225d56fe873a4ea14f))
+* add plural-tolerant exact matching and advanced product name alias extraction ([da44c94](https://github.com/miguelangel-nubla/product-matcher/commit/da44c941d97bd60781b989b22f8300b7c2d76437))
+* enhance product name normalization with multi-word expansion support and case-insensitive Grocy alias deduplication ([f27c333](https://github.com/miguelangel-nubla/product-matcher/commit/f27c333cb20174b687aa908c2468ac5541f215d1))
+* expand normalization unit vocabulary, make normalizer config optional, and improve alias duplicate handling ([c0cfe1b](https://github.com/miguelangel-nubla/product-matcher/commit/c0cfe1bba0cc102771b8983936c5d7fcab74ff9e))
+* **matcher:** add measurement and dimension tie-breaking disambiguation ([4f86ede](https://github.com/miguelangel-nubla/product-matcher/commit/4f86edea60db44f0ee8d759d95d19f7908bbb2e6))
+* support barcode matching and filter inactive products in grocy adapter ([ef4cf82](https://github.com/miguelangel-nubla/product-matcher/commit/ef4cf826acb5b19d762743741597cabd4ba6fd59))
+* support multiple product barcodes and ignore prefixes in Grocy adapter and exact matcher ([4f9054e](https://github.com/miguelangel-nubla/product-matcher/commit/4f9054e3d38b221c076a2cabb6ed27ec599a99fa))
+
 # [1.28.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.27.0...v1.28.0) (2026-03-31)
 
 
