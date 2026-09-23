@@ -61,11 +61,42 @@ class TestProductMatcher:
         # Verify method calls
         mock_get_backend.assert_called_once_with("mock")
         self.matcher.data_preparation.prepare_context.assert_called_once()
+        _args, kwargs = self.matcher.data_preparation.prepare_context.call_args
+        assert kwargs.get("candidate_product_ids") is None
         self.matcher.pipeline.execute.assert_called_once_with(
             context=mock_context,
             threshold=0.8,
             max_candidates=5
         )
+
+    @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
+    def test_match_product_forwards_candidate_ids_as_set(self, mock_get_backend):
+        """candidate_product_ids become a str-set for prepare_context."""
+        mock_backend = Mock()
+        mock_backend.normalizer = Mock()
+        mock_get_backend.return_value = mock_backend
+
+        mock_context = Mock()
+        mock_context.normalized_input = "aceite vextra"
+        self.matcher.data_preparation.prepare_context = Mock(return_value=mock_context)
+
+        mock_result = Mock()
+        mock_result.strategy_name = "Exact"
+        mock_result.matches = [("9", 1.0)]
+        mock_result.aliases = {"9": "aceite vextra"}
+        self.matcher.pipeline.execute = Mock(return_value=(True, mock_result))
+
+        success, _, matches, _, _ = self.matcher.match_product(
+            input_query="aceite v.extra",
+            backend_name=self.backend_name,
+            threshold=0.9,
+            candidate_product_ids=["9", 365],
+        )
+
+        assert success is True
+        assert matches == [("9", 1.0)]
+        _args, kwargs = self.matcher.data_preparation.prepare_context.call_args
+        assert kwargs.get("candidate_product_ids") == {"9", "365"}
 
     @patch('app.services.matcher.matcher.ProductMatcher._get_backend')
     def test_match_product_with_debug_tracker(self, mock_get_backend):

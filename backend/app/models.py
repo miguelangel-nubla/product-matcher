@@ -184,6 +184,11 @@ class MatchRequest(SQLModel):
     debug: bool = Field(
         default=False
     )  # Whether to include debug information in response
+    # When set, only these external product ids are scored (same pipeline,
+    # smaller catalog). An empty list matches nothing. Constrained calls are
+    # for join/disambiguation, not discovery: no pending-queue rows and no
+    # MatchLog entries.
+    candidate_product_ids: list[str] | None = Field(default=None, max_length=100)
 
 
 class MatchCandidate(SQLModel):

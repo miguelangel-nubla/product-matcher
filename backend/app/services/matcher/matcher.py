@@ -51,6 +51,7 @@ class ProductMatcher:
         threshold: float = 0.8,
         max_candidates: int = 10,
         debug: DebugStepTracker | None = None,
+        candidate_product_ids: list[str] | None = None,
     ) -> tuple[bool, str, list[tuple[str, float]], list[DebugStep], dict[str, str]]:
         """
         Match a product using the modular strategy-based pipeline.
@@ -61,6 +62,7 @@ class ProductMatcher:
             threshold: Minimum score threshold for fuzzy matching (final fallback)
             max_candidates: Maximum number of candidates to return
             debug: Debug tracker (created if not provided)
+            candidate_product_ids: When set, only these product ids are scored
 
         Returns:
             Tuple of (success, normalized_input, matches, debug_info, aliases)
@@ -73,8 +75,15 @@ class ProductMatcher:
         if debug is None:
             debug = DebugStepTracker()
 
+        constrained = (
+            None
+            if candidate_product_ids is None
+            else {str(pid) for pid in candidate_product_ids}
+        )
         debug.add(
-            f"ProductMatcher.match_product called with: '{input_query}' (backend: {backend_name}, threshold: {threshold})"
+            f"ProductMatcher.match_product called with: '{input_query}' "
+            f"(backend: {backend_name}, threshold: {threshold}, "
+            f"candidates: {sorted(constrained) if constrained is not None else None})"
         )
 
         # Step 1: Get backend instance with both adapter and normalizer
@@ -82,7 +91,11 @@ class ProductMatcher:
 
         # Step 2: Prepare data and context with backend
         context = self.data_preparation.prepare_context(
-            backend.normalizer, input_query, backend, debug
+            backend.normalizer,
+            input_query,
+            backend,
+            debug,
+            candidate_product_ids=constrained,
         )
 
         # Exact keys and lexical coverage decide acceptance. The threshold is

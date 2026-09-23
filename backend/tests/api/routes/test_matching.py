@@ -79,6 +79,7 @@ class TestMatchingRoutes:
             backend_name="test-backend",
             threshold=0.9,
             max_candidates=10,
+            candidate_product_ids=None,
         )
 
     @patch('app.api.routes.matching.PendingQueueManager')
@@ -178,6 +179,115 @@ class TestMatchingRoutes:
         data = response.json()
         assert data["ignored"] is True
         assert data["pending_query_id"] is None
+        mock_pending_manager_instance.add_to_pending.assert_not_called()
+
+    @patch('app.api.routes.matching.PendingQueueManager')
+    @patch('app.api.routes.matching.ProductMatcher')
+    @patch('app.api.routes.matching.get_global_settings')
+    def test_match_product_constrained_candidates_skips_pending(
+        self,
+        mock_get_global_settings,
+        mock_product_matcher,
+        mock_pending_queue_manager,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Miss with create_pending=True still skips pending when constrained."""
+        mock_global_settings = Mock()
+        mock_global_settings.default_threshold = 0.8
+        mock_global_settings.max_candidates = 10
+        mock_get_global_settings.return_value = mock_global_settings
+
+        mock_matcher_instance = Mock()
+        # Must be a miss: success=True would never call add_to_pending anyway.
+        mock_matcher_instance.match_product.return_value = (
+            False,
+            "aceite vextra",
+            [],
+            [],
+            {},
+        )
+        mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = False
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
+
+        request_data = {
+            "text": "aceite v.extra",
+            "backend": "test-backend",
+            "threshold": 0.9,
+            "create_pending": True,
+            "candidate_product_ids": ["9", "365"],
+        }
+
+        response = client.post(
+            "/api/v1/matching/match",
+            headers=normal_user_token_headers,
+            json=request_data,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert data["candidates"] == []
+        assert data["pending_query_id"] is None
+        mock_pending_manager_instance.add_to_pending.assert_not_called()
+        mock_matcher_instance.match_product.assert_called_once_with(
+            input_query="aceite v.extra",
+            backend_name="test-backend",
+            threshold=0.9,
+            max_candidates=10,
+            candidate_product_ids=["9", "365"],
+        )
+
+    @patch('app.api.routes.matching.MatchLog')
+    @patch('app.api.routes.matching.PendingQueueManager')
+    @patch('app.api.routes.matching.ProductMatcher')
+    @patch('app.api.routes.matching.get_global_settings')
+    def test_match_product_constrained_success_skips_match_log(
+        self,
+        mock_get_global_settings,
+        mock_product_matcher,
+        mock_pending_queue_manager,
+        mock_match_log,
+        client: TestClient,
+        normal_user_token_headers: dict[str, str],
+    ):
+        """Constrained success must not write MatchLog (join, not discovery)."""
+        mock_global_settings = Mock()
+        mock_global_settings.default_threshold = 0.8
+        mock_global_settings.max_candidates = 10
+        mock_get_global_settings.return_value = mock_global_settings
+
+        mock_matcher_instance = Mock()
+        mock_matcher_instance.match_product.return_value = (
+            True,
+            "aceite vextra",
+            [("9", 1.0)],
+            [],
+            {"9": "aceite vextra"},
+        )
+        mock_product_matcher.return_value = mock_matcher_instance
+
+        mock_pending_manager_instance = Mock()
+        mock_pending_manager_instance.is_query_ignored.return_value = False
+        mock_pending_queue_manager.return_value = mock_pending_manager_instance
+
+        response = client.post(
+            "/api/v1/matching/match",
+            headers=normal_user_token_headers,
+            json={
+                "text": "aceite v.extra",
+                "backend": "test-backend",
+                "threshold": 0.9,
+                "create_pending": True,
+                "candidate_product_ids": ["9"],
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+        mock_match_log.assert_not_called()
         mock_pending_manager_instance.add_to_pending.assert_not_called()
 
     @patch('app.api.routes.matching.PendingQueueManager')

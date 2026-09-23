@@ -149,6 +149,79 @@ class TestDataPreparation:
             )
 
 
+    def test_prepare_context_filters_candidate_product_ids(self):
+        """Constrained mode normalizes only shortlisted aliases/barcodes."""
+        mock_normalizer = Mock()
+        mock_normalizer.normalize.side_effect = [
+            ["aceite", "vextra"],  # input
+            ["aceite", "vextra"],  # alias 9
+            ["aceite", "girasol"],  # alias 28
+        ]
+        self.mock_backend.adapter.get_all_aliases.return_value = [
+            ("9", "aceite vextra"),
+            ("365", "Aceite de sésamo"),
+            ("28", "- Aceite de girasol"),
+        ]
+        p9 = Mock(id=9, barcodes=["8402001020629"], barcode=None)
+        p365 = Mock(id=365, barcodes=["12345678"], barcode=None)
+        p28 = Mock(id=28, barcodes=["87654321"], barcode=None)
+        self.mock_backend.adapter.get_all_products.return_value = [p9, p365, p28]
+
+        context = self.data_prep.prepare_context(
+            mock_normalizer,
+            "aceite v.extra",
+            self.mock_backend,
+            self.debug,
+            candidate_product_ids={"9", "28"},
+        )
+
+        assert [row[0] for row in context.normalized_aliases] == ["9", "28"]
+        assert set(context.barcodes) == {"9", "28"}
+        # Input + two shortlisted aliases only (365 never normalized).
+        assert mock_normalizer.normalize.call_count == 3
+        assert mock_normalizer.normalize.call_args_list[1].args[0] == "aceite vextra"
+        assert mock_normalizer.normalize.call_args_list[2].args[0] == "- Aceite de girasol"
+
+    def test_get_normalized_aliases_filters_before_normalize(self):
+        mock_normalizer = Mock()
+        mock_normalizer.normalize.side_effect = [["aceite", "vextra"]]
+        self.mock_backend.adapter.get_all_aliases.return_value = [
+            ("9", "aceite vextra"),
+            ("365", "Aceite de sésamo"),
+        ]
+
+        result = self.data_prep._get_normalized_aliases(
+            mock_normalizer,
+            self.debug,
+            self.mock_backend.adapter,
+            candidate_product_ids={"9"},
+        )
+
+        assert result == [("9", "aceite vextra", ["aceite", "vextra"])]
+        mock_normalizer.normalize.assert_called_once_with("aceite vextra")
+
+    def test_prepare_context_empty_candidate_list_matches_nothing(self):
+        mock_normalizer = Mock()
+        mock_normalizer.normalize.return_value = ["aceite"]
+        self.mock_backend.adapter.get_all_aliases.return_value = [
+            ("9", "aceite vextra"),
+        ]
+        self.mock_backend.adapter.get_all_products.return_value = [
+            Mock(id=9, barcodes=["8402001020629"], barcode=None)
+        ]
+
+        context = self.data_prep.prepare_context(
+            mock_normalizer,
+            "aceite v.extra",
+            self.mock_backend,
+            self.debug,
+            candidate_product_ids=set(),
+        )
+
+        assert context.normalized_aliases == []
+        assert context.barcodes == {}
+        mock_normalizer.normalize.assert_called_once_with("aceite v.extra")
+
     def test_clear_cache(self):
         """Test cache clearing."""
         mock_normalizer = Mock()

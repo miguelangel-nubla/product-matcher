@@ -23,6 +23,7 @@ class DataPreparation:
         input_query: str,
         backend: Backend,
         debug: DebugStepTracker,
+        candidate_product_ids: set[str] | None = None,
     ) -> MatchingContext:
         """
         Prepare matching context with normalized input and aliases.
@@ -32,6 +33,8 @@ class DataPreparation:
             input_query: Raw input query to match
             backend: Backend instance with adapter and configuration
             debug: Debug tracker
+            candidate_product_ids: When set, only aliases/barcodes for these
+                product ids are kept. An empty set yields an empty catalog.
 
         Returns:
             MatchingContext with normalized data ready for matching
@@ -46,11 +49,31 @@ class DataPreparation:
             f"Normalized input: '{input_query}' -> '{normalized_input}' -> tokens: {input_tokens}"
         )
 
-        # Get normalized aliases - pass normalizer instance
+        # Get normalized aliases - pass normalizer instance. When a shortlist is
+        # set, filter raw rows before normalize / barcode index so we do not
+        # pay catalog-wide tokenization for a two-id kitchen beep.
         normalized_aliases = self._get_normalized_aliases(
-            normalizer, debug, backend.adapter
+            normalizer,
+            debug,
+            backend.adapter,
+            candidate_product_ids=candidate_product_ids,
         )
-        barcodes = self._index_barcodes(backend.adapter, debug)
+        barcodes = self._index_barcodes(
+            backend.adapter,
+            debug,
+            candidate_product_ids=candidate_product_ids,
+        )
+        if candidate_product_ids is not None:
+            debug.add(
+                "Constrained candidate filter applied",
+                {
+                    "candidate_product_ids": sorted(
+                        {str(pid) for pid in candidate_product_ids}
+                    ),
+                    "aliases_after": len(normalized_aliases),
+                    "barcode_products_after": len(barcodes),
+                },
+            )
         query_barcodes = extract_barcodes(input_query)
 
         # Prepare debug data with input tokens and all aliases
@@ -68,6 +91,10 @@ class DataPreparation:
 
         preparation_data["query_barcodes"] = query_barcodes
         preparation_data["barcodes"] = barcodes
+        if candidate_product_ids is not None:
+            preparation_data["candidate_product_ids"] = sorted(
+                {str(pid) for pid in candidate_product_ids}
+            )
 
         debug.add(
             f"Data preparation completed: {len(input_tokens)} input tokens, {len(normalized_aliases)} normalized aliases, {len(barcodes)} barcodes",
@@ -90,9 +117,13 @@ class DataPreparation:
         normalizer: Any,
         debug: DebugStepTracker,
         backend_adapter: ProductDatabaseAdapter,
+        candidate_product_ids: set[str] | None = None,
     ) -> list[tuple[str, str, list[str]]]:
         """
         Get normalized aliases with immediate cache expiry.
+
+        When ``candidate_product_ids`` is set, only those product ids are
+        normalized (empty set → no aliases).
 
         Returns:
             List of (product_id, original_alias, tokenized_alias) tuples
@@ -102,8 +133,22 @@ class DataPreparation:
         # Fetch and normalize aliases
         debug.add("Starting backend alias fetch")
         aliases = backend_adapter.get_all_aliases()
+        fetched = len(aliases)
+        if candidate_product_ids is not None:
+            aliases = [
+                (product_id, alias)
+                for product_id, alias in aliases
+                if str(product_id) in candidate_product_ids
+            ]
 
-        debug.add(f"Alias fetch completed, normalizing {len(aliases)} aliases")
+        debug.add(
+            f"Alias fetch completed, normalizing {len(aliases)} aliases"
+            + (
+                f" (filtered from {fetched})"
+                if candidate_product_ids is not None
+                else ""
+            )
+        )
         normalized_aliases = []
 
         # Use same normalizer instance for all aliases (includes automatic caching)
@@ -117,12 +162,16 @@ class DataPreparation:
         return normalized_aliases
 
     def _index_barcodes(
-        self, backend_adapter: ProductDatabaseAdapter, debug: DebugStepTracker
+        self,
+        backend_adapter: ProductDatabaseAdapter,
+        debug: DebugStepTracker,
+        candidate_product_ids: set[str] | None = None,
     ) -> dict[str, Any]:
         """Index catalog barcodes for exact matching.
 
         A non-list return means products are not available from this adapter
         call. Name matching still runs; barcode keys are simply absent.
+        When ``candidate_product_ids`` is set, only those products are indexed.
         """
         products = backend_adapter.get_all_products()
         if not isinstance(products, list):
@@ -133,6 +182,11 @@ class DataPreparation:
         total_barcodes = 0
         for product in products:
             product_id = str(product.id)
+            if (
+                candidate_product_ids is not None
+                and product_id not in candidate_product_ids
+            ):
+                continue
             keys: list[str] = []
 
             raw_barcodes = getattr(product, "barcodes", None)

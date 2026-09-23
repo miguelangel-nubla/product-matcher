@@ -49,6 +49,10 @@ def match_product(
     # Get global settings and ensure valid threshold
     global_settings = get_global_settings()
     threshold = query.threshold or global_settings.default_threshold
+    # Constrained calls score a known shortlist (e.g. kitchen beeps). They must
+    # not open pending-queue rows or inflate MatchLog discovery stats.
+    constrained = query.candidate_product_ids is not None
+    create_pending = False if constrained else query.create_pending
 
     try:
         success, normalized_input, candidates, debug_info, match_aliases = (
@@ -57,6 +61,7 @@ def match_product(
                 backend_name=query.backend,
                 threshold=threshold,
                 max_candidates=global_settings.max_candidates,
+                candidate_product_ids=query.candidate_product_ids,
             )
         )
     except ValueError as e:
@@ -91,12 +96,16 @@ def match_product(
                     "ignored": ignored,
                     "normalized_input": normalized_input,
                     "backend": query.backend,
+                    "candidate_product_ids": query.candidate_product_ids,
+                    "create_pending": create_pending,
+                    "constrained": constrained,
                 },
             )
         )
 
-    # If successful match, log it for reference
-    if success and candidates:
+    # Full-catalog successes land in MatchLog for analytics / learning.
+    # Constrained shortlist joins do not: they are not discovery matches.
+    if success and candidates and not constrained:
         best_match = candidates[0]
         match_log = MatchLog(
             original_text=query.text,
@@ -110,9 +119,9 @@ def match_product(
         )
         session.add(match_log)
         session.commit()
-    else:
+    elif not success or not candidates:
         # If no match or low confidence, optionally add to pending queue
-        if query.create_pending and not ignored:
+        if create_pending and not ignored:
             pending_query = pending_manager.add_to_pending(
                 original_text=query.text,
                 normalized_text=normalized_input,

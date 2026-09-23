@@ -2,6 +2,10 @@
 
 Receipt lines are linked to a closed catalog. A wrong automatic link moves stock and can be stored as an alias, so the pipeline accepts only high-precision evidence. Everything else is a suggestion for the review queue.
 
+## Constrained candidates
+
+`POST /matching/match` accepts optional `candidate_product_ids`. When that list is present, the same exact → lexical → semantic pipeline runs, but only aliases and barcodes for those product ids are scored (raw catalog rows are filtered before normalization). Use this when the caller already has a shortlist (kitchen identify beeps, pending-scan barcodes) and needs the matcher’s normalization and ranking instead of a separate string scorer. An empty list matches nothing. Constrained calls never create pending-queue rows and never write `MatchLog` entries.
+
 ## Decision order
 
 1. **Exact.** A barcode on the line matches a catalog barcode, or the normalized tokens equal a product name or learned alias. One product accepts at confidence 1. Several products sharing the key are ambiguous and later stages do not pick between them.
