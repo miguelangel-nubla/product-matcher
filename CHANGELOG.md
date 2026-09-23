@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.29.0...v1.30.0) (2026-09-23)
+
+
+### Features
+
+* add candidate_product_ids query parameter to constrain matching scope and skip pending queue ([f3c6ae6](https://github.com/miguelangel-nubla/product-matcher/commit/f3c6ae65eb9d3b315b701e361ade88a9a85b7d4b))
+
 # [1.29.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.28.0...v1.29.0) (2026-09-22)
 
 
