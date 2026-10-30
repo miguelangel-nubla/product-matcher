@@ -1,3 +1,4 @@
+import os
 import secrets
 import warnings
 from typing import Annotated, Any, Literal
@@ -11,8 +12,15 @@ from pydantic import (
     computed_field,
     model_validator,
 )
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic.fields import FieldInfo
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 from typing_extensions import Self
+
+from app.core.secret_files import FILE_SUFFIX, read_secret_file
 
 # Released version. Keep this aligned with the latest entry in CHANGELOG.md.
 APP_VERSION = "1.27.0"
@@ -26,6 +34,39 @@ def parse_cors(v: Any) -> list[str] | str:
     raise ValueError(v)
 
 
+# Settings that may hold secrets. Each one can also be given as <NAME>_FILE,
+# pointing to a file that holds the value (Docker secrets style).
+SECRET_SETTINGS: tuple[str, ...] = (
+    "SECRET_KEY",
+    "POSTGRES_PASSWORD",
+    "FIRST_SUPERUSER_PASSWORD",
+    "SMTP_PASSWORD",
+    "SENTRY_DSN",
+)
+
+
+class SecretFileSettingsSource(PydanticBaseSettingsSource):
+    """Read secret settings from the files named by <NAME>_FILE env vars."""
+
+    def get_field_value(
+        self, field: FieldInfo, field_name: str
+    ) -> tuple[Any, str, bool]:
+        file_var = f"{field_name}{FILE_SUFFIX}"
+        path = os.environ.get(file_var)
+        if not path:
+            return None, field_name, False
+        return read_secret_file(file_var, path), field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        values: dict[str, Any] = {}
+        for field_name in SECRET_SETTINGS:
+            field = self.settings_cls.model_fields[field_name]
+            value, key, _ = self.get_field_value(field, field_name)
+            if value is not None:
+                values[key] = value
+        return values
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
@@ -33,6 +74,25 @@ class Settings(BaseSettings):
         env_ignore_empty=True,
         extra="ignore",
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        # <NAME>_FILE takes precedence over <NAME> from the environment or .env
+        return (
+            init_settings,
+            SecretFileSettingsSource(settings_cls),
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+        )
+
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days

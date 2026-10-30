@@ -39,7 +39,7 @@ Deploy using pre-built Docker images - no building required!
    curl -o docker-compose.yml https://raw.githubusercontent.com/miguelangel-nubla/product-matcher/master/docker-compose.yml
    ```
 
-2. **Set secrets before the first start.** The Compose file runs the backend in production mode, which refuses the default `changethis` values for `SECRET_KEY`, `POSTGRES_PASSWORD`, and `FIRST_SUPERUSER_PASSWORD`. Put real values in `.env` (see [DEPLOY.md](DEPLOY.md)).
+2. **Set secrets before the first start.** The Compose file runs the backend in production mode, which refuses the default `changethis` values for `SECRET_KEY`, `POSTGRES_PASSWORD`, and `FIRST_SUPERUSER_PASSWORD`. Put real values in `.env`, or point `<NAME>_FILE` at a file that holds each value (see [DEPLOY.md](DEPLOY.md#secrets-from-files)).
 
 3. **Start the application:**
    ```bash

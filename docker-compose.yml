@@ -32,6 +32,12 @@ services:
       # Published deploys refuse the default "changethis" secrets.
       # Local stacks that still use those secrets should add docker-compose.test.yml.
       - ENVIRONMENT=production
+      # Secrets can be read from files instead of env vars (Docker secrets style):
+      # set <NAME>_FILE instead of <NAME>, e.g. with a `secrets:` entry
+      # mounted at /run/secrets/secret_key:
+      # - SECRET_KEY_FILE=/run/secrets/secret_key
+      # - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      # - FIRST_SUPERUSER_PASSWORD_FILE=/run/secrets/first_superuser_password
     ports:
       - "8000:80"
     healthcheck:

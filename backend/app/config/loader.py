@@ -2,13 +2,13 @@
 Configuration loader for YAML backend configuration with environment variable support.
 """
 
-import os
 import re
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from app.core.secret_files import getenv_or_file
 from app.models import BackendConfig, GlobalSettings
 
 
@@ -19,6 +19,9 @@ def _substitute_env_vars(value: Any) -> Any:
     Supports patterns like:
     - ${VAR_NAME} - required variable (raises error if not found)
     - ${VAR_NAME:-default} - optional variable with default value
+
+    If VAR_NAME_FILE is set, the value is read from that file instead
+    (Docker secrets style, e.g. GROCY_API_KEY_FILE=/run/secrets/grocy_api_key).
     """
     if isinstance(value, str):
         # Pattern to match ${VAR_NAME} or ${VAR_NAME:-default}
@@ -28,7 +31,7 @@ def _substitute_env_vars(value: Any) -> Any:
             var_name = match.group(1)
             default_value = match.group(3) if match.group(3) is not None else None
 
-            env_value = os.getenv(var_name)
+            env_value = getenv_or_file(var_name)
             if env_value is not None:
                 return env_value
             elif default_value is not None:
