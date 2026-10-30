@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.30.0...v1.31.0) (2026-10-30)
+
+
+### Features
+
+* **backend:** read secrets from <NAME>_FILE files (Docker secrets style) ([059b289](https://github.com/miguelangel-nubla/product-matcher/commit/059b289c1e60681f00676c6ad7298aa9aef61327))
+
 # [1.30.0](https://github.com/miguelangel-nubla/product-matcher/compare/v1.29.0...v1.30.0) (2026-09-23)
 
 
